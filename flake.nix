@@ -13,14 +13,8 @@
         pkgs-unstable = import nixpkgs-unstable { inherit system; };
         pkgs-stable = import nixpkgs-stable { inherit system; };
       in {
-        devShells.default = pkgs-unstable.mkShell {
-          buildInputs = with pkgs-unstable; [
-            git
-          ];
-          
-          shellHook = ''
-            echo "🟪 development environment is ready..."
-          '';
+        devShells = {
+          default = import ./nix/devShell.nix;
         };
-      }
+});
 }
