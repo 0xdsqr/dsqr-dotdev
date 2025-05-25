@@ -14,7 +14,17 @@
         pkgs-stable = import nixpkgs-stable { inherit system; };
       in {
         devShells = {
-          default = import ./nix/devShell.nix;
+          default = pkgs-unstable.mkShell {
+            buildInputs = with pkgs-unstable; [
+              nodejs_22
+              git
+              bun
+            ];
+            
+            shellHook = ''
+              echo "🟪 bingbong 🟪"
+            '';
+          };
         };
-});
+      });
 }
