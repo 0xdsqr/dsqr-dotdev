@@ -1,0 +1,19 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: [nixos, self-hosted, dsqr-deotdev, dsqr]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+      
+      - name: Check Nix version
+        run: nix --version
+      
+      - name: Verify flake integrity
+        run: nix flake check
+      
+      - name: Show flake info
+        run: nix flake show
