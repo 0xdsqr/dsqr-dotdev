@@ -1,23 +1,23 @@
 {
-    "name": "@dsqr-dotdev/api",
+    "name": "@dsqr-dotdev/web",
     "version": "0.0.0",
     "type": "module",
     "sideEffects": false,
     "scripts": {
-        "dev": "bun run --watch src/index.ts",
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
         "test": "bun test",
         "test:watch": "bun test --watch",
         "test:coverage": "bun test --coverage"
     },
     "devDependencies": {
-        "@testcontainers/postgresql": "^10.7.1",
         "bun-types": "latest",
-        "supertest": "^6.3.4",
         "typescript": "5.8.3"
     },
     "dependencies": {
-        "@dsqr-dotdev/database": "workspace:*",
+        "@dsqr-dotdev/hoot": "workspace:*",
         "@tsconfig/node22": "^22.0.1",
-        "elysia": "^1.2.25"
+        "vite": "^6.3.5"
     }
 }
