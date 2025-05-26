@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: [nixos, self-hosted, dsqr-deotdev, dsqr]
+    runs-on: [nixos, self-hosted, dsqr-dotdev, dsqr]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
