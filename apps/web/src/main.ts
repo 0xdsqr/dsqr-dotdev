@@ -1,25 +1,62 @@
 import * as hoot from "@dsqr-dotdev/hoot"
 
-const element = hoot.createElement('div', { 
-    style: 'padding: 20px; background: #f0f0f0; border-radius: 8px;' 
-  },
-    hoot.createElement('h1', { 
-      style: 'color: #333; font-size: 2rem; margin-bottom: 1rem;' 
-    }, 'Hello Mini React!'),
-    
-    hoot.createElement('p', { 
-      style: 'color: #666; line-height: 1.5;' 
-    }, 'Built with just createElement and render'),
-    
+function HomePage() {
+  const navigate = hoot.useNavigate()
+  return hoot.createElement('div', {},
+    hoot.createElement('h1', {}, 'Welcome to Our App'),
+    hoot.createElement('p', {}, 'This is the landing page'),
     hoot.createElement('button', {
-      style: 'background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;',
-      onclick: () => alert('It works!')
-    }, 'Click me')
+      onclick: () => navigate('/about')
+    }, 'Go to About Page'),
+    hoot.createElement('br', {}),
+    hoot.createElement('button', {
+      onclick: () => navigate('/nonexistent')
+    }, 'Test 404 Page')
   )
-  
-  
-  const container = document.getElementById('app')
-  if (!container) {
-    throw new Error('could not find #app element')
-  }
-  hoot.render(element, container)
+}
+
+function AboutPage() {
+  const navigate = hoot.useNavigate()
+  return hoot.createElement('div', {},
+    hoot.createElement('h1', {}, 'About Us'),
+    hoot.createElement('p', {}, 'Hello world from the about page!'),
+    hoot.createElement('button', {
+      onclick: () => navigate('/')
+    }, 'Back to Home')
+  )
+}
+
+function NotFoundPage() {
+  const navigate = hoot.useNavigate()
+  return hoot.createElement('div', {},
+    hoot.createElement('h1', {}, '404 - Page Not Found'),
+    hoot.createElement('p', {}, 'Sorry, the page you are looking for does not exist.'),
+    hoot.createElement('button', {
+      onclick: () => navigate('/')
+    }, 'Go Home')
+  )
+}
+
+const router = hoot.createRouter({
+  routes: [
+    hoot.createRoute('/', HomePage),
+    hoot.createRoute('/about', AboutPage)
+  ],
+  notFound: NotFoundPage
+})
+
+function App() {
+  return hoot.createElement('div', { style: 'padding: 20px; font-family: Arial, sans-serif;' },
+    hoot.RouterProvider({ router })
+  )
+}
+
+const container = document.getElementById('app')
+if (!container) {
+  throw new Error('Could not find #app element')
+}
+
+hoot.renderApp(App, container)
+
+;(window as any).router = router
+console.log("bing bong router is working", router.getCurrentComponent)
