@@ -16,17 +16,21 @@ export const subscriberRoutes = new Elysia({ prefix: "/v1/subscriber" })
   .onTransform(({ body, params, path, request: { method } }) => {
     console.log(`${method} ${path}`, { body, params })
   })
-  .get("/", async ({ set }) => {
-    try {
-      const result = await subscriberControllers.getAllSubscribers()
-      return result
-    } catch (error) {
-      set.status = 500
-      return handleError(error)
-    }
-  }, {
-    response: ResponseSchema
-  })
+  .get(
+    "/",
+    async ({ set }) => {
+      try {
+        const result = await subscriberControllers.getAllSubscribers()
+        return result
+      } catch (error) {
+        set.status = 500
+        return handleError(error)
+      }
+    },
+    {
+      response: ResponseSchema,
+    },
+  )
   .get(
     "/:email",
     async ({ params: { email }, set }) => {

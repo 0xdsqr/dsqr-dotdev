@@ -31,32 +31,32 @@ export const HealthStatusSchema = t.Object({
 })
 
 export interface ApiResponse {
-  data?: any;
-  meta?: Record<string, any>;
+  data?: any
+  meta?: Record<string, any>
   errors?: Array<{
-    status: string;
-    title: string;
-    detail?: string;
-  }>;
+    status: string
+    title: string
+    detail?: string
+  }>
 }
 
 export interface HealthStatus {
-  status: "up" | "down" | "degraded";
-  version: string;
+  status: "up" | "down" | "degraded"
+  version: string
   services: {
     database: {
-      status: "up" | "down";
-      latency_ms: number;
-    };
+      status: "up" | "down"
+      latency_ms: number
+    }
     api: {
-      status: "up" | "down";
-      uptime_sec: number;
-    };
-  };
-  timestamp: string;
+      status: "up" | "down"
+      uptime_sec: number
+    }
+  }
+  timestamp: string
 }
 
 export interface ControllerResponse {
-  status: number;
-  body: ApiResponse;
+  status: number
+  body: ApiResponse
 }

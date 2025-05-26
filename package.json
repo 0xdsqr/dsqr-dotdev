@@ -3,8 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "format:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path .gitignore",
-    "format:fix": "prettier --write \"**/*.{ts,tsx,md}\" --ignore-path .gitignore"
+    "style:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path .gitignore",
+    "style:fix": "prettier --write \"**/*.{ts,tsx,md}\" --ignore-path .gitignore"
   },
   "workspaces": [
     "packages/database",

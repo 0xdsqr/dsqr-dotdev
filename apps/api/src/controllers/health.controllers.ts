@@ -10,7 +10,7 @@ export const healthControllers = {
   checkLiveness: async (): Promise<ControllerResponse> => {
     return {
       status: 204,
-      body: {}
+      body: {},
     }
   },
 
@@ -18,7 +18,7 @@ export const healthControllers = {
     try {
       let dbStatus: "up" | "down" = "down"
       let dbLatency = 0
-      
+
       try {
         const dbStartTime = performance.now()
         await db.execute(sql`SELECT 1`)
@@ -28,36 +28,36 @@ export const healthControllers = {
         console.error("Database health check failed:", error)
         dbStatus = "down"
       }
-      
+
       const uptimeSec = Math.floor((Date.now() - serverStartTime) / 1000)
-      
-      const overallStatus: HealthStatus["status"] = 
+
+      const overallStatus: HealthStatus["status"] =
         dbStatus === "up" ? "up" : "degraded"
-      
+
       const healthStatus: HealthStatus = {
         status: overallStatus,
         version: API_VERSION,
         services: {
           database: {
             status: dbStatus,
-            latency_ms: dbLatency
+            latency_ms: dbLatency,
           },
           api: {
             status: "up",
-            uptime_sec: uptimeSec
-          }
+            uptime_sec: uptimeSec,
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
-      
-      const httpStatus = overallStatus === "up" ? 200 : 
-                        overallStatus === "degraded" ? 200 : 503
-      
+
+      const httpStatus =
+        overallStatus === "up" ? 200 : overallStatus === "degraded" ? 200 : 503
+
       return {
         status: httpStatus,
         body: {
-          data: healthStatus
-        }
+          data: healthStatus,
+        },
       }
     } catch (error) {
       console.error("Health check failed:", error)
@@ -68,11 +68,14 @@ export const healthControllers = {
             {
               status: "500",
               title: "Internal Server Error",
-              detail: error instanceof Error ? error.message : "Unknown error occurred"
-            }
-          ]
-        }
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : "Unknown error occurred",
+            },
+          ],
+        },
       }
     }
-  }
+  },
 }

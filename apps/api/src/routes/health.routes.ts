@@ -18,33 +18,41 @@ export const healthRoutes = new Elysia({ prefix: "/v1/health" })
           {
             status: "500",
             title: "Internal Server Error",
-            detail: error instanceof Error ? error.message : "Unknown error occurred",
+            detail:
+              error instanceof Error ? error.message : "Unknown error occurred",
           },
         ],
       }
     }
   })
-  .get("/readiness", async ({ set }) => {
-    try {
-      const result = await healthControllers.checkReadiness()
-      set.status = result.status
-      return result.body
-    } catch (error) {
-      set.status = 500
-      return {
-        errors: [
-          {
-            status: "500",
-            title: "Internal Server Error",
-            detail: error instanceof Error ? error.message : "Unknown error occurred",
-          },
-        ],
+  .get(
+    "/readiness",
+    async ({ set }) => {
+      try {
+        const result = await healthControllers.checkReadiness()
+        set.status = result.status
+        return result.body
+      } catch (error) {
+        set.status = 500
+        return {
+          errors: [
+            {
+              status: "500",
+              title: "Internal Server Error",
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : "Unknown error occurred",
+            },
+          ],
+        }
       }
-    }
-  }, {
-    response: {
-      200: ResponseSchema,
-      500: ResponseSchema,
-      503: ResponseSchema
-    }
-  })
+    },
+    {
+      response: {
+        200: ResponseSchema,
+        500: ResponseSchema,
+        503: ResponseSchema,
+      },
+    },
+  )
