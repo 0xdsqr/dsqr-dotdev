@@ -1,4 +1,5 @@
-import * as hoot from "@dsqr-dotdev/hoot"
+import * as hoot from "@dsqr/hoot"
+
 import { router } from "./router.js"
 
 function App() {

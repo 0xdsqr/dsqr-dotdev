@@ -1,4 +1,4 @@
-import * as hoot from "@dsqr-dotdev/hoot"
+import * as hoot from "@dsqr/hoot"
 
 function HomePage() {
   const navigate = hoot.useNavigate()

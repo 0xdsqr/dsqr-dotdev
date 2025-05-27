@@ -28,7 +28,7 @@
       "name": "@dsqr-dotdev/web",
       "version": "0.0.0",
       "dependencies": {
-        "@dsqr-dotdev/hoot": "workspace:*",
+        "@dsqr/hoot": "0.0.1-beta.0",
         "@tsconfig/node22": "^22.0.1",
         "vite": "^6.3.5",
       },
@@ -55,17 +55,6 @@
         "typescript": "5.8.3",
       },
     },
-    "packages/hoot": {
-      "name": "@dsqr-dotdev/hoot",
-      "version": "0.0.0",
-      "dependencies": {
-        "@tsconfig/node22": "^22.0.1",
-      },
-      "devDependencies": {
-        "bun-types": "latest",
-        "typescript": "5.8.3",
-      },
-    },
   },
   "packages": {
     "@balena/dockerignore": ["@balena/dockerignore@1.0.2", "", {}, "sha512-wMue2Sy4GAVTk6Ic4tJVcnfdau+gx2EnG7S+uAEe+TWJFqE4YoWN4/H8MSLj4eYJKxGg26lZwboEniNiNwZQ6Q=="],
@@ -76,9 +65,9 @@
 
     "@dsqr-dotdev/database": ["@dsqr-dotdev/database@workspace:packages/database"],
 
-    "@dsqr-dotdev/hoot": ["@dsqr-dotdev/hoot@workspace:packages/hoot"],
-
     "@dsqr-dotdev/web": ["@dsqr-dotdev/web@workspace:apps/web"],
+
+    "@dsqr/hoot": ["@dsqr/hoot@0.0.1-beta.0", "", { "dependencies": { "@tsconfig/node22": "^22.0.1" }, "peerDependencies": { "typescript": "~5.6.3" } }, "sha512-IiNyC5ijY3Wz4DmjyreZjpRnK/hXslAHySTp9xlC15Oh2Jt2/TGH7WT8o/C7kkaDOfsEHniftbeURUQTzTCcVQ=="],
 
     "@esbuild-kit/core-utils": ["@esbuild-kit/core-utils@3.3.2", "", { "dependencies": { "esbuild": "~0.18.20", "source-map-support": "^0.5.21" } }, "sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ=="],
 

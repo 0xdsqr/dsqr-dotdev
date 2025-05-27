@@ -1,4 +1,5 @@
-import * as hoot from "@dsqr-dotdev/hoot"
+import * as hoot from "@dsqr/hoot"
+
 import { HomePage } from "./routes/home.js"
 import { AboutPage } from "./routes/about.js"
 import { NotFoundPage } from "./routes/not-found.js"

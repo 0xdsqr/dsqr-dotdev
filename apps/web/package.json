@@ -16,7 +16,7 @@
         "typescript": "5.8.3"
     },
     "dependencies": {
-        "@dsqr-dotdev/hoot": "workspace:*",
+        "@dsqr/hoot": "0.0.1-beta.0",
         "@tsconfig/node22": "^22.0.1",
         "vite": "^6.3.5"
     }

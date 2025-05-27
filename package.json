@@ -8,7 +8,6 @@
   },
   "workspaces": [
     "packages/database",
-    "packages/hoot",
     "apps/api",
     "apps/web"
   ],

@@ -1,4 +1,4 @@
-import * as hoot from "@dsqr-dotdev/hoot"
+import * as hoot from "@dsqr/hoot"
 
 function NotFoundPage() {
   const navigate = hoot.useNavigate()
