@@ -5,6 +5,7 @@
     "sideEffects": false,
     "scripts": {
         "dev": "bun run --watch src/index.ts",
+        "build": "bun build src/index.ts --outdir dist --target node",
         "test": "bun test",
         "test:watch": "bun test --watch",
         "test:coverage": "bun test --coverage"

@@ -14,22 +14,6 @@ export const ResponseSchema = t.Object({
   ),
 })
 
-export const HealthStatusSchema = t.Object({
-  status: t.String(),
-  version: t.String(),
-  services: t.Object({
-    database: t.Object({
-      status: t.String(),
-      latency_ms: t.Number(),
-    }),
-    api: t.Object({
-      status: t.String(),
-      uptime_sec: t.Number(),
-    }),
-  }),
-  timestamp: t.String(),
-})
-
 export interface ApiResponse {
   data?: any
   meta?: Record<string, any>
@@ -38,22 +22,6 @@ export interface ApiResponse {
     title: string
     detail?: string
   }>
-}
-
-export interface HealthStatus {
-  status: "up" | "down" | "degraded"
-  version: string
-  services: {
-    database: {
-      status: "up" | "down"
-      latency_ms: number
-    }
-    api: {
-      status: "up" | "down"
-      uptime_sec: number
-    }
-  }
-  timestamp: string
 }
 
 export interface ControllerResponse {
