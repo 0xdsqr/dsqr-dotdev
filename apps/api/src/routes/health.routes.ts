@@ -1,7 +1,7 @@
 import { Elysia } from "elysia"
 import { healthControllers } from "../controllers/health.controllers.js"
 
-export const healthRoutes = new Elysia({ prefix: "/v1/health" })
+export const healthRoutes = new Elysia({ prefix: "/api/health" })
   .onTransform(({ path, request: { method } }) => {
     console.log(`${method} ${path}`)
   })
