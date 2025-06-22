@@ -4,7 +4,7 @@ function SocialLinks() {
   const linkClass = "text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
   
   return (
-    <nav className="flex items-center justify-center gap-4 text-sm mb-6">
+    <nav className="flex items-center justify-center gap-4 text-sm mb-6" data-slot="social-links">
       <Link
         to="/"
         search={{category: undefined, sort: undefined, order: undefined}}

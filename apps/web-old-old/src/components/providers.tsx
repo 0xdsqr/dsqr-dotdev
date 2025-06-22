@@ -6,7 +6,11 @@ interface ProvidersProps {
 
 function Providers({ children }: ProvidersProps) {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="dsqr-theme">
+    <ThemeProvider 
+      defaultTheme="system" 
+      storageKey="dsqr-theme"
+      disableTransitionOnChange
+    >
       {children}
     </ThemeProvider>
   )

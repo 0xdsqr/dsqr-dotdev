@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils.js"
+import { cn } from "@/lib/utils"
 
 const iconVariants = cva(
   "inline-flex items-center justify-center transition-colors",

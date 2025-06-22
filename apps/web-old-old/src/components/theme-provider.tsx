@@ -6,6 +6,7 @@ interface ThemeProviderProps {
   children: React.ReactNode
   defaultTheme?: Theme
   storageKey?: string
+  disableTransitionOnChange?: boolean
 }
 
 interface ThemeProviderState {
