@@ -1,9 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Button } from "@/components/ui/button.js"
 
 export const Route = createFileRoute('/about')({
   component: About,
 })
 
 function About() {
-  return <div className="p-2">Hello from About!</div>
+  return (
+    <div>
+      <Button>Contact Meee</Button>
+    </div>
+  )
 }

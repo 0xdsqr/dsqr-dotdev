@@ -9,7 +9,8 @@
   "workspaces": [
     "packages/database",
     "apps/api",
-    "apps/web"
+    "apps/web",
+    "apps/temp"
   ],
   "devDependencies": {
     "@types/bun": "latest",
