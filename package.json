@@ -7,9 +7,7 @@
     "style:fix": "prettier --write \"**/*.{ts,tsx,md}\" --ignore-path .gitignore"
   },
   "workspaces": [
-    "packages/database",
-    "apps/api",
-    "apps/web"
+    "apps/dsqr-dotdev"
   ],
   "devDependencies": {
     "@types/bun": "latest",
