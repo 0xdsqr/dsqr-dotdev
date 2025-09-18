@@ -1,10 +1,31 @@
 { pkgs, ... }:
 {
-  # treefmt configuration
   projectRootFile = "flake.nix";
 
-  # Enable nixfmt for all .nix files
   programs.nixfmt.enable = true;
+  programs.biome.enable = true;
 
-  # (Optional) add other formatters later, like prettier/black/etc.
+  settings.formatter.biome = {
+    includes = [
+      # JS/TS
+      "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"
+
+      # JSON
+      "**/*.{json,jsonc}"
+
+      # CSS
+      "**/*.css"
+    ];
+
+    excludes = [
+      "*.min.js"
+      "*.gen.ts"
+      "routeTree.gen.ts"
+      "node_modules/**"
+      ".vite/**"
+      "pkgs/*"
+      "dist/**"
+      "build/**"
+    ];
+  };
 }
