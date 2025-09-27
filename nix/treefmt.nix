@@ -3,21 +3,37 @@
   projectRootFile = "flake.nix";
 
   programs.nixfmt.enable = true;
-  programs.biome.enable = true;
+  programs.biome = {
+    enable = true;
+    settings = {
+      formatter = {
+        enabled = true;
+        indentStyle = "space";
+        indentWidth = 2;
+      };
+      javascript = {
+        formatter = {
+          quoteStyle = "double";
+          semicolons = "asNeeded";
+        };
+      };
+    };
+  };
 
+  # Add prettier for CSS/Tailwind support
+  programs.prettier = {
+    enable = true;
+    includes = [ "**/*.css" ];
+  };
+
+  # Configure biome for JS/TS/JSON only, exclude CSS due to Tailwind syntax
   settings.formatter.biome = {
     includes = [
-      # JS/TS
       "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"
-
-      # JSON
       "**/*.{json,jsonc}"
-
-      # CSS
-      "**/*.css"
     ];
-
     excludes = [
+      "**/*.css" # Exclude all CSS files due to Tailwind syntax
       "*.min.js"
       "*.gen.ts"
       "routeTree.gen.ts"
