@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router"
 
 function Intro() {
   return (
@@ -42,7 +42,7 @@ function Intro() {
         </p>
       </div>
     </div>
-  );
+  )
 }
 
-export { Intro };
+export { Intro }

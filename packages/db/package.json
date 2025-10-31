@@ -1,0 +1,41 @@
+{
+  "name": "@dsqr-dotdev/db",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio",
+    "generate": "drizzle-kit generate"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@types/pg": "^8.15.6",
+    "bun-types": "latest",
+    "drizzle-kit": "^0.31.6",
+    "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/esm/*.js",
+      "types": "./dist/types/*.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@tsconfig/node22": "^22.0.2",
+    "drizzle-orm": "^0.44.7",
+    "drizzle-zod": "^0.8.3",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12"
+  }
+}

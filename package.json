@@ -7,7 +7,11 @@
     "style:fix": ""
   },
   "workspaces": [
-    "apps/dotdev"
+    "apps/api",
+    "apps/dotdev",
+    "packages/api",
+    "packages/auth",
+    "packages/db"
   ],
   "devDependencies": {
     "@types/bun": "latest",

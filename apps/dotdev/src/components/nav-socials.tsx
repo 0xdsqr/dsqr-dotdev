@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router"
 
 function NavSocials() {
   return (
@@ -31,7 +31,7 @@ function NavSocials() {
         about
       </Link>
     </nav>
-  );
+  )
 }
 
-export { NavSocials };
+export { NavSocials }

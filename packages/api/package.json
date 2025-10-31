@@ -1,0 +1,33 @@
+{
+  "name": "@dsqr-dotdev/api",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/esm/*.js",
+      "types": "./dist/types/*.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@dsqr-dotdev/auth": "workspace:*",
+    "@dsqr-dotdev/db": "workspace:*",
+    "@tsconfig/node22": "^22.0.2"
+  }
+}

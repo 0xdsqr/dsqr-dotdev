@@ -1,0 +1,38 @@
+{
+  "name": "@dsqr-dotdev/auth",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "generate": "bunx @better-auth/cli generate --config scripts/auth-cli.ts --output ../db/src/auth-schema.ts"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@better-auth/cli": "^1.3.34",
+    "@types/pg": "^8.15.6",
+    "bun-types": "latest",
+    "drizzle-kit": "^0.31.6",
+    "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/esm/*.js",
+      "types": "./dist/types/*.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@dsqr-dotdev/db": "workspace:*",
+    "@tsconfig/node22": "^22.0.2",
+    "better-auth": "^1.3.34",
+    "zod": "^4.1.12"
+  }
+}
