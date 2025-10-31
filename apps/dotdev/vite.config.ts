@@ -16,6 +16,7 @@ import tailwindcss from '@tailwindcss/vite'
     server: {
       host: '0.0.0.0',
       port: 3000,
+      allowedHosts: ['dev-dsqr.dev', 'dsqr.dev', 'localhost', '127.0.0.1', '192.168.50.27'],
     },
   })
 
