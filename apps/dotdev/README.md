@@ -1,1 +1,1 @@
-# dsqr-dotdev
+# dotdev

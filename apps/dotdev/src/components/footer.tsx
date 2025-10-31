@@ -1,4 +1,5 @@
-import { ThemeToggle } from "@/components/theme-toggle.js"
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserAvatar } from "@/components/user-avatar";
 
 function PoweredBySection() {
   return (
@@ -21,16 +22,16 @@ function PoweredBySection() {
         •
       </span>
 
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex items-center">
         <a
           href="https://github.com/0xdsqr"
-          className="hover:text-primary transition-colors"
+          className="hover:text-primary transition-colors mr-1 sm:mr-2"
           aria-label="GitHub"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className="w-4 h-4 sm:w-5 sm:h-5"
+            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
             aria-hidden="true"
             fill="currentColor"
           >
@@ -39,24 +40,26 @@ function PoweredBySection() {
         </a>
         <a
           href="https://x.com/0xdsqr"
-          className="hover:text-primary transition-colors"
+          className="hover:text-primary transition-colors mr-1 sm:mr-2"
           aria-label="X"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className="w-4 h-4 sm:w-5 sm:h-5"
+            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
             aria-hidden="true"
             fill="currentColor"
           >
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
           </svg>
         </a>
+        <span className="text-muted-foreground/40 mr-1 sm:mr-2">•</span>
+        <UserAvatar />
         <span className="text-muted-foreground/40 mx-1 sm:mx-2">•</span>
         <ThemeToggle />
       </div>
     </div>
-  )
+  );
 }
 
 function Footer() {
@@ -80,7 +83,7 @@ function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
 
-export { Footer }
+export { Footer };

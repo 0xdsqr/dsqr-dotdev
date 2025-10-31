@@ -1,11 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router";
 
 function Misc() {
-  return <div>misc</div>
+  return <div>misc</div>;
 }
 
-const Route = createFileRoute("/misc")({
+export const Route = createFileRoute("/misc")({
   component: Misc,
-})
-
-export { Route }
+});

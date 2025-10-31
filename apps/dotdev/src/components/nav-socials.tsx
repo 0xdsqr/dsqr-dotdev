@@ -1,8 +1,8 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router";
 
 function NavSocials() {
   return (
-    <nav className="flex items-center justify-center gap-4 text-sm mb-12 mt-6 font-mono">
+    <nav className="flex items-center justify-center gap-4 text-sm mb-6 mt-6 font-mono">
       <Link
         to="/"
         className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
@@ -31,7 +31,7 @@ function NavSocials() {
         about
       </Link>
     </nav>
-  )
+  );
 }
 
-export { NavSocials }
+export { NavSocials };
