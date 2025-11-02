@@ -4,7 +4,13 @@ import { db } from "@dsqr-dotdev/db/client"
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { emailOTP, jwt, oAuthProxy } from "better-auth/plugins"
+import {
+  admin,
+  emailOTP,
+  jwt,
+  oAuthProxy,
+  organization,
+} from "better-auth/plugins"
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -29,7 +35,8 @@ export function initAuth(options: {
 
     plugins: [
       jwt(),
-
+      admin(),
+      organization(),
       emailOTP({
         async sendVerificationOTP({ email, otp, type }) {
           try {

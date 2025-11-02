@@ -7,6 +7,7 @@ INSERT INTO posts (
     category, 
     description, 
     file_path,
+    header_image_url,
     tags,
     reading_time_minutes,
     published
@@ -17,7 +18,8 @@ INSERT INTO posts (
     '2025-03-01T00:00:00Z',
     'Blog',
     'hello world',
-    'tbd/hello-world.mdx',
+    'static/posts/hello-world/hello-world.mdx',
+    'https://cdn.dsqr.dev/static/posts/hello-world/post-header.png',
     ARRAY['mdx', 'components', 'testing'],
     5,
     true
@@ -28,7 +30,8 @@ INSERT INTO posts (
     '2025-04-06T00:00:00Z',
     'NixWithMe',
     'A guide to building and packaging Go projects with Nix Flakes',
-    'tbd/getting-started-with-go-and-nix-flakes.mdx',
+    'static/posts/getting-started-with-go-and-nix-flakes/getting-started-with-go-and-nix-flakes.mdx',
+    'https://cdn.dsqr.dev/static/posts/getting-started-with-go-and-nix-flakes/post-header.png',
     ARRAY['nix', 'golang', 'flakes', 'devops'],
     12,
     true
@@ -39,7 +42,8 @@ INSERT INTO posts (
     '2025-03-24T00:00:00Z',
     'NixWithMe',
     'How to set up and manage Cloudflare tunnels using CLI on NixOS',
-    'tbd/cloudflare-tunnels-cli-with-nix.mdx',
+    'static/posts/cloudflare-tunnels-cli-with-nix/cloudflare-tunnels-cli-with-nix.mdx',
+    'https://cdn.dsqr.dev/static/posts/cloudflare-tunnels-cli-with-nix/post-header.png',
     ARRAY['nix', 'cloudflare', 'tunnels', 'homelab'],
     3,
     true

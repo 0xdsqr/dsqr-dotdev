@@ -16,8 +16,6 @@ function App() {
   const trpc = useTRPC()
   const { data: posts } = useSuspenseQuery(trpc.post.all.queryOptions())
 
-  console.log("Posts:", posts)
-
   return (
     <div className="space-y-6">
       <Intro />

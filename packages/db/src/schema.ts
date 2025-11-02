@@ -12,6 +12,10 @@ import {
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
 
+// ──────────────────────────────────────────────
+// Posts Table
+// ──────────────────────────────────────────────
+
 export const posts = pgTable(
   "posts",
   {
@@ -24,13 +28,17 @@ export const posts = pgTable(
     category: varchar("category", { length: 100 }).notNull(),
     description: text("description").notNull(),
 
-    // File reference
+    // File and media
     filePath: varchar("file_path", { length: 512 }).notNull(),
+    headerImageUrl: varchar("header_image_url", { length: 512 }),
+
+    // Engagement
+    likesCount: integer("likes_count").default(0).notNull(),
+    viewCount: integer("view_count").default(0).notNull(),
 
     // Additional fields
     tags: text("tags").array().default(sql`ARRAY[]::text[]`),
     readingTimeMinutes: integer("reading_time_minutes"),
-    viewCount: integer("view_count").default(0).notNull(),
 
     // Meta
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -53,6 +61,10 @@ export const posts = pgTable(
     index("posts_published_date_idx").on(table.published, table.date),
   ],
 )
+
+// ──────────────────────────────────────────────
+// Subscribers Table
+// ──────────────────────────────────────────────
 
 export const subscribers = pgTable(
   "subscribers",
@@ -82,7 +94,10 @@ export const subscribers = pgTable(
   ],
 )
 
-// Schemas
+// ──────────────────────────────────────────────
+// Zod Schemas
+// ──────────────────────────────────────────────
+
 export const createPostSchema = createInsertSchema(posts, {
   title: z.string().min(1).max(256),
   slug: z
@@ -94,8 +109,10 @@ export const createPostSchema = createInsertSchema(posts, {
   category: z.string().min(1).max(100),
   description: z.string().min(1),
   filePath: z.string().min(1).max(512),
+  headerImageUrl: z.string().url().max(512).optional(),
   tags: z.array(z.string()).optional(),
   readingTimeMinutes: z.number().int().positive().optional(),
+  likesCount: z.number().int().nonnegative().optional(),
 }).omit({
   id: true,
   createdAt: true,
@@ -113,9 +130,17 @@ export const createSubscriberSchema = createInsertSchema(subscribers, {
   unsubscribeToken: true,
 })
 
+// ──────────────────────────────────────────────
+// Types
+// ──────────────────────────────────────────────
+
 export type Post = typeof posts.$inferSelect
 export type NewPost = typeof posts.$inferInsert
 export type Subscriber = typeof subscribers.$inferSelect
 export type NewSubscriber = typeof subscribers.$inferInsert
+
+// ──────────────────────────────────────────────
+// Re-exports
+// ──────────────────────────────────────────────
 
 export * from "./auth-schema"

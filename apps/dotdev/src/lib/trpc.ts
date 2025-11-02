@@ -1,5 +1,5 @@
 import type { AppRouter } from "@dsqr-dotdev/api"
-import { createTRPCClient, httpBatchStreamLink, loggerLink } from "@trpc/client"
+import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import SuperJSON from "superjson"
 
@@ -10,7 +10,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
         process.env.NODE_ENV === "development" ||
         (op.direction === "down" && op.result instanceof Error),
     }),
-    httpBatchStreamLink({
+    httpBatchLink({
       transformer: SuperJSON,
       url: "http://localhost:3000" + "/api/trpc",
       headers() {
