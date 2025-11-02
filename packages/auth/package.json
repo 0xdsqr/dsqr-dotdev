@@ -33,6 +33,7 @@
     "@dsqr-dotdev/db": "workspace:*",
     "@tsconfig/node22": "^22.0.2",
     "better-auth": "^1.3.34",
+    "resend": "^6.4.0",
     "zod": "^4.1.12"
   }
 }

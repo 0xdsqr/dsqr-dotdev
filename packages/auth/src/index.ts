@@ -5,6 +5,9 @@ import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { emailOTP, jwt, oAuthProxy } from "better-auth/plugins"
+import { Resend } from "resend"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 /**
  * Initializes a Better Auth instance with Drizzle adapter,
@@ -29,13 +32,19 @@ export function initAuth(options: {
 
       emailOTP({
         async sendVerificationOTP({ email, otp, type }) {
-          const label =
-            type === "sign-in"
-              ? "Sign-in"
-              : type === "email-verification"
-                ? "Verification"
-                : "Password reset"
-          console.log(`${label} OTP:`, otp, "→", email)
+          try {
+            await resend.emails.send({
+              from: "DSQR <noreply@updates.dsqr.dev>",
+              to: email,
+              subject: `Your OTP: ${otp}`,
+              html: `<p>Your code is: <strong>${otp}</strong></p>`,
+            })
+            console.log(`✉️ [AUTH] ${type} OTP sent to ${email}`)
+            console.log("BONG", process.env.RESEND_API_KEY)
+          } catch (error) {
+            console.error(`❌ Failed to send ${type} OTP:`, error)
+            throw error
+          }
         },
       }),
 
