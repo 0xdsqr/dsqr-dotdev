@@ -7,7 +7,7 @@ function PoweredBySection() {
       <a
         href="https://github.com/0xdsqr"
         className="hover:text-primary transition-colors mr-1 sm:mr-2"
-        aria-label="GitHub"
+        aria-label="GitHub Profile"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -22,7 +22,7 @@ function PoweredBySection() {
       <a
         href="https://x.com/0xdsqr"
         className="hover:text-primary transition-colors mr-1 sm:mr-2"
-        aria-label="X"
+        aria-label="X Profile"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -53,6 +53,7 @@ function Footer() {
               <a
                 href="https://x.com/0xdsqr"
                 className="hover:text-primary transition-colors font-mono"
+                aria-label="Dave Dennis on X"
               >
                 (@0xdsqr)
               </a>

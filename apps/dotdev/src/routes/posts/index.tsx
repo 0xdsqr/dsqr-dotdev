@@ -3,16 +3,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { PostList } from "../../components/post-list"
 import { useTRPC } from "../../lib/trpc"
 
-async function getPosts({ context }: { context: any }) {
-  await context.queryClient.prefetchQuery(context.trpc.post.all.queryOptions())
-}
-
 export const Route = createFileRoute("/posts/")({
-  loader: async ({ context }) => getPosts({ context }),
-  component: PostsPage,
+  component: PostsIndexPage,
 })
 
-function PostsPage() {
+function PostsIndexPage() {
   const trpc = useTRPC()
   const { data: posts } = useSuspenseQuery(trpc.post.all.queryOptions())
 

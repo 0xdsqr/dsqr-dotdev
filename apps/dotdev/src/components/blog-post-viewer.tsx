@@ -1,17 +1,17 @@
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
 import remarkGfm from "remark-gfm"
+import styles from "./blog-post-viewer.module.css"
 import { Caution, Important, MoreInfo, Note, Tip, Warning } from "./callouts"
 import { CopyButton } from "./copy-button"
-import "./blog-post-viewer.css"
+import { generateHeadingId } from "./on-this-page"
 
 interface BlogPostViewerProps {
   content: string
 }
 
-// Map callout types to components
 const calloutComponents = {
   Important,
   Note,
@@ -23,7 +23,6 @@ const calloutComponents = {
 
 type CalloutType = keyof typeof calloutComponents
 
-// Split content by callout tags and return mixed content
 function processCallouts(content: string) {
   const parts: Array<{
     type: "markdown" | "callout"
@@ -34,10 +33,10 @@ function processCallouts(content: string) {
     /<(Important|Note|Tip|Warning|Caution|MoreInfo)>([\s\S]*?)<\/\1>/g
 
   let lastIndex = 0
-  let match
 
-  while ((match = calloutRegex.exec(content)) !== null) {
-    // Add markdown before callout
+  let execMatch: RegExpExecArray | null = calloutRegex.exec(content)
+  while (execMatch !== null) {
+    const match = execMatch
     if (match.index > lastIndex) {
       parts.push({
         type: "markdown",
@@ -45,7 +44,6 @@ function processCallouts(content: string) {
       })
     }
 
-    // Add callout
     parts.push({
       type: "callout",
       content: match[2],
@@ -53,9 +51,9 @@ function processCallouts(content: string) {
     })
 
     lastIndex = calloutRegex.lastIndex
+    execMatch = calloutRegex.exec(content)
   }
 
-  // Add remaining markdown
   if (lastIndex < content.length) {
     parts.push({
       type: "markdown",
@@ -71,12 +69,14 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
 
   return (
     <article className="w-full font-sans">
-      <div className="prose max-w-none space-y-6">
-        {parts.map((part, idx) => {
+      <div className={`${styles.prose} max-w-none space-y-6`}>
+        {parts.map((part) => {
           if (part.type === "callout") {
-            const Component = calloutComponents[part.calloutType!]
+            const Component = calloutComponents[part.calloutType as CalloutType]
             return (
-              <Component key={idx}>
+              <Component
+                key={`${part.calloutType}-${part.content.substring(0, 10)}`}
+              >
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
@@ -89,13 +89,128 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
 
           return (
             <ReactMarkdown
-              key={idx}
+              key={`markdown-${part.content.substring(0, 10)}`}
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeHighlight]}
               components={{
-                pre: ({ children, ...props }: any) => {
-                  // Extract plain text code from the rendered HTML
-                  const extractText = (node: any): string => {
+                h1: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h1 id={id} {...props}>
+                      {children}
+                    </h1>
+                  )
+                },
+                h2: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h2 id={id} {...props}>
+                      {children}
+                    </h2>
+                  )
+                },
+                h3: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h3 id={id} {...props}>
+                      {children}
+                    </h3>
+                  )
+                },
+                h4: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h4 id={id} {...props}>
+                      {children}
+                    </h4>
+                  )
+                },
+                h5: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h5 id={id} {...props}>
+                      {children}
+                    </h5>
+                  )
+                },
+                h6: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
+                    if (typeof node === "string") return node
+                    if (Array.isArray(node))
+                      return node.map(extractText).join("")
+                    if (node?.props?.children)
+                      return extractText(node.props.children)
+                    return ""
+                  }
+                  const text = extractText(children)
+                  const id = generateHeadingId(text)
+                  return (
+                    <h6 id={id} {...props}>
+                      {children}
+                    </h6>
+                  )
+                },
+                pre: ({ children, ...props }: Record<string, unknown>) => {
+                  const extractText = (
+                    node: Record<string, unknown>,
+                  ): string => {
                     if (typeof node === "string") return node
                     if (!node) return ""
                     if (node.props?.children) {
@@ -110,29 +225,33 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     return ""
                   }
 
-                  // Extract language from className
                   const className = props.className || ""
                   const languageMatch = className.match(/language-(\w+)/)
                   const language = languageMatch ? languageMatch[1] : undefined
 
                   const codeText = extractText({ props: { children } })
-                  const lineCount = codeText.split("\n").length
+                  const lineCount = codeText.trim().split("\n").length
 
                   return (
-                    <div className="code-block-wrapper">
+                    <div className={styles.codeBlockWrapper}>
                       {language && (
-                        <span className="code-block-language">{language}</span>
+                        <span className={styles.codeBlockLanguage}>
+                          {language}
+                        </span>
                       )}
                       {codeText && <CopyButton value={codeText} />}
-                      <div className="code-block-container">
-                        <pre className="code-block-lines">
+                      <div className={styles.codeBlockContainer}>
+                        <pre className={styles.codeBlockLines}>
                           {Array.from({ length: lineCount }, (_, i) => (
-                            <div key={i} className="code-line-number">
+                            <div
+                              key={`line-${i}`}
+                              className={styles.codeLineNumber}
+                            >
                               {i + 1}
                             </div>
                           ))}
                         </pre>
-                        <pre {...props} className="code-block-pre">
+                        <pre {...props} className={styles.codeBlockPre}>
                           {children}
                         </pre>
                       </div>

@@ -28,13 +28,10 @@ function NewsletterSignup() {
 
   const subscribe = useMutation(
     trpc.email.subscribe.mutationOptions({
-      onSuccess: async (data) => {
-        console.log("[NEWSLETTER] Signup success:", data)
+      onSuccess: async (_data) => {
         form.reset()
       },
-      onError: (err) => {
-        console.error("[NEWSLETTER] Signup error:", err)
-      },
+      onError: (_err) => {},
     }),
   )
 

@@ -1,8 +1,27 @@
 import type { Post } from "@dsqr-dotdev/db/schema"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { ChevronDown } from "lucide-react"
+import { lazy, Suspense, useMemo, useRef, useState } from "react"
+import { trpcClient } from "@/lib/trpc"
+import { BlogComments } from "../../components/blog-comments"
 import { BlogPostHeader } from "../../components/blog-post-header"
-import { BlogPostViewer } from "../../components/blog-post-viewer"
-import { useTRPC } from "../../lib/trpc"
+import {
+  extractHeadingsFromMarkdown,
+  OnThisPage,
+} from "../../components/on-this-page"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../components/ui/popover"
+import { useIsMobile } from "../../hooks/use-mobile"
+
+const BlogPostViewer = lazy(() =>
+  import("../../components/blog-post-viewer").then((mod) => ({
+    default: mod.BlogPostViewer,
+  })),
+)
 
 export const Route = createFileRoute("/posts/$slug")({
   loader: async ({ context, params }) => {
@@ -31,6 +50,31 @@ function PostDetailPage() {
     post: Post
     contentResult: { success: boolean; content: string; error?: string }
   }
+  const isMobile = useIsMobile()
+  const [open, setOpen] = useState(false)
+  const commentsRef = useRef<HTMLDivElement>(null)
+
+  useQuery({
+    queryKey: ["post.comments", post.id],
+    queryFn: () => trpcClient.post.getComments.query({ postId: post.id }),
+  })
+
+  const { data: commentCount = 0 } = useQuery({
+    queryKey: ["post.commentCount", post.id],
+    queryFn: () => trpcClient.post.commentCount.query({ postId: post.id }),
+  })
+
+  const headings = useMemo(
+    () =>
+      contentResult.success
+        ? extractHeadingsFromMarkdown(contentResult.content)
+        : [],
+    [contentResult],
+  )
+
+  const handleCommentClick = () => {
+    commentsRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   if (!contentResult.success) {
     return (
@@ -42,18 +86,63 @@ function PostDetailPage() {
   }
 
   return (
-    <div className="py-8 max-w-3xl">
-      <div className="space-y-8">
-        <BlogPostHeader
-          title={post.title}
-          date={post.createdAt}
-          category={post.category}
-          readingTimeMinutes={post.readingTimeMinutes || 0}
-          headerImageUrl={post.headerImageUrl || ""}
-          tags={post.tags || []}
-        />
-        <BlogPostViewer content={contentResult.content} />
+    <>
+      <div className="py-8 max-w-3xl mx-auto relative">
+        <div className="space-y-3">
+          <BlogPostHeader
+            title={post.title}
+            date={post.createdAt}
+            category={post.category}
+            postId={post.id}
+            readingTimeMinutes={post.readingTimeMinutes || 0}
+            headerImageUrl={post.headerImageUrl || ""}
+            tags={post.tags || []}
+            likes={post.likesCount}
+            commentCount={commentCount}
+            onCommentClick={handleCommentClick}
+          />
+          {isMobile && headings.length > 0 && (
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full px-4 py-3 text-sm text-left border border-dotted border-border rounded flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <span className="text-foreground font-medium">
+                    On this page
+                  </span>
+                  <ChevronDown
+                    className="w-4 h-4 opacity-50 transition-transform"
+                    style={{ transform: open ? "rotate(180deg)" : "rotate(0)" }}
+                  />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[280px] p-0">
+                <div className="py-2">
+                  <OnThisPage headings={headings} />
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          <Suspense
+            fallback={
+              <div className="text-muted-foreground">Loading post...</div>
+            }
+          >
+            <BlogPostViewer content={contentResult.content} />
+          </Suspense>
+          <div ref={commentsRef}>
+            <BlogComments postId={post.id} />
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Desktop sidebar */}
+      {headings.length > 0 && (
+        <div className="hidden xl:block fixed right-8 top-24 h-[calc(100vh-6rem)] w-64 overflow-y-auto">
+          <OnThisPage headings={headings} />
+        </div>
+      )}
+    </>
   )
 }

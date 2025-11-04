@@ -58,19 +58,32 @@ function Callout({
   className,
 }: CalloutProps & { variant: keyof typeof calloutConfigs }) {
   const config = calloutConfigs[variant]
+  const isMoreInfo = variant === "moreinfo"
 
   return (
     <div
       className={cn(
-        "my-6 pl-4 py-2 border-l-4 font-sans text-sm leading-relaxed",
+        isMoreInfo
+          ? "my-6 pl-4 py-2 border-l-4 font-sans text-sm leading-relaxed"
+          : "my-6 pl-4 py-2 border-l-4 font-sans text-sm leading-relaxed",
         config.borderColor,
         className,
       )}
     >
       <div className="flex gap-3 items-start">
-        <div className={cn("mt-0.5 flex-shrink-0", config.accentColor)}>
-          {config.icon}
-        </div>
+        {isMoreInfo ? (
+          <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded overflow-hidden bg-muted border border-border">
+            <img
+              src="/me.jpeg"
+              alt="0xdsqr"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className={cn("mt-0.5 flex-shrink-0", config.accentColor)}>
+            {config.icon}
+          </div>
+        )}
         <div className="flex-1 min-w-0 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-muted [&_code]:text-foreground">
           {children}
         </div>
@@ -119,10 +132,6 @@ export function Caution({ children, className }: CalloutProps) {
   )
 }
 
-export function MoreInfo({ children, className }: CalloutProps) {
-  return (
-    <Callout variant="moreinfo" className={className}>
-      {children}
-    </Callout>
-  )
+export function MoreInfo() {
+  return null
 }

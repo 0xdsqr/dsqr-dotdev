@@ -28,6 +28,7 @@
   "dependencies": {
     "@dsqr-dotdev/auth": "workspace:*",
     "@dsqr-dotdev/db": "workspace:*",
-    "@tsconfig/node22": "^22.0.2"
+    "@tsconfig/node22": "^22.0.2",
+    "minio": "^7.1.4"
   }
 }

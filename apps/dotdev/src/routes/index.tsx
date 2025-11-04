@@ -4,11 +4,8 @@ import { Intro } from "@/components/intro"
 import { NewsletterSignup } from "@/components/newsletter-signup"
 import { PostList } from "@/components/post-list"
 import { useTRPC } from "../lib/trpc"
+
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => {
-    const { trpc, queryClient } = context
-    void queryClient.prefetchQuery(trpc.post.all.queryOptions())
-  },
   component: App,
 })
 
@@ -17,7 +14,7 @@ function App() {
   const { data: posts } = useSuspenseQuery(trpc.post.all.queryOptions())
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-12">
       <Intro />
       <NewsletterSignup />
       <div>

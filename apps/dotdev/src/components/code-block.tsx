@@ -19,7 +19,6 @@ export function CodeBlock({
 }: CodeBlockProps) {
   const [hasCopied, setHasCopied] = React.useState(false)
 
-  // Extract plain text from children
   const plainText = useMemo(() => {
     if (typeof children === "string") return children
     if (Array.isArray(children)) {
@@ -61,7 +60,6 @@ export function CodeBlock({
         className,
       )}
     >
-      {/* Header */}
       {(filename || language) && (
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
           <div className="flex items-center gap-2">
@@ -79,7 +77,6 @@ export function CodeBlock({
         </div>
       )}
 
-      {/* Code Container */}
       <div className="relative overflow-x-auto bg-background">
         <pre
           className={cn(
@@ -91,8 +88,8 @@ export function CodeBlock({
           {children}
         </pre>
 
-        {/* Copy Button */}
         <button
+          type="button"
           onClick={copyToClipboard}
           className={cn(
             "absolute top-3 right-3 inline-flex items-center justify-center",

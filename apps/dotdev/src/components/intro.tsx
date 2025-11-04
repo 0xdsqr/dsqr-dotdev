@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router"
 function Intro() {
   return (
     <div className="flex flex-col items-center justify-center space-y-4">
-      <div className="w-18 h-20 md:w-24 md:h-28 rounded overflow-hidden bg-muted mb-4">
+      <div className="w-20 h-20 md:w-24 md:h-24 rounded overflow-hidden bg-muted mb-4 border border-border">
         <img
           src="/me.jpeg"
           alt="0xdsqr"

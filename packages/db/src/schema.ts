@@ -1,9 +1,10 @@
-import { sql } from "drizzle-orm"
+import { eq, relations, sql } from "drizzle-orm"
 import {
   boolean,
   index,
   integer,
   pgTable,
+  pgView,
   text,
   timestamp,
   uuid,
@@ -11,36 +12,28 @@ import {
 } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
-
-// ──────────────────────────────────────────────
-// Posts Table
-// ──────────────────────────────────────────────
+import { user } from "./auth-schema.js"
 
 export const posts = pgTable(
   "posts",
   {
-    id: uuid("id").notNull().primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
-    // Frontmatter fields
     title: varchar("title", { length: 256 }).notNull(),
     slug: varchar("slug", { length: 256 }).notNull().unique(),
     date: timestamp("date", { withTimezone: true }).notNull(),
     category: varchar("category", { length: 100 }).notNull(),
     description: text("description").notNull(),
 
-    // File and media
     filePath: varchar("file_path", { length: 512 }).notNull(),
     headerImageUrl: varchar("header_image_url", { length: 512 }),
 
-    // Engagement
     likesCount: integer("likes_count").default(0).notNull(),
     viewCount: integer("view_count").default(0).notNull(),
 
-    // Additional fields
     tags: text("tags").array().default(sql`ARRAY[]::text[]`),
     readingTimeMinutes: integer("reading_time_minutes"),
 
-    // Meta
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -48,7 +41,6 @@ export const posts = pgTable(
       .defaultNow()
       .$onUpdate(() => sql`now()`),
 
-    // Publishing
     published: boolean("published").default(true).notNull(),
   },
   (table) => [
@@ -57,31 +49,56 @@ export const posts = pgTable(
     index("posts_category_idx").on(table.category),
     index("posts_published_idx").on(table.published),
     index("posts_created_at_idx").on(table.createdAt),
-    // Composite index for common queries
     index("posts_published_date_idx").on(table.published, table.date),
   ],
 )
 
-// ──────────────────────────────────────────────
-// Subscribers Table
-// ──────────────────────────────────────────────
+export const postComments = pgTable(
+  "post_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+
+    parentCommentId: uuid("parent_comment_id"),
+
+    content: text("content").notNull(),
+
+    isActive: boolean("is_active").default(true).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+  },
+  (table) => [
+    index("post_comments_post_id_idx").on(table.postId),
+    index("post_comments_user_id_idx").on(table.userId),
+    index("post_comments_parent_id_idx").on(table.parentCommentId),
+    index("post_comments_post_id_created_at_idx").on(
+      table.postId,
+      table.createdAt,
+    ),
+  ],
+)
 
 export const subscribers = pgTable(
   "subscribers",
   {
-    id: uuid("id").notNull().primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom(),
     email: varchar("email", { length: 255 }).notNull().unique(),
-
-    // Status
     active: boolean("active").default(true).notNull(),
 
-    // Timestamps
     subscribedAt: timestamp("subscribed_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
 
-    // Unsubscribe token
     unsubscribeToken: varchar("unsubscribe_token", { length: 128 })
       .notNull()
       .unique()
@@ -94,9 +111,50 @@ export const subscribers = pgTable(
   ],
 )
 
-// ──────────────────────────────────────────────
-// Zod Schemas
-// ──────────────────────────────────────────────
+export const postCommentsView = pgView("post_comments_view").as((qb) => {
+  return qb
+    .select({
+      id: postComments.id,
+      postId: postComments.postId,
+      userId: postComments.userId,
+      parentCommentId: postComments.parentCommentId,
+      content: postComments.content,
+      isActive: postComments.isActive,
+      createdAt: postComments.createdAt,
+      updatedAt: postComments.updatedAt,
+      userName: sql`COALESCE(${user.name}, '')`.as("user_name"),
+      userEmail: sql`COALESCE(${user.email}, '')`.as("user_email"),
+      userImage: sql`COALESCE(${user.image}, '')`.as("user_image"),
+      userRole: sql`COALESCE(${user.role}, '')`.as("user_role"),
+      userBanned: sql`COALESCE(${user.banned}, false)`.as("user_banned"),
+    })
+    .from(postComments)
+    .leftJoin(user, eq(postComments.userId, user.id))
+})
+
+export const postsRelations = relations(posts, ({ many }) => ({
+  comments: many(postComments),
+}))
+
+export const postCommentsRelations = relations(
+  postComments,
+  ({ one, many }) => ({
+    post: one(posts, {
+      fields: [postComments.postId],
+      references: [posts.id],
+    }),
+    parent: one(postComments, {
+      fields: [postComments.parentCommentId],
+      references: [postComments.id],
+      relationName: "parent",
+    }),
+    replies: many(postComments, {
+      relationName: "parent",
+    }),
+  }),
+)
+
+export const subscribersRelations = relations(subscribers, () => ({}))
 
 export const createPostSchema = createInsertSchema(posts, {
   title: z.string().min(1).max(256),
@@ -120,6 +178,17 @@ export const createPostSchema = createInsertSchema(posts, {
   viewCount: true,
 })
 
+export const createPostCommentSchema = createInsertSchema(postComments, {
+  content: z.string().min(1).max(1000),
+  postId: z.string().uuid(),
+  parentCommentId: z.string().uuid().optional(),
+}).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+})
+
 export const createSubscriberSchema = createInsertSchema(subscribers, {
   email: z.string().email().max(255),
 }).omit({
@@ -130,17 +199,13 @@ export const createSubscriberSchema = createInsertSchema(subscribers, {
   unsubscribeToken: true,
 })
 
-// ──────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────
-
 export type Post = typeof posts.$inferSelect
 export type NewPost = typeof posts.$inferInsert
+
+export type PostComment = typeof postComments.$inferSelect
+export type NewPostComment = typeof postComments.$inferInsert
+
 export type Subscriber = typeof subscribers.$inferSelect
 export type NewSubscriber = typeof subscribers.$inferInsert
 
-// ──────────────────────────────────────────────
-// Re-exports
-// ──────────────────────────────────────────────
-
-export * from "./auth-schema"
+export * from "./auth-schema.js"

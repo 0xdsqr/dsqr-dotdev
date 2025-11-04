@@ -36,7 +36,6 @@ export function InlineSignIn() {
     setLoading(true)
 
     try {
-      // TODO: implement sendVerificationOTP() in auth config to send email via Resend
       const { error: sendError } =
         await authClient.emailOtp.sendVerificationOtp({
           email,
@@ -91,17 +90,30 @@ export function InlineSignIn() {
   }
 
   if (session?.user) {
-    return <UserDropdown email={session.user.email} />
+    return (
+      <UserDropdown
+        email={session.user.email || ""}
+        username={session.user.name}
+        avatarUrl={session.user.image}
+        onSignOut={async () => {
+          await authClient.signOut()
+        }}
+      />
+    )
   }
 
   if (step === "email") {
     return (
       <form onSubmit={handleSendOTP} className="flex items-center gap-2">
-        <label className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400">
+        <label
+          htmlFor="email-input"
+          className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400"
+        >
           sign in
         </label>
         <div className="flex flex-col">
           <input
+            id="email-input"
             type="email"
             placeholder="email"
             value={email}
@@ -126,11 +138,15 @@ export function InlineSignIn() {
 
   return (
     <form onSubmit={handleVerifyOTP} className="flex items-center gap-2">
-      <label className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400">
+      <label
+        htmlFor="otp-input"
+        className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400"
+      >
         otp
       </label>
       <div className="flex flex-col">
         <InputOTP
+          id="otp-input"
           maxLength={6}
           value={otp}
           onChange={(value) => setOtp(value)}

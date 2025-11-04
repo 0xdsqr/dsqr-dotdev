@@ -1,0 +1,606 @@
+/* ============ PROSE BASE STYLES ============ */
+
+.prose {
+  max-width: none;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+.prose p {
+  margin: 1.25em 0;
+  line-height: 1.75;
+  font-size: 1rem;
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--primary);
+  text-decoration-thickness: 0.125em;
+  text-underline-offset: 0.25em;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.prose a:hover {
+  color: var(--primary);
+  text-decoration-color: var(--primary);
+  opacity: 0.8;
+}
+
+.prose strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+/* ============ INLINE CODE ============ */
+
+.prose code {
+  color: var(--foreground);
+  background-color: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+  font-family: var(--font-mono);
+  word-break: break-word;
+}
+
+/* Remove background from code blocks */
+.prose pre code {
+  background-color: transparent;
+  color: inherit;
+  border-radius: 0;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+/* ============ CODE BLOCK STYLING ============ */
+
+/* Main code block wrapper */
+.codeBlockWrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 1.5em 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: var(--card);
+  border: 2px solid var(--border);
+  transition: all 0.2s ease-in-out;
+}
+
+.codeBlockWrapper:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* Code block container for side-by-side lines and code */
+.codeBlockContainer {
+  display: flex;
+  overflow-x: auto;
+  background-color: var(--card);
+  gap: 1rem;
+}
+
+/* Line numbers column */
+.codeBlockLines {
+  margin: 0;
+  padding: 1rem 0.75rem;
+  overflow: hidden;
+  background-color: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.95em;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  white-space: pre;
+  user-select: none;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.codeLineNumber {
+  display: block;
+  text-align: right;
+  min-width: 2.5rem;
+  padding-right: 0.25rem;
+}
+
+/* Code block header with language badge and copy button */
+.codeBlockHeader {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: transparent;
+  border-bottom: none;
+  font-size: 0.875rem;
+  z-index: 10;
+}
+
+.codeBlockLanguage {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+
+/* Pre element styling */
+.codeBlockPre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  background-color: var(--card);
+  color: var(--foreground);
+  font-size: 0.95em;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  white-space: pre;
+  word-wrap: normal;
+  flex: 1;
+}
+
+/* Remove previous pre styles that conflict */
+.prose pre {
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+/* ============ SYNTAX HIGHLIGHTING - TOKYO NIGHT THEME (Dark Mode) ============ */
+
+/* General syntax highlighting - Dark mode (default) */
+.prose :global(.hljs) {
+  background-color: transparent;
+  color: #a9b1d6;
+}
+
+/* Keywords - Dark */
+.prose :global(.hljs-keyword),
+.prose :global(.hljs-built_in) {
+  color: #bb9af7;
+}
+
+/* Strings - Dark */
+.prose :global(.hljs-string) {
+  color: #9ece6a;
+}
+
+/* Numbers - Dark */
+.prose :global(.hljs-number) {
+  color: #ff9e64;
+}
+
+/* Attributes, variables, params - Dark */
+.prose :global(.hljs-attr),
+.prose :global(.hljs-variable),
+.prose :global(.hljs-params),
+.prose :global(.hljs-literal) {
+  color: #7aa2f7;
+}
+
+/* Functions - Dark */
+.prose :global(.hljs-function) {
+  color: #7aa2f7;
+}
+
+/* Classes - Dark */
+.prose :global(.hljs-class),
+.prose :global(.hljs-class-name) {
+  color: #ff9e64;
+}
+
+/* Titles/Identifiers - Dark */
+.prose :global(.hljs-title) {
+  color: #7aa2f7;
+}
+
+/* Comments - Dark */
+.prose :global(.hljs-comment) {
+  color: #565f89;
+  font-style: italic;
+}
+
+/* Operators - Dark */
+.prose :global(.hljs-operator) {
+  color: #a9b1d6;
+}
+
+/* Properties - Dark */
+.prose :global(.hljs-property) {
+  color: #7aa2f7;
+}
+
+/* Types - Dark */
+.prose :global(.hljs-type) {
+  color: #bb9af7;
+}
+
+/* Tags (HTML/XML) - Dark */
+.prose :global(.hljs-tag),
+.prose :global(.hljs-name) {
+  color: #f7768e;
+}
+
+/* Literals and special values - Dark */
+.prose :global(.hljs-literal) {
+  color: #7aa2f7;
+}
+
+/* Meta information - Dark */
+.prose :global(.hljs-meta) {
+  color: #565f89;
+}
+
+/* Subst (substitution) - Dark */
+.prose :global(.hljs-subst) {
+  color: #a9b1d6;
+}
+
+/* Emphasis - Dark */
+.prose :global(.hljs-emphasis) {
+  font-style: italic;
+}
+
+/* Strong - Dark */
+.prose :global(.hljs-strong) {
+  font-weight: 600;
+}
+
+/* ============ LIGHT MODE SYNTAX HIGHLIGHTING ============ */
+
+@media (prefers-color-scheme: light) {
+  .prose :global(.hljs) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-keyword),
+  .prose :global(.hljs-built_in) {
+    color: #188092;
+  }
+
+  .prose :global(.hljs-string) {
+    color: #33098f;
+  }
+
+  .prose :global(.hljs-number) {
+    color: #b15c00;
+  }
+
+  .prose :global(.hljs-attr),
+  .prose :global(.hljs-variable),
+  .prose :global(.hljs-params),
+  .prose :global(.hljs-literal) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-function) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-class),
+  .prose :global(.hljs-class-name) {
+    color: #b15c00;
+  }
+
+  .prose :global(.hljs-title) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-comment) {
+    color: #848cb5;
+    font-style: italic;
+  }
+
+  .prose :global(.hljs-operator) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-property) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-type) {
+    color: #188092;
+  }
+
+  .prose :global(.hljs-tag),
+  .prose :global(.hljs-name) {
+    color: #d20005;
+  }
+
+  .prose :global(.hljs-literal) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-meta) {
+    color: #848cb5;
+  }
+
+  .prose :global(.hljs-subst) {
+    color: #3760f4;
+  }
+
+  .prose :global(.hljs-emphasis) {
+    font-style: italic;
+  }
+
+  .prose :global(.hljs-strong) {
+    font-weight: 600;
+  }
+}
+
+/* Light mode for dark .dark class */
+:global(.dark) .prose :global(.hljs) {
+  color: #a9b1d6;
+}
+
+:global(.dark) .prose :global(.hljs-keyword),
+:global(.dark) .prose :global(.hljs-built_in) {
+  color: #bb9af7;
+}
+
+:global(.dark) .prose :global(.hljs-string) {
+  color: #9ece6a;
+}
+
+:global(.dark) .prose :global(.hljs-number) {
+  color: #ff9e64;
+}
+
+:global(.dark) .prose :global(.hljs-attr),
+:global(.dark) .prose :global(.hljs-variable),
+:global(.dark) .prose :global(.hljs-params),
+:global(.dark) .prose :global(.hljs-literal) {
+  color: #7aa2f7;
+}
+
+:global(.dark) .prose :global(.hljs-function) {
+  color: #7aa2f7;
+}
+
+:global(.dark) .prose :global(.hljs-class),
+:global(.dark) .prose :global(.hljs-class-name) {
+  color: #ff9e64;
+}
+
+:global(.dark) .prose :global(.hljs-title) {
+  color: #7aa2f7;
+}
+
+:global(.dark) .prose :global(.hljs-comment) {
+  color: #565f89;
+  font-style: italic;
+}
+
+:global(.dark) .prose :global(.hljs-operator) {
+  color: #a9b1d6;
+}
+
+:global(.dark) .prose :global(.hljs-property) {
+  color: #7aa2f7;
+}
+
+:global(.dark) .prose :global(.hljs-type) {
+  color: #bb9af7;
+}
+
+:global(.dark) .prose :global(.hljs-tag),
+:global(.dark) .prose :global(.hljs-name) {
+  color: #f7768e;
+}
+
+:global(.dark) .prose :global(.hljs-literal) {
+  color: #7aa2f7;
+}
+
+:global(.dark) .prose :global(.hljs-meta) {
+  color: #565f89;
+}
+
+:global(.dark) .prose :global(.hljs-subst) {
+  color: #a9b1d6;
+}
+
+:global(.dark) .prose :global(.hljs-emphasis) {
+  font-style: italic;
+}
+
+:global(.dark) .prose :global(.hljs-strong) {
+  font-weight: 600;
+}
+
+/* ============ CUSTOM SCROLLBAR ============ */
+
+/* Code block specific scrollbar */
+.codeBlockPre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.codeBlockPre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.codeBlockPre::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+.codeBlockPre::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border);
+  opacity: 0.8;
+}
+
+/* Dark mode scrollbar */
+:global(.dark) .codeBlockPre::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+:global(.dark) .codeBlockPre::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============ HEADINGS ============ */
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--foreground);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  scroll-margin-top: 4rem;
+}
+
+.prose h1 {
+  font-size: 2em;
+  letter-spacing: -0.02em;
+}
+
+.prose h2 {
+  font-size: 1.5em;
+  border-bottom: 2px dotted var(--border);
+  padding-bottom: 0.5em;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.prose h3 {
+  font-size: 1.25em;
+}
+
+.prose h4 {
+  font-size: 1.125em;
+}
+
+/* ============ LISTS ============ */
+
+.prose ul,
+.prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose li > :first-child {
+  margin-top: 0;
+}
+
+.prose li > :last-child {
+  margin-bottom: 0;
+}
+
+/* ============ BLOCKQUOTES ============ */
+
+.prose blockquote {
+  border-left: 3px solid var(--primary);
+  background-color: rgba(var(--primary-rgb, 122, 162, 247), 0.05);
+  padding: 0.75em 0 0.75em 1em;
+  margin: 1.25em 0;
+  border-radius: 0 0.375rem 0.375rem 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* ============ HORIZONTAL RULE ============ */
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+/* ============ TABLES ============ */
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25em 0;
+  font-size: 0.875em;
+}
+
+.prose th,
+.prose td {
+  padding: 0.75em;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.prose th {
+  background-color: var(--muted);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.prose tr:nth-child(even) {
+  background-color: var(--muted);
+  opacity: 0.5;
+}
+
+/* ============ RESPONSIVE ============ */
+
+@media (max-width: 640px) {
+  .codeBlockHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .codeBlockPre {
+    font-size: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .prose h1 {
+    font-size: 1.5em;
+  }
+
+  .prose h2 {
+    font-size: 1.25em;
+  }
+}
+
+/* ============ PRINT STYLES ============ */
+
+@media print {
+  .codeBlockHeader {
+    display: none;
+  }
+
+  .codeBlockWrapper {
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+
+  .prose code {
+    background-color: transparent;
+    border: 1px solid #ccc;
+  }
+}

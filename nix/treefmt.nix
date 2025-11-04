@@ -17,6 +17,16 @@
           semicolons = "asNeeded";
         };
       };
+      linter = {
+        rules = {
+          suspicious = {
+            noArrayIndexKey = "warn";
+          };
+          a11y = {
+            useAnchorContent = "warn";
+          };
+        };
+      };
     };
   };
 
@@ -42,6 +52,7 @@
       "pkgs/*"
       "dist/**"
       "build/**"
+      "apps/dotdev/src/components/ui/**"
     ];
   };
 }

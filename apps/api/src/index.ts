@@ -2,10 +2,12 @@ import { serve } from "@hono/node-server"
 import { Hono } from "hono"
 import healthRouter from "./routes/health.js"
 
+const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`)
+
 const app = new Hono()
 
-// Health routes
 app.basePath("/health").route("/", healthRouter)
 
-serve({ fetch: app.fetch, port: 3001 })
-console.log("✅ Server running on http://localhost:3001")
+const port = 3001
+serve({ fetch: app.fetch, port })
+log(`✅ Server listening on http://localhost:${port}`)

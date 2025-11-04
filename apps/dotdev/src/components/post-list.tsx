@@ -46,6 +46,7 @@ function PostList({ posts }: PostListProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-4 mb-4">
         <button
+          type="button"
           onClick={() => {
             setSortBy("date")
             setSortAscending(sortBy === "date" ? !sortAscending : false)
@@ -62,6 +63,7 @@ function PostList({ posts }: PostListProps) {
             ))}
         </button>
         <button
+          type="button"
           onClick={() => {
             setSortBy("title")
             setSortAscending(sortBy === "title" ? !sortAscending : false)

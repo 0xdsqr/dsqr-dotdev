@@ -14,9 +14,7 @@ const handler = (req: Request) =>
         auth: auth,
         headers: req.headers,
       }),
-    onError({ error, path }) {
-      console.error(`>>> tRPC Error on '${path}'`, error)
-    },
+    onError() {},
   })
 
 export const Route = createFileRoute("/api/trpc/$")({

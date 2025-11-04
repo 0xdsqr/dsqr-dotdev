@@ -1,26 +1,78 @@
-import React from "react"
+import { useMutation } from "@tanstack/react-query"
+import { Heart, MessageCircle } from "lucide-react"
+import { useState } from "react"
+import { authClient } from "@/auth/client"
 import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { trpcClient } from "@/lib/trpc"
 
 interface BlogPostHeaderProps {
   title: string
   date: Date
   category: string
+  postId: string
   readingTimeMinutes?: number
   tags?: string[]
   headerImageUrl?: string
+  authorImageUrl?: string
+  likes?: number
+  commentCount?: number
+  onCommentClick?: () => void
 }
 
 export function BlogPostHeader({
   title,
   date,
   category,
+  postId,
   readingTimeMinutes,
   tags = [],
   headerImageUrl,
+  authorImageUrl = "/me.jpeg",
+  likes = 0,
+  commentCount = 0,
+  onCommentClick,
 }: BlogPostHeaderProps) {
+  const { data: session } = authClient.useSession()
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(likes)
+
+  const likeMutation = useMutation({
+    mutationFn: (increment: boolean) =>
+      trpcClient.post.like.mutate({
+        postId,
+        increment,
+      }),
+    onMutate: async (increment: boolean) => {
+      const previousLiked = liked
+      const previousCount = likeCount
+
+      setLiked(!liked)
+      setLikeCount(increment ? likeCount + 1 : Math.max(likeCount - 1, 0))
+
+      return { previousLiked, previousCount }
+    },
+    onSuccess: () => {},
+    onError: (_error, _variables, context) => {
+      if (context) {
+        setLiked(context.previousLiked)
+        setLikeCount(context.previousCount)
+      }
+    },
+  })
+
+  const handleLike = () => {
+    if (!session?.user) {
+      return
+    }
+    likeMutation.mutate(!liked)
+  }
   return (
-    <div className="w-full space-y-6 mb-8">
-      {/* Header Image */}
+    <div className="w-full space-y-4 mb-6">
       {headerImageUrl && (
         <div className="relative w-full overflow-hidden rounded-lg border border-border">
           <img
@@ -34,43 +86,104 @@ export function BlogPostHeader({
         </div>
       )}
 
-      {/* Content */}
-      <div className="space-y-4">
-        {/* Category Badge */}
-        <div className="flex w-fit">
-          <span
-            className={`text-sm font-semibold px-3 py-1.5 rounded-full ${getCategoryColor(category)}`}
-          >
-            {category}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight break-words">
+      <div className="space-y-3">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight break-words">
           {title}
         </h1>
 
-        {/* Metadata */}
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground font-medium pt-2">
-          <span>
-            {date.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </span>
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground font-medium pt-1">
+          <div className="w-8 h-8 rounded overflow-hidden bg-muted flex-shrink-0 border border-border">
+            <img
+              src={authorImageUrl}
+              alt="Author"
+              className="w-full h-full object-cover"
+            />
+          </div>
 
-          {readingTimeMinutes && (
-            <>
-              <span className="opacity-50">·</span>
-              <span>{readingTimeMinutes} min read</span>
-            </>
-          )}
+          <span className="opacity-50">·</span>
+
+          <div className="flex items-center gap-1.5">
+            <span>
+              {date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+
+            {readingTimeMinutes && (
+              <>
+                <span className="opacity-50">·</span>
+                <span>{readingTimeMinutes} min</span>
+              </>
+            )}
+
+            <span className="opacity-50">·</span>
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getCategoryColor(category)}`}
+            >
+              {category}
+            </span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onCommentClick}
+                  className="flex items-center gap-2 transition-opacity hover:opacity-70 cursor-pointer text-muted-foreground"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span>{commentCount}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="bg-foreground text-background"
+              >
+                {commentCount === 0 ? "be first to comment" : "view comments"}
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={handleLike}
+                  disabled={!session?.user || likeMutation.isPending}
+                  className={`flex items-center gap-2 transition-opacity ${
+                    session?.user
+                      ? "hover:opacity-70 cursor-pointer"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  <Heart
+                    className="w-5 h-5 transition-colors"
+                    fill={liked ? "#ef4444" : "none"}
+                    stroke={liked ? "#ef4444" : "currentColor"}
+                  />
+                  <span
+                    className={liked ? "text-red-500" : "text-muted-foreground"}
+                  >
+                    {likeCount}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              {!session?.user && (
+                <TooltipContent
+                  side="bottom"
+                  className="bg-foreground text-background"
+                >
+                  Just sign up bro...
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </div>
         </div>
 
-        {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
             {tags.map((tag) => (
               <Badge
                 key={tag}
