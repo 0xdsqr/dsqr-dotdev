@@ -84,10 +84,10 @@ function PostList({ posts }: PostListProps) {
         sortedPosts.map((post) => (
           <Link key={post._id} to={post.url} className="block group">
             <article className="p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <h2 className="text-base sm:text-lg font-medium mb-2 group-hover:text-primary transition-colors leading-snug">
+              <h2 className="text-base sm:text-lg font-medium font-mono mb-2 group-hover:text-primary transition-colors leading-snug">
                 {post.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground font-mono">
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="w-4 h-4 flex-shrink-0" />
                   <span>
@@ -105,16 +105,16 @@ function PostList({ posts }: PostListProps) {
                   </div>
                 )}
                 <div
-                  className={`flex items-center gap-1 ${
+                  className={`flex items-center gap-1 border-b-2 border-dotted ${
                     post.category === "TIL"
-                      ? "text-emerald-600 dark:text-emerald-400"
+                      ? "text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400"
                       : post.category === "Blog"
-                        ? "text-indigo-600 dark:text-indigo-400"
+                        ? "text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400"
                         : post.category === "NixWithMe"
-                          ? "text-cyan-600 dark:text-cyan-400"
+                          ? "text-cyan-600 dark:text-cyan-400 border-cyan-600 dark:border-cyan-400"
                           : post.category === "Life"
-                            ? "text-rose-600 dark:text-rose-400"
-                            : "text-gray-600 dark:text-gray-400"
+                            ? "text-rose-600 dark:text-rose-400 border-rose-600 dark:border-rose-400"
+                            : "text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400"
                   }`}
                 >
                   <TagIcon className="w-3 h-3 flex-shrink-0" />
