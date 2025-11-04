@@ -1,36 +1,64 @@
-import { Link } from "@tanstack/react-router"
+import { Link, useLocation } from "@tanstack/react-router"
+import { motion } from "framer-motion"
 
 function NavSocials() {
+  const location = useLocation()
+  const isHome = location.pathname === "/"
+  const isPosts = location.pathname.startsWith("/posts")
+  const isMisc = location.pathname === "/misc"
+  const isAbout = location.pathname === "/about"
+
+  const getLinkClass = (active: boolean) => {
+    const baseClass =
+      "text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors whitespace-nowrap"
+    return active
+      ? `${baseClass} font-semibold border-b-2 border-dotted border-purple-600 dark:border-purple-400`
+      : baseClass
+  }
+
   return (
-    <nav className="flex items-center justify-center gap-4 text-sm mb-0 mt-6 font-mono">
-      <Link
-        to="/"
-        className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+    <motion.nav
+      className="flex items-center justify-center gap-4 text-base mb-0 mt-6 font-mono flex-wrap"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+    >
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        0xdsqr
-      </Link>
+        <Link to="/" className={getLinkClass(isHome)}>
+          0xdsqr
+        </Link>
+      </motion.div>
       <span className="text-muted-foreground">/</span>
-      <Link
-        to="/posts"
-        className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        posts
-      </Link>
+        <Link to="/posts" className={getLinkClass(isPosts)}>
+          posts
+        </Link>
+      </motion.div>
       <span className="text-muted-foreground">/</span>
-      <Link
-        to="/misc"
-        className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        misc
-      </Link>
+        <Link to="/misc" className={getLinkClass(isMisc)}>
+          misc
+        </Link>
+      </motion.div>
       <span className="text-muted-foreground">/</span>
-      <Link
-        to="/about"
-        className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        about
-      </Link>
-    </nav>
+        <Link to="/about" className={getLinkClass(isAbout)}>
+          about
+        </Link>
+      </motion.div>
+    </motion.nav>
   )
 }
 
