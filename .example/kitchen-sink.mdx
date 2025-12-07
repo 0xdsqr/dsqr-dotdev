@@ -1,0 +1,314 @@
+---
+title: "Kitchen Sink - All Blog Components"
+category: "Blog"
+published: true
+createdAt: 2025-01-15
+readingTimeMinutes: 10
+---
+
+# Kitchen Sink: Every Blog Component
+
+This is a **complete example** showing how to write blog posts in MDX format using all available components.
+
+## Text Formatting
+
+You can use **bold text**, *italic text*, ~~strikethrough~~, and `inline code` just like regular Markdown.
+
+Here's a blockquote:
+
+> "The best way to predict the future is to invent it."
+> — Alan Kay
+
+### Lists
+
+Unordered list:
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+- Third item
+
+Ordered list:
+1. First step
+2. Second step
+3. Third step
+
+Task list:
+- [x] Completed task
+- [ ] Pending task
+- [ ] Another pending task
+
+### Links
+
+You can link to [external sites](https://dsqr.dev) or use relative links like [about page](/about).
+
+---
+
+## Callouts
+
+Use callouts to highlight important information. We have 5 different styles:
+
+:::note
+**Note:** This is a note callout. Use it for general information and tips that readers should be aware of.
+:::
+
+:::tip
+**Pro Tip:** This is a tip callout. Perfect for sharing best practices and helpful advice!
+:::
+
+:::warning
+**Warning:** This is a warning callout. Use it to highlight potential pitfalls or things to watch out for.
+:::
+
+:::important
+**Important:** This is an important callout. Great for critical information that shouldn't be missed.
+:::
+
+:::purple
+**Custom:** This is a purple-themed callout. Use it for brand-specific or special messages!
+:::
+
+You can also customize labels:
+
+:::tip[Quick Hack]
+Use custom labels to make your callouts even more specific to your content!
+:::
+
+---
+
+## Code Blocks
+
+### Basic Code Block
+
+```typescript
+function greet(name: string): string {
+  return `Hello, ${name}!`
+}
+
+const message = greet("World")
+console.log(message)
+```
+
+### With Line Highlighting
+
+You can highlight specific lines to draw attention:
+
+```typescript {2-4}
+const config = {
+  apiUrl: process.env.API_URL,
+  timeout: 5000,
+  retries: 3,
+}
+
+export default config
+```
+
+Lines 2-4 are highlighted above!
+
+### Without Line Numbers
+
+```bash showLineNumbers=false
+npm install @dsqr/dodo
+npm install @dsqr/durable-lambda
+bun add typescript-go-overlay
+```
+
+### Multiple Languages
+
+JavaScript:
+```javascript
+const hello = (name) => `Hello, ${name}!`
+```
+
+Python:
+```python
+def hello(name):
+    return f"Hello, {name}!"
+```
+
+Rust:
+```rust
+fn hello(name: &str) -> String {
+    format!("Hello, {}!", name)
+}
+```
+
+Nix:
+```nix
+{ pkgs ? import <nixpkgs> {} }:
+pkgs.mkShell {
+  buildInputs = [ pkgs.hello ];
+}
+```
+
+---
+
+## Images
+
+### Basic Image
+
+![A beautiful landscape](/api/placeholder/800/400)
+
+### Image with Caption
+
+![Architecture diagram](/api/placeholder/800/400)
+*This is a caption explaining what the image shows. Very helpful for context!*
+
+### Image with Caption and Credit
+
+![Team collaboration](/api/placeholder/800/400)
+*Our team working on the next big thing*
+Photo by Jane Doe
+
+### Different Aspect Ratios
+
+Use HTML-style attributes for advanced features:
+
+<img src="/api/placeholder/800/450" alt="Video aspect ratio" data-aspect="video" />
+*Perfect for screenshots and videos (16:9)*
+
+<img src="/api/placeholder/400/400" alt="Square aspect ratio" data-aspect="square" />
+*Great for profile pictures or icons (1:1)*
+
+<img src="/api/placeholder/600/800" alt="Portrait aspect ratio" data-aspect="portrait" />
+*Ideal for mobile screenshots (3:4)*
+
+### Zoomable Images
+
+By default, images are zoomable (click to see full size). To disable:
+
+<img src="/api/placeholder/400/200" alt="Small diagram" data-zoomable="false" />
+*This image doesn't zoom when clicked*
+
+### Animated GIFs
+
+<img src="/api/placeholder/600/400" alt="Animated demo" data-animated="true" />
+*Hover to see play/pause controls*
+
+---
+
+## Tables
+
+| Feature | Supported | Notes |
+|---------|-----------|-------|
+| Code Blocks | ✅ | With syntax highlighting |
+| Images | ✅ | With captions and zoom |
+| Callouts | ✅ | 5 different styles |
+| Line Highlighting | ✅ | For code blocks |
+| Tables | ✅ | Like this one! |
+
+---
+
+## Advanced Examples
+
+### Code with Callout
+
+:::tip
+Here's a quick implementation example:
+
+```typescript {3}
+import { BlogPost } from "@/components/ui/blog-post"
+
+export default function MyPost() {
+  return <BlogPost>...</BlogPost>
+}
+```
+
+Line 3 shows the key export!
+:::
+
+### Side-by-Side Images
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+  <div>
+    <img src="/api/placeholder/400/300" alt="Before" />
+    <em>Before</em>
+  </div>
+  <div>
+    <img src="/api/placeholder/400/300" alt="After" />
+    <em>After</em>
+  </div>
+</div>
+
+### Nested Callouts
+
+:::important
+**Deployment Checklist:**
+
+1. Run tests
+2. Build the project
+3. Review the changes
+
+```bash
+npm test
+npm run build
+npm run deploy
+```
+
+Make sure to check the logs after deployment!
+
+:::note
+You can nest callouts if needed, but use sparingly for readability.
+:::
+:::
+
+---
+
+## Horizontal Rules
+
+Use three or more dashes for a horizontal rule:
+
+---
+
+Like that!
+
+---
+
+## Headings
+
+# H1 Heading
+## H2 Heading
+### H3 Heading
+#### H4 Heading
+##### H5 Heading
+###### H6 Heading
+
+---
+
+## Math (if supported)
+
+Inline math: $E = mc^2$
+
+Block math:
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+---
+
+## Conclusion
+
+That's everything! You now know how to use:
+
+- ✅ All 5 callout variants (note, tip, warning, important, purple)
+- ✅ Code blocks with line numbers and highlighting
+- ✅ Images with captions, credits, and aspect ratios
+- ✅ Animated GIF support
+- ✅ Zoomable images
+- ✅ Tables, lists, links, and all text formatting
+- ✅ Math equations (if enabled)
+
+Happy writing! 🎉
+
+---
+
+## Meta Information
+
+**Note:** The frontmatter at the top of this file defines:
+- `title`: Post title
+- `category`: TIL, Blog, NixWithMe, or Life
+- `published`: true/false
+- `createdAt`: Publication date
+- `readingTimeMinutes`: Estimated reading time
+
+You can write your blog posts in pure MDX and they'll automatically get all the styling and components!

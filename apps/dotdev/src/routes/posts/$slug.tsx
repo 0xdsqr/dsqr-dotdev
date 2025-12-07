@@ -1,21 +1,18 @@
 import type { Post } from "@dsqr-dotdev/db/schema"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { ChevronDown } from "lucide-react"
-import { lazy, Suspense, useMemo, useRef, useState } from "react"
+import { lazy, Suspense, useRef } from "react"
 import { trpcClient } from "@/lib/trpc"
 import { BlogComments } from "../../components/blog-comments"
 import { BlogPostHeader } from "../../components/blog-post-header"
-import {
-  extractHeadingsFromMarkdown,
-  OnThisPage,
-} from "../../components/on-this-page"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../../components/ui/popover"
-import { useIsMobile } from "../../hooks/use-mobile"
+import { ReadingProgress } from "../../components/reading-progress"
+import { ScrollLines } from "../../components/scroll-lines"
+
+// Temporarily commented out
+// import {
+//   extractHeadingsFromMarkdown,
+//   OnThisPage,
+// } from "../../components/on-this-page"
 
 const BlogPostViewer = lazy(() =>
   import("../../components/blog-post-viewer").then((mod) => ({
@@ -50,8 +47,6 @@ function PostDetailPage() {
     post: Post
     contentResult: { success: boolean; content: string; error?: string }
   }
-  const isMobile = useIsMobile()
-  const [open, setOpen] = useState(false)
   const commentsRef = useRef<HTMLDivElement>(null)
 
   useQuery({
@@ -64,13 +59,14 @@ function PostDetailPage() {
     queryFn: () => trpcClient.post.commentCount.query({ postId: post.id }),
   })
 
-  const headings = useMemo(
-    () =>
-      contentResult.success
-        ? extractHeadingsFromMarkdown(contentResult.content)
-        : [],
-    [contentResult],
-  )
+  // Temporarily commented out
+  // const headings = useMemo(
+  //   () =>
+  //     contentResult.success
+  //       ? extractHeadingsFromMarkdown(contentResult.content)
+  //       : [],
+  //   [contentResult],
+  // )
 
   const handleCommentClick = () => {
     commentsRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -87,7 +83,10 @@ function PostDetailPage() {
 
   return (
     <>
-      <div className="py-8 max-w-3xl mx-auto relative">
+      <ReadingProgress />
+      <ScrollLines />
+
+      <div className="py-8 max-w-3xl mx-auto relative z-10">
         <div className="space-y-3">
           <BlogPostHeader
             title={post.title}
@@ -101,7 +100,8 @@ function PostDetailPage() {
             commentCount={commentCount}
             onCommentClick={handleCommentClick}
           />
-          {isMobile && headings.length > 0 && (
+          {/* Temporarily commented out */}
+          {/* {isMobile && headings.length > 0 && (
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -123,7 +123,7 @@ function PostDetailPage() {
                 </div>
               </PopoverContent>
             </Popover>
-          )}
+          )} */}
           <Suspense
             fallback={
               <div className="text-muted-foreground">Loading post...</div>
@@ -137,12 +137,12 @@ function PostDetailPage() {
         </div>
       </div>
 
-      {/* Desktop sidebar */}
-      {headings.length > 0 && (
+      {/* Desktop sidebar - Temporarily commented out */}
+      {/* {headings.length > 0 && (
         <div className="hidden xl:block fixed right-8 top-24 h-[calc(100vh-6rem)] w-64 overflow-y-auto">
           <OnThisPage headings={headings} />
         </div>
-      )}
+      )} */}
     </>
   )
 }

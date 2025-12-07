@@ -243,10 +243,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       <div className={styles.codeBlockContainer}>
                         <pre className={styles.codeBlockLines}>
                           {Array.from({ length: lineCount }, (_, i) => (
-                            <div
-                              key={`line-${i}`}
-                              className={styles.codeLineNumber}
-                            >
+                            <div key={i + 1} className={styles.codeLineNumber}>
                               {i + 1}
                             </div>
                           ))}

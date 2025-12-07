@@ -42,35 +42,50 @@ function NewsletterSignup() {
   return (
     <div className="flex flex-col items-center justify-center space-y-4">
       <div className="prose dark:prose-invert max-w-none text-center font-mono">
-        <p className="text-sm sm:text-base leading-relaxed">
+        <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
           I also write sometimes. Stay connected if you want.
         </p>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex gap-2 w-full max-w-sm"
+        >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
-                <div className="flex gap-2">
-                  <FormControl>
-                    <Input
-                      placeholder="m@example.com"
-                      className="rounded font-mono flex-1"
-                      {...field}
-                    />
-                  </FormControl>
-                  <Button type="submit" className="rounded font-mono">
-                    Subscribe
-                  </Button>
-                </div>
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Input
+                    placeholder="m@example.com"
+                    className="rounded font-mono"
+                    disabled={subscribe.isPending}
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          <Button
+            type="submit"
+            className="rounded font-mono"
+            disabled={subscribe.isPending}
+          >
+            {subscribe.isPending
+              ? "..."
+              : subscribe.isSuccess
+                ? "Subscribed!"
+                : "Subscribe"}
+          </Button>
         </form>
       </Form>
+      {subscribe.isSuccess && (
+        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">
+          Thanks for subscribing!
+        </p>
+      )}
     </div>
   )
 }

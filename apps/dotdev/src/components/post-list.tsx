@@ -5,6 +5,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   Clock,
+  Heart,
+  MessageCircle,
   TagIcon,
 } from "lucide-react"
 import { useState } from "react"
@@ -26,6 +28,8 @@ function PostList({ posts }: PostListProps) {
       _id: post.id,
       url: `/posts/${post.slug}`,
       date: post.createdAt.toISOString(),
+      likes: post.likesCount,
+      comments: 0, // Note: Comment count not included in post.all query
     }))
 
   const sortedPosts = [...transformedPosts].sort((a, b) => {
@@ -42,91 +46,137 @@ function PostList({ posts }: PostListProps) {
     }
   })
 
+  const getCategoryStyles = (category: string) => {
+    const styles = {
+      TIL: "text-emerald-600 dark:text-emerald-400 border-emerald-600/30 dark:border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/30",
+      Blog: "text-indigo-600 dark:text-indigo-400 border-indigo-600/30 dark:border-indigo-400/30 bg-indigo-50 dark:bg-indigo-950/30",
+      NixWithMe:
+        "text-cyan-600 dark:text-cyan-400 border-cyan-600/30 dark:border-cyan-400/30 bg-cyan-50 dark:bg-cyan-950/30",
+      Life: "text-rose-600 dark:text-rose-400 border-rose-600/30 dark:border-rose-400/30 bg-rose-50 dark:bg-rose-950/30",
+    }
+    return (
+      styles[category as keyof typeof styles] ||
+      "text-muted-foreground border-border"
+    )
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 mb-4">
+    <div className="space-y-6">
+      {/* Sort Controls */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground font-mono">
+          Sort by:
+        </span>
         <button
           type="button"
           onClick={() => {
             setSortBy("date")
             setSortAscending(sortBy === "date" ? !sortAscending : false)
           }}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className={`flex items-center gap-1.5 text-sm font-mono transition-all ${
+            sortBy === "date"
+              ? "text-foreground font-medium"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
-          <CalendarIcon className="w-4 h-4" />
+          <CalendarIcon className="w-3.5 h-3.5" />
           <span>Date</span>
           {sortBy === "date" &&
             (sortAscending ? (
-              <ChevronUpIcon className="w-4 h-4" />
+              <ChevronUpIcon className="w-3.5 h-3.5" />
             ) : (
-              <ChevronDownIcon className="w-4 h-4" />
+              <ChevronDownIcon className="w-3.5 h-3.5" />
             ))}
         </button>
+        <span className="text-muted-foreground/40">•</span>
         <button
           type="button"
           onClick={() => {
             setSortBy("title")
             setSortAscending(sortBy === "title" ? !sortAscending : false)
           }}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className={`flex items-center gap-1.5 text-sm font-mono transition-all ${
+            sortBy === "title"
+              ? "text-foreground font-medium"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           <span>Title</span>
           {sortBy === "title" &&
             (sortAscending ? (
-              <ChevronUpIcon className="w-4 h-4" />
+              <ChevronUpIcon className="w-3.5 h-3.5" />
             ) : (
-              <ChevronDownIcon className="w-4 h-4" />
+              <ChevronDownIcon className="w-3.5 h-3.5" />
             ))}
         </button>
       </div>
 
+      {/* Posts Grid */}
       {sortedPosts.length > 0 ? (
-        sortedPosts.map((post) => (
-          <Link key={post._id} to={post.url} className="block group">
-            <article className="p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <h2 className="text-base sm:text-lg font-medium font-mono mb-2 group-hover:text-primary transition-colors leading-snug">
-                {post.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground font-mono">
-                <span className="flex items-center gap-1">
-                  <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    {new Date(post.date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+        <div className="space-y-3">
+          {sortedPosts.map((post) => (
+            <Link key={post._id} to={post.url} className="block group">
+              <article className="relative p-5 rounded-xl border border-border bg-card transition-all duration-200 group-hover:border-foreground/20 group-hover:shadow-sm">
+                {/* Title */}
+                <h2 className="text-lg font-semibold font-mono mb-3 group-hover:text-primary transition-colors leading-tight">
+                  {post.title}
+                </h2>
+
+                {/* Meta Information */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 text-sm">
+                  {/* Date */}
+                  <span className="flex items-center gap-1.5 text-muted-foreground font-mono">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <span>
+                      {new Date(post.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </span>
-                </span>
-                {post.readingTimeMinutes && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 flex-shrink-0" />
-                    <span>{post.readingTimeMinutes} min read</span>
+
+                  {/* Reading Time */}
+                  {post.readingTimeMinutes && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground font-mono">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{post.readingTimeMinutes} min</span>
+                    </span>
+                  )}
+
+                  {/* Category Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border font-mono text-xs font-medium ${getCategoryStyles(
+                      post.category,
+                    )}`}
+                  >
+                    <TagIcon className="w-3 h-3" />
+                    {post.category}
+                  </span>
+
+                  {/* Engagement Stats */}
+                  <div className="flex items-center gap-3 ml-auto">
+                    {post.likes !== undefined && post.likes > 0 && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground font-mono">
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>{post.likes}</span>
+                      </span>
+                    )}
+                    {post.comments !== undefined && post.comments > 0 && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground font-mono">
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{post.comments}</span>
+                      </span>
+                    )}
                   </div>
-                )}
-                <div
-                  className={`flex items-center gap-1 border-b-2 border-dotted ${
-                    post.category === "TIL"
-                      ? "text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400"
-                      : post.category === "Blog"
-                        ? "text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400"
-                        : post.category === "NixWithMe"
-                          ? "text-cyan-600 dark:text-cyan-400 border-cyan-600 dark:border-cyan-400"
-                          : post.category === "Life"
-                            ? "text-rose-600 dark:text-rose-400 border-rose-600 dark:border-rose-400"
-                            : "text-gray-600 dark:text-gray-400 border-gray-600 dark:border-gray-400"
-                  }`}
-                >
-                  <TagIcon className="w-3 h-3 flex-shrink-0" />
-                  <span>{post.category}</span>
                 </div>
-              </div>
-            </article>
-          </Link>
-        ))
+              </article>
+            </Link>
+          ))}
+        </div>
       ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          <span>No posts found.</span>
+        <div className="text-center py-16 px-4">
+          <p className="text-muted-foreground font-mono">No posts found.</p>
         </div>
       )}
     </div>

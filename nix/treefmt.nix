@@ -34,6 +34,13 @@
   programs.prettier = {
     enable = true;
     includes = [ "**/*.css" ];
+    excludes = [
+      "**/src/styles.css" # Main styles file - don't auto-format due to custom font configs
+      "node_modules/**"
+      ".vite/**"
+      "dist/**"
+      "build/**"
+    ];
   };
 
   # Configure biome for JS/TS/JSON only, exclude CSS due to Tailwind syntax

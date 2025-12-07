@@ -12,9 +12,9 @@ function PostsIndexPage() {
   const { data: posts } = useSuspenseQuery(trpc.post.all.queryOptions())
 
   return (
-    <div className="py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
-        Blog Posts
+    <div className="space-y-12">
+      <h1 className="text-2xl font-bold font-mono border-b-2 border-dotted border-border pb-2">
+        all posts
       </h1>
       <PostList posts={posts} />
     </div>

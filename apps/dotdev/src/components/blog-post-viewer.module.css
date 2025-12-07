@@ -479,6 +479,10 @@
   letter-spacing: -0.02em;
 }
 
+.prose > :first-child {
+  margin-top: 0 !important;
+}
+
 .prose h2 {
   font-size: 1.5em;
   border-bottom: 2px dotted var(--border);

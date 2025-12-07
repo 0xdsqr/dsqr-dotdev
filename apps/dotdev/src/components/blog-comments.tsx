@@ -2,7 +2,7 @@
 
 import type { PostComment } from "@dsqr-dotdev/db/schema"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Reply, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { authClient } from "@/auth/client"
 import { trpcClient } from "@/lib/trpc"
@@ -16,6 +16,7 @@ export function BlogComments({ postId }: BlogCommentsProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [commentText, setCommentText] = useState("")
   const [replyText, setReplyText] = useState("")
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
 
   const { data: comments = [], refetch } = useQuery({
     queryKey: ["post.comments", postId],
@@ -58,48 +59,59 @@ export function BlogComments({ postId }: BlogCommentsProps) {
     })
   }
 
+  const toggleReplies = (commentId: string) => {
+    setExpandedReplies((prev) => {
+      const next = new Set(prev)
+      if (next.has(commentId)) {
+        next.delete(commentId)
+      } else {
+        next.add(commentId)
+      }
+      return next
+    })
+  }
+
   return (
-    <div className="space-y-6 mt-8 border-t border-border pt-8">
-      <div>
-        <h2 className="text-lg font-mono font-bold tracking-tight">
-          <span className="border-b-2 border-dotted border-border">
-            comments
-          </span>{" "}
+    <section className="mt-16 pt-8 border-t border-border space-y-6">
+      <h2 className="text-xl font-mono font-bold mb-6 flex items-center gap-2">
+        <span className="border-b-2 border-dotted border-primary">
+          comments
+        </span>
+        <span className="text-muted-foreground font-normal">
           ({comments.length})
-        </h2>
-      </div>
+        </span>
+      </h2>
 
       {session?.user ? (
-        <form
-          onSubmit={(e) => handleSubmit(e)}
-          className="space-y-3 border border-dashed border-border p-4 rounded"
-        >
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="what are your thoughts..."
-            className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-            rows={3}
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setCommentText("")}
-              className="px-3 py-1.5 text-xs font-mono border border-border rounded hover:bg-muted transition-colors"
-            >
-              cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!commentText.trim() || createMutation.isPending}
-              className="px-3 py-1.5 text-xs font-mono bg-primary text-primary-foreground border border-primary rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {createMutation.isPending ? "posting..." : "post"}
-            </button>
+        <form onSubmit={(e) => handleSubmit(e)} className="mb-8">
+          <div className="border border-dashed border-border rounded-lg p-4 focus-within:border-primary/50 transition-colors">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="what are your thoughts..."
+              className="w-full bg-transparent resize-none text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none min-h-[80px]"
+              rows={3}
+            />
+            <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setCommentText("")}
+                className="px-4 py-2 text-sm font-mono text-muted-foreground hover:text-foreground transition-colors"
+              >
+                clear
+              </button>
+              <button
+                type="submit"
+                disabled={!commentText.trim() || createMutation.isPending}
+                className="px-4 py-2 text-sm font-mono bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {createMutation.isPending ? "posting..." : "post"}
+              </button>
+            </div>
           </div>
         </form>
       ) : (
-        <div className="border border-dashed border-border p-4 rounded text-center">
+        <div className="border border-dashed border-border rounded-lg p-4 text-center">
           <p className="text-sm text-muted-foreground font-mono">
             sign in to leave a comment
           </p>
@@ -108,7 +120,7 @@ export function BlogComments({ postId }: BlogCommentsProps) {
 
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-12 border border-dashed border-border rounded-lg">
             <p className="text-sm text-muted-foreground font-mono">
               no comments yet. be the first to share your thoughts.
             </p>
@@ -127,11 +139,13 @@ export function BlogComments({ postId }: BlogCommentsProps) {
               isSubmitting={createMutation.isPending}
               onDelete={deleteMutation.mutate}
               isDeleting={deleteMutation.isPending}
+              expandedReplies={expandedReplies}
+              toggleReplies={toggleReplies}
             />
           ))
         )}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -146,6 +160,8 @@ interface CommentThreadProps {
   isSubmitting: boolean
   onDelete: (commentId: string) => void
   isDeleting: boolean
+  expandedReplies: Set<string>
+  toggleReplies: (id: string) => void
   depth?: number
 }
 
@@ -160,81 +176,92 @@ function CommentThread({
   isSubmitting,
   onDelete,
   isDeleting,
+  expandedReplies,
+  toggleReplies,
   depth = 0,
 }: CommentThreadProps) {
   const isReply = depth > 0
 
   return (
     <div
-      className={`space-y-3 ${isReply ? "ml-6 border-l-2 border-dashed border-border pl-4" : ""}`}
+      className={`space-y-3 ${isReply ? "ml-8 border-l-2 border-dashed border-border pl-4" : ""}`}
     >
       <CommentItem
         comment={comment}
-        onReply={() => setReplyingTo(comment.id)}
+        onReply={() =>
+          setReplyingTo(replyingTo === comment.id ? null : comment.id)
+        }
         onDelete={onDelete}
         isDeleting={isDeleting}
         isReply={isReply}
         isReplying={replyingTo === comment.id}
+        expandedReplies={expandedReplies}
+        toggleReplies={toggleReplies}
       />
 
       {replyingTo === comment.id && (
-        <div className="ml-6 space-y-3 border-l-2 border-dashed border-border pl-4">
+        <div className="ml-6 mt-2 border-l-2 border-dashed border-border pl-4">
           <form
             onSubmit={(e) => {
               onSubmit(e, comment.id)
             }}
-            className="space-y-2"
           >
-            <textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="reply..."
-              className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-              rows={2}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setReplyingTo(null)
-                  setReplyText("")
-                }}
-                className="px-2 py-1 text-xs font-mono border border-border rounded hover:bg-muted transition-colors"
-              >
-                cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!replyText.trim() || isSubmitting}
-                className="px-2 py-1 text-xs font-mono bg-primary text-primary-foreground border border-primary rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                {isSubmitting ? "posting..." : "reply"}
-              </button>
+            <div className="border border-dashed border-border rounded-lg p-3 focus-within:border-primary/50 transition-colors">
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="reply..."
+                className="w-full bg-transparent resize-none text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none"
+                rows={2}
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplyingTo(null)
+                    setReplyText("")
+                  }}
+                  className="px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!replyText.trim() || isSubmitting}
+                  className="px-3 py-1.5 text-xs font-mono bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {isSubmitting ? "posting..." : "reply"}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       )}
 
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="space-y-3">
-          {comment.replies.map((reply) => (
-            <CommentThread
-              key={reply.id}
-              comment={reply}
-              postId={postId}
-              replyingTo={replyingTo}
-              setReplyingTo={setReplyingTo}
-              replyText={replyText}
-              setReplyText={setReplyText}
-              onSubmit={onSubmit}
-              isSubmitting={isSubmitting}
-              onDelete={onDelete}
-              isDeleting={isDeleting}
-              depth={depth + 1}
-            />
-          ))}
-        </div>
-      )}
+      {comment.replies &&
+        comment.replies.length > 0 &&
+        expandedReplies.has(comment.id) && (
+          <div className="mt-2 space-y-2">
+            {comment.replies.map((reply) => (
+              <CommentThread
+                key={reply.id}
+                comment={reply}
+                postId={postId}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
+                replyText={replyText}
+                setReplyText={setReplyText}
+                onSubmit={onSubmit}
+                isSubmitting={isSubmitting}
+                onDelete={onDelete}
+                isDeleting={isDeleting}
+                expandedReplies={expandedReplies}
+                toggleReplies={toggleReplies}
+                depth={depth + 1}
+              />
+            ))}
+          </div>
+        )}
     </div>
   )
 }
@@ -246,6 +273,8 @@ interface CommentItemProps {
   isDeleting: boolean
   isReply?: boolean
   isReplying?: boolean
+  expandedReplies: Set<string>
+  toggleReplies: (id: string) => void
 }
 
 const DEFAULT_AVATAR =
@@ -256,8 +285,10 @@ function CommentItem({
   onReply,
   onDelete,
   isDeleting,
-  _isReply,
-  isReplying,
+  isReply,
+  _isReplying,
+  expandedReplies,
+  toggleReplies,
 }: CommentItemProps) {
   const { data: session } = authClient.useSession()
   const userName = (comment as Record<string, unknown>).userName as
@@ -271,75 +302,84 @@ function CommentItem({
   const userImage =
     ((comment as Record<string, unknown>).userImage as string | undefined) ||
     DEFAULT_AVATAR
-  const userRole = (comment as Record<string, unknown>).userRole
-  const userBanned = (comment as Record<string, unknown>).userBanned
   const isOwner = session?.user?.id === comment.userId
 
+  const hasReplies = comment.replies && comment.replies.length > 0
+  const isExpanded = expandedReplies.has(comment.id)
+
   return (
-    <div className="border border-border rounded p-4 bg-muted/30 hover:border-purple-500 dark:hover:border-purple-400 transition-colors">
-      <div className="flex items-start justify-between mb-3 gap-3">
-        <div className="flex items-start gap-3 flex-1">
-          <div className="w-8 h-8 rounded overflow-hidden bg-muted flex-shrink-0 border border-border flex items-center justify-center">
-            <img
-              src={userImage}
-              alt={displayName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                ;(e.target as HTMLImageElement).src = DEFAULT_AVATAR
-              }}
-            />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-mono font-semibold text-foreground">
-                {displayName}
-              </span>
-              {userRole && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-border bg-muted text-foreground">
-                  {userRole}
-                </span>
-              )}
-              {userBanned && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
-                  banned
-                </span>
-              )}
+    <div>
+      <div className="border border-border rounded-lg p-4 bg-card hover:border-primary/30 transition-colors">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-border bg-muted">
+              <img
+                src={userImage}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).src = DEFAULT_AVATAR
+                }}
+              />
             </div>
-            <span className="text-xs font-mono text-muted-foreground">
-              {formatDate(new Date(comment.createdAt))}
-            </span>
+            <div>
+              <p className="text-sm font-mono font-medium">{displayName}</p>
+              <p className="text-xs font-mono text-muted-foreground">
+                {formatDate(new Date(comment.createdAt))}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {!isReply && (
+              <button
+                type="button"
+                onClick={onReply}
+                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Reply"
+              >
+                <Reply className="w-4 h-4" />
+              </button>
+            )}
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => onDelete(comment.id)}
+                disabled={isDeleting}
+                className="p-1.5 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex items-center gap-2">
-          {!isReplying && (
-            <button
-              type="button"
-              onClick={onReply}
-              className="px-2 py-1 text-xs font-mono border border-border rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              reply
-            </button>
-          )}
+        {/* Content */}
+        <p className="text-sm font-mono text-foreground/90 whitespace-pre-wrap">
+          {comment.content}
+        </p>
 
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => onDelete(comment.id)}
-              disabled={isDeleting}
-              className="p-1.5 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Delete comment"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {/* Show replies toggle */}
+        {hasReplies && (
+          <button
+            type="button"
+            onClick={() => toggleReplies(comment.id)}
+            className="flex items-center gap-1 mt-3 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-3 h-3" />
+            ) : (
+              <ChevronDown className="w-3 h-3" />
+            )}
+            <span>
+              {comment.replies?.length}{" "}
+              {comment.replies?.length === 1 ? "reply" : "replies"}
+            </span>
+          </button>
+        )}
       </div>
-
-      <p className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
-        {comment.content}
-      </p>
     </div>
   )
 }

@@ -3,6 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
+    "build": "bun run --cwd apps/dotdev build",
+    "start": "bun run --cwd apps/dotdev start",
+    "dev": "bun run --cwd apps/dotdev dev",
     "style:check": "",
     "style:fix": ""
   },

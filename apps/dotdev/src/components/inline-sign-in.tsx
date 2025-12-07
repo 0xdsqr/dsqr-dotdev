@@ -118,7 +118,7 @@ export function InlineSignIn() {
             placeholder="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-transparent text-xs border-0 border-b-2 border-purple-600 dark:border-purple-400 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none px-1 py-0.5 w-32"
+            className="bg-transparent text-xs font-mono border-0 border-b-2 border-purple-600 dark:border-purple-400 text-foreground placeholder-muted-foreground focus:outline-none px-1 py-0.5 w-32"
             disabled={loading}
           />
           {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
@@ -128,7 +128,7 @@ export function InlineSignIn() {
           disabled={loading}
           variant="ghost"
           size="sm"
-          className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 h-auto p-0"
+          className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-transparent h-auto p-0"
         >
           {loading ? "..." : "→"}
         </Button>
@@ -155,27 +155,27 @@ export function InlineSignIn() {
           <InputOTPGroup className="gap-1">
             <InputOTPSlot
               index={0}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <InputOTPSlot
               index={1}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <InputOTPSlot
               index={2}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <InputOTPSlot
               index={3}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <InputOTPSlot
               index={4}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <InputOTPSlot
               index={5}
-              className="w-4 h-5 text-xs bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </InputOTPGroup>
         </InputOTP>
