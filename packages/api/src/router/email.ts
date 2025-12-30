@@ -1,7 +1,7 @@
 import { createSubscriberSchema, subscribers } from "@dsqr-dotdev/db/schema"
 import type { TRPCRouterRecord } from "@trpc/server"
-import { logger } from "../lib/logger.js"
-import { publicProcedure } from "../trpc.js"
+import { logger } from "../lib/logger"
+import { publicProcedure } from "../trpc"
 
 const log = logger
 

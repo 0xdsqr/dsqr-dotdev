@@ -9,13 +9,40 @@ import type { TRPCRouterRecord } from "@trpc/server"
 import { and, desc, eq, sql } from "drizzle-orm"
 import { z } from "zod/v4"
 
-import { protectedProcedure, publicProcedure } from "../trpc.js"
+import { protectedProcedure, publicProcedure } from "../trpc"
 
 const CDN_BASE = "https://cdn.dsqr.dev"
 
 export const postRouter = {
   all: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.db.select().from(posts).orderBy(desc(posts.date)).limit(10)
+    const postsWithCommentCount = await ctx.db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        category: posts.category,
+        description: posts.description,
+        published: posts.published,
+        createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
+        date: posts.date,
+        filePath: posts.filePath,
+        headerImageUrl: posts.headerImageUrl,
+        readingTimeMinutes: posts.readingTimeMinutes,
+        tags: posts.tags,
+        likesCount: posts.likesCount,
+        commentCount: sql<number>`(
+          SELECT COUNT(*)::int
+          FROM ${postCommentsView}
+          WHERE ${postCommentsView.postId} = ${posts.id}
+          AND ${postCommentsView.isActive} = true
+        )`.as("commentCount"),
+      })
+      .from(posts)
+      .orderBy(desc(posts.date))
+      .limit(10)
+
+    return postsWithCommentCount
   }),
 
   byId: publicProcedure

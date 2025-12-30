@@ -29,7 +29,7 @@ function PostList({ posts }: PostListProps) {
       url: `/posts/${post.slug}`,
       date: post.createdAt.toISOString(),
       likes: post.likesCount,
-      comments: 0, // Note: Comment count not included in post.all query
+      comments: (post as any).commentCount || 0,
     }))
 
   const sortedPosts = [...transformedPosts].sort((a, b) => {

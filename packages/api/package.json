@@ -28,8 +28,8 @@
   "dependencies": {
     "@dsqr-dotdev/auth": "workspace:*",
     "@dsqr-dotdev/db": "workspace:*",
+    "@dsqr-dotdev/tsconfig": "workspace:*",
     "@trpc/server": "^11.7.1",
-    "@tsconfig/node22": "^22.0.2",
     "drizzle-orm": "^0.44.7",
     "minio": "^7.1.4",
     "superjson": "^2.2.5",

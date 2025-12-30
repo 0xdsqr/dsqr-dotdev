@@ -1,8 +1,8 @@
-import { authRouter } from "./router/auth.js"
-import { emailRouter } from "./router/email.js"
-import { miscRouter } from "./router/misc.js"
-import { postRouter } from "./router/post.js"
-import { createTRPCRouter } from "./trpc.js"
+import { authRouter } from "./router/auth"
+import { emailRouter } from "./router/email"
+import { miscRouter } from "./router/misc"
+import { postRouter } from "./router/post"
+import { createTRPCRouter } from "./trpc"
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,

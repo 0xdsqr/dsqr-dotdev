@@ -22,7 +22,7 @@ const endpointConfig = parseEndpoint(
 )
 
 const minioClient = new Client({
-  endPoint: endpointConfig.host,
+  endPoint: endpointConfig.host!,
   port: endpointConfig.port,
   useSSL: process.env.MINIO_USE_SSL === "true",
   accessKey: process.env.MINIO_ACCESS_KEY || "",

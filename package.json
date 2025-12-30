@@ -3,24 +3,27 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "bun run --cwd apps/dotdev build",
-    "start": "bun run --cwd apps/dotdev start",
-    "dev": "bun run --cwd apps/dotdev dev",
-    "style:check": "",
-    "style:fix": ""
+    "all": "bun run clean && bun run build",
+    "build": "bun run --filter='@dsqr-dotdev/db' build && bun run --filter='@dsqr-dotdev/auth' build && bun run --filter='@dsqr-dotdev/api' build && bun run --filter='dotdev' build",
+    "clean": "rm -rf packages/*/dist packages/*/coverage apps/*/dist apps/*/.output",
+    "dev:dotdev": "bun run --filter='dotdev' dev",
+    "style:fix": "nix fmt .",
+    "sync:check": "syncpack list-mismatches",
+    "sync:fix": "syncpack fix-mismatches"
   },
   "workspaces": [
-    "apps/api",
     "apps/dotdev",
     "packages/api",
     "packages/auth",
-    "packages/db"
+    "packages/db",
+    "tooling/typescript"
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "rehype-pretty-code": "^0.14.1",
-    "shiki": "^3.14.0",
-    "typescript": "5.8.3"
+    "syncpack": "^13.0.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.0"
   },
   "private": true
 }

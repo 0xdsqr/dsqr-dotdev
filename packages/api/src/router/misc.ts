@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure } from "../trpc.js"
+import { createTRPCRouter, publicProcedure } from "../trpc"
 
 export const miscRouter = createTRPCRouter({
   gpgData: publicProcedure.query(async () => {

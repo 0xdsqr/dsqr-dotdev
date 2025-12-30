@@ -41,6 +41,7 @@ dist-ssr
 count.txt
 .env
 .nitro
-.tanstack
+.tanstackim
 result
 .direnv
+.claude

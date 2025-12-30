@@ -2,9 +2,9 @@ import { user } from "@dsqr-dotdev/db/auth-schema"
 import type { TRPCRouterRecord } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { z } from "zod/v4"
-import { logger } from "../lib/logger.js"
-import { uploadAvatarToMinIO } from "../lib/minio.js"
-import { protectedProcedure, publicProcedure } from "../trpc.js"
+import { logger } from "../lib/logger"
+import { uploadAvatarToMinIO } from "../lib/minio"
+import { protectedProcedure, publicProcedure } from "../trpc"
 
 const log = logger
 

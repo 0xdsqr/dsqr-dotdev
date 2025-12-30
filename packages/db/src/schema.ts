@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
-import { user } from "./auth-schema.js"
+import { user } from "./auth-schema"
 
 export const posts = pgTable(
   "posts",
@@ -208,4 +208,4 @@ export type NewPostComment = typeof postComments.$inferInsert
 export type Subscriber = typeof subscribers.$inferSelect
 export type NewSubscriber = typeof subscribers.$inferInsert
 
-export * from "./auth-schema.js"
+export * from "./auth-schema"

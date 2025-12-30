@@ -1,13 +1,22 @@
-{ pkgs, ... }:
 {
   projectRootFile = "flake.nix";
 
   programs.nixfmt.enable = true;
   programs.biome = {
     enable = true;
+    includes = [
+      "*.js"
+      "*.ts"
+      "*.jsx"
+      "*.tsx"
+      "*.json"
+    ];
+    excludes = [
+      "apps/dotdev/src/components/ui/*"
+      "*.gen.ts"
+    ];
     settings = {
       formatter = {
-        enabled = true;
         indentStyle = "space";
         indentWidth = 2;
       };
@@ -20,46 +29,22 @@
       linter = {
         rules = {
           suspicious = {
-            noArrayIndexKey = "warn";
+            noExplicitAny = "warn";
+            noArrayIndexKey = "off";
+            noDoubleEquals = "warn";
           };
           a11y = {
-            useAnchorContent = "warn";
+            useSemanticElements = "off";
+            useFocusableInteractive = "off";
+            useKeyWithClickEvents = "off";
+            useAriaPropsForRole = "off";
+            noRedundantRoles = "off";
+          };
+          security = {
+            noDangerouslySetInnerHtml = "off";
           };
         };
       };
     };
-  };
-
-  # Add prettier for CSS/Tailwind support
-  programs.prettier = {
-    enable = true;
-    includes = [ "**/*.css" ];
-    excludes = [
-      "**/src/styles.css" # Main styles file - don't auto-format due to custom font configs
-      "node_modules/**"
-      ".vite/**"
-      "dist/**"
-      "build/**"
-    ];
-  };
-
-  # Configure biome for JS/TS/JSON only, exclude CSS due to Tailwind syntax
-  settings.formatter.biome = {
-    includes = [
-      "**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"
-      "**/*.{json,jsonc}"
-    ];
-    excludes = [
-      "**/*.css" # Exclude all CSS files due to Tailwind syntax
-      "*.min.js"
-      "*.gen.ts"
-      "routeTree.gen.ts"
-      "node_modules/**"
-      ".vite/**"
-      "pkgs/*"
-      "dist/**"
-      "build/**"
-      "apps/dotdev/src/components/ui/**"
-    ];
   };
 }
