@@ -27,6 +27,7 @@ in
 
       # Language runtimes
       bun
+      nodejs_24
       starship
     ];
 
@@ -39,6 +40,7 @@ in
       fi
 
       echo "Bun version: $(bun --version)"
+      echo "Node version: $(node --version)"
       echo "🚀 Development shell activated, you can now compile things"
     '';
 
