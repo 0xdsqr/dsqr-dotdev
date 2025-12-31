@@ -2,14 +2,12 @@
 
 import { Link, useRouterState } from "@tanstack/react-router"
 import { motion } from "framer-motion"
-import { authClient } from "@/auth/client"
+import { InlineSignIn } from "@/components/inline-sign-in"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { UserDropdown } from "@/components/user-dropdown"
 
 function Nav() {
   const router = useRouterState()
   const pathname = router.location.pathname
-  const { data: session } = authClient.useSession()
 
   const getLinkClass = (active: boolean) => {
     const baseClass =
@@ -61,23 +59,7 @@ function Nav() {
           </motion.div>
 
           <div className="flex items-center gap-4">
-            {session?.user ? (
-              <UserDropdown
-                email={session.user.email}
-                username={session.user.name || session.user.email.split("@")[0]}
-                avatarUrl={session.user.image}
-                onSignOut={async () => {
-                  await authClient.signOut()
-                }}
-              />
-            ) : (
-              <Link
-                to="/sign-in"
-                className="text-xs font-mono text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 border-b border-dotted border-purple-600 dark:border-purple-400 transition-colors"
-              >
-                sign in
-              </Link>
-            )}
+            <InlineSignIn />
             <ThemeToggle />
           </div>
         </div>

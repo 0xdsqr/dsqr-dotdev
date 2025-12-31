@@ -17,7 +17,7 @@ const otpSchema = z.string().length(6, "OTP must be 6 digits")
 
 export function InlineSignIn() {
   const { data: session, isPending } = authClient.useSession()
-  const [step, setStep] = useState<"email" | "otp">("email")
+  const [step, setStep] = useState<"idle" | "email" | "otp">("idle")
   const [email, setEmail] = useState("")
   const [otp, setOtp] = useState("")
   const [loading, setLoading] = useState(false)
@@ -81,7 +81,7 @@ export function InlineSignIn() {
 
     setOtp("")
     setEmail("")
-    setStep("email")
+    setStep("idle")
     setLoading(false)
   }
 
@@ -93,8 +93,8 @@ export function InlineSignIn() {
     return (
       <UserDropdown
         email={session.user.email || ""}
-        username={session.user.name}
-        avatarUrl={session.user.image}
+        username={session.user.name ?? undefined}
+        avatarUrl={session.user.image ?? undefined}
         onSignOut={async () => {
           await authClient.signOut()
         }}
@@ -102,15 +102,21 @@ export function InlineSignIn() {
     )
   }
 
+  if (step === "idle") {
+    return (
+      <button
+        type="button"
+        onClick={() => setStep("email")}
+        className="text-xs font-mono text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 border-b border-dotted border-purple-600 dark:border-purple-400 transition-colors"
+      >
+        sign in
+      </button>
+    )
+  }
+
   if (step === "email") {
     return (
       <form onSubmit={handleSendOTP} className="flex items-center gap-2">
-        <label
-          htmlFor="email-input"
-          className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400"
-        >
-          sign in
-        </label>
         <div className="flex flex-col">
           <input
             id="email-input"
@@ -132,6 +138,19 @@ export function InlineSignIn() {
         >
           {loading ? "..." : "→"}
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setStep("idle")
+            setEmail("")
+            setError("")
+          }}
+          className="text-xs text-muted-foreground hover:text-foreground h-auto p-0"
+        >
+          ×
+        </Button>
       </form>
     )
   }
@@ -140,7 +159,7 @@ export function InlineSignIn() {
     <form onSubmit={handleVerifyOTP} className="flex items-center gap-2">
       <label
         htmlFor="otp-input"
-        className="text-purple-600 dark:text-purple-400 text-xs font-mono border-b-2 border-dotted border-purple-600 dark:border-purple-400"
+        className="text-purple-600 dark:text-purple-400 text-xs font-mono"
       >
         otp
       </label>
@@ -186,7 +205,7 @@ export function InlineSignIn() {
         disabled={loading}
         variant="ghost"
         size="sm"
-        className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 h-auto p-0"
+        className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-transparent h-auto p-0"
       >
         {loading ? "..." : "→"}
       </Button>
@@ -195,13 +214,13 @@ export function InlineSignIn() {
         variant="ghost"
         size="sm"
         onClick={() => {
-          setStep("email")
+          setStep("idle")
           setOtp("")
           setError("")
         }}
-        className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 h-auto p-0"
+        className="text-xs text-muted-foreground hover:text-foreground h-auto p-0"
       >
-        back
+        ×
       </Button>
     </form>
   )

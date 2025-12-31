@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut } from "lucide-react"
+import { LogOut, Settings } from "lucide-react"
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SettingsModal } from "./settings-modal"
 
 interface UserDropdownProps {
   email: string
@@ -25,6 +26,7 @@ export function UserDropdown({
   onSignOut,
 }: UserDropdownProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleSignOut = async () => {
     setIsLoading(true)
@@ -80,6 +82,13 @@ export function UserDropdown({
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          className="text-xs"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Settings className="mr-2 h-3 w-3" />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
           className="text-xs text-rose-600 dark:text-rose-400"
           onClick={handleSignOut}
           disabled={isLoading}
@@ -88,6 +97,14 @@ export function UserDropdown({
           {isLoading ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
+
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        email={email}
+        username={username}
+        avatarUrl={avatarUrl}
+      />
     </DropdownMenu>
   )
 }

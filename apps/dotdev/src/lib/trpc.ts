@@ -3,6 +3,15 @@ import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import SuperJSON from "superjson"
 
+function getBaseUrl() {
+  // Browser - use relative URL
+  if (typeof window !== "undefined") {
+    return ""
+  }
+  // Server - use env var or fallback
+  return process.env.BASE_URL || "http://localhost:3000"
+}
+
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     loggerLink({
@@ -12,7 +21,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
     }),
     httpBatchLink({
       transformer: SuperJSON,
-      url: "http://localhost:3000" + "/api/trpc",
+      url: `${getBaseUrl()}/api/trpc`,
       headers() {
         const headers = new Headers()
         headers.set("x-trpc-source", "dsqr-dotdev-react")

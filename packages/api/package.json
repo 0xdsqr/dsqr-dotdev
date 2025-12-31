@@ -26,12 +26,12 @@
     "dist"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
     "@dsqr-dotdev/auth": "workspace:*",
     "@dsqr-dotdev/db": "workspace:*",
     "@dsqr-dotdev/tsconfig": "workspace:*",
     "@trpc/server": "^11.7.1",
     "drizzle-orm": "^0.44.7",
-    "minio": "^7.1.4",
     "superjson": "^2.2.5",
     "zod": "^4.1.12"
   }

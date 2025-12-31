@@ -3,9 +3,13 @@
 import { Camera, Loader2, X } from "lucide-react"
 import type React from "react"
 import { useRef, useState } from "react"
-import { authClient } from "@/auth/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -107,8 +111,7 @@ export function SettingsModal({
         image: avatarUrl || undefined,
       })
 
-      await authClient.refetch()
-
+      // Session will be refreshed automatically by useSession hook
       onOpenChange(false)
     } catch (_error) {
       alert("Failed to save profile")
@@ -131,6 +134,10 @@ export function SettingsModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl gap-0 p-0">
+        <DialogTitle className="sr-only">Profile Settings</DialogTitle>
+        <DialogDescription className="sr-only">
+          Manage your profile picture, username, and account settings
+        </DialogDescription>
         <div className="flex flex-col h-screen max-h-[80vh]">
           <div className="flex items-center justify-between border-b border-border p-6">
             <div>

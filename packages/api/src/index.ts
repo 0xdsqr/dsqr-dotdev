@@ -18,6 +18,7 @@ type RouterInputs = inferRouterInputs<AppRouter>
  */
 type RouterOutputs = inferRouterOutputs<AppRouter>
 
+export { getAvatar } from "./lib/s3"
 export { type AppRouter, appRouter } from "./root"
 export { createTRPCContext } from "./trpc"
 export type { RouterInputs, RouterOutputs }

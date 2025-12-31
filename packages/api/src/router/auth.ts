@@ -3,7 +3,7 @@ import type { TRPCRouterRecord } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { z } from "zod/v4"
 import { logger } from "../lib/logger"
-import { uploadAvatarToMinIO } from "../lib/minio"
+import { uploadAvatar } from "../lib/s3"
 import { protectedProcedure, publicProcedure } from "../trpc"
 
 const log = logger
@@ -23,7 +23,14 @@ export const authRouter = {
     .input(
       z.object({
         name: z.string().min(1).max(255).optional(),
-        image: z.string().url().optional(),
+        // Accept relative paths (e.g., /api/avatar/...) or full URLs
+        image: z
+          .string()
+          .refine(
+            (val) => val.startsWith("/") || val.startsWith("http"),
+            "Image must be a relative path or URL",
+          )
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -73,7 +80,7 @@ export const authRouter = {
       }
 
       try {
-        const cdnUrl = await uploadAvatarToMinIO(
+        const cdnUrl = await uploadAvatar(
           userId,
           buffer,
           input.fileName,
