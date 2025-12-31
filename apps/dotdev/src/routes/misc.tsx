@@ -1,12 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { lazy, Suspense } from "react"
-import { BlogPostHeader } from "../components/blog-post-header"
-
-const BlogPostViewer = lazy(() =>
-  import("../components/blog-post-viewer").then((mod) => ({
-    default: mod.BlogPostViewer,
-  })),
-)
+import { Check, Copy } from "lucide-react"
+import { useState } from "react"
 
 export const Route = createFileRoute("/misc")({
   loader: async ({ context }) => {
@@ -17,42 +11,65 @@ export const Route = createFileRoute("/misc")({
   component: MiscPage,
 })
 
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="absolute top-3 right-3 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <Check className="w-4 h-4 text-green-500" />
+      ) : (
+        <Copy className="w-4 h-4 text-muted-foreground" />
+      )}
+    </button>
+  )
+}
+
 function MiscPage() {
   const { gpgKey, gpgFingerprint } = Route.useLoaderData() as {
     gpgKey: string
     gpgFingerprint: string
   }
 
-  const content = `\`\`\`
-${gpgKey}
-\`\`\`
-
-## Fingerprint
-
-\`\`\`
-${gpgFingerprint}
-\`\`\``
-
   return (
-    <div className="py-8 max-w-3xl mx-auto relative z-10">
-      <div className="space-y-3">
-        <BlogPostHeader
-          title="GPG Key"
-          date={new Date()}
-          category="misc"
-          postId="gpg-key"
-          readingTimeMinutes={1}
-          headerImageUrl=""
-          tags={[]}
-          likes={0}
-          commentCount={0}
-        />
-        <Suspense
-          fallback={<div className="text-muted-foreground">Loading...</div>}
-        >
-          <BlogPostViewer content={content} />
-        </Suspense>
-      </div>
+    <div className="py-12 max-w-4xl mx-auto px-4">
+      <h1 className="text-3xl font-bold mb-2">Misc</h1>
+      <p className="text-muted-foreground mb-12">
+        Random things that don't fit elsewhere.
+      </p>
+
+      <section className="space-y-8">
+        <div>
+          <h2 className="text-xl font-semibold mb-4 font-mono">GPG Key</h2>
+          <div className="relative">
+            <CopyButton value={gpgKey} />
+            <pre className="p-4 pr-14 rounded-lg bg-card border border-border overflow-x-auto text-sm font-mono">
+              {gpgKey}
+            </pre>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-4 font-mono">Fingerprint</h2>
+          <div className="relative">
+            <CopyButton value={gpgFingerprint} />
+            <pre className="p-4 pr-14 rounded-lg bg-card border border-border overflow-x-auto text-sm font-mono">
+              {gpgFingerprint}
+            </pre>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

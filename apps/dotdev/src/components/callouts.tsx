@@ -132,6 +132,10 @@ export function Caution({ children, className }: CalloutProps) {
   )
 }
 
-export function MoreInfo() {
-  return null
+export function MoreInfo({ children, className }: CalloutProps) {
+  return (
+    <Callout variant="moreinfo" className={className}>
+      {children}
+    </Callout>
+  )
 }

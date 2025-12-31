@@ -8,107 +8,107 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root"
-import { Route as AboutRouteImport } from "./routes/about"
-import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth.$"
-import { Route as ApiTrpcSplatRouteImport } from "./routes/api/trpc.$"
-import { Route as IndexRouteImport } from "./routes/index"
-import { Route as MiscRouteImport } from "./routes/misc"
-import { Route as PostsSlugRouteImport } from "./routes/posts/$slug"
-import { Route as PostsIndexRouteImport } from "./routes/posts/index"
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as MiscRouteImport } from './routes/misc'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as PostsIndexRouteImport } from './routes/posts/index'
+import { Route as PostsSlugRouteImport } from './routes/posts/$slug'
+import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 
 const MiscRoute = MiscRouteImport.update({
-  id: "/misc",
-  path: "/misc",
+  id: '/misc',
+  path: '/misc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
-  id: "/about",
-  path: "/about",
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIndexRoute = PostsIndexRouteImport.update({
-  id: "/posts/",
-  path: "/posts/",
+  id: '/posts/',
+  path: '/posts/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsSlugRoute = PostsSlugRouteImport.update({
-  id: "/posts/$slug",
-  path: "/posts/$slug",
+  id: '/posts/$slug',
+  path: '/posts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
-  id: "/api/trpc/$",
-  path: "/api/trpc/$",
+  id: '/api/trpc/$',
+  path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: "/api/auth/$",
-  path: "/api/auth/$",
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute
-  "/about": typeof AboutRoute
-  "/misc": typeof MiscRoute
-  "/posts/$slug": typeof PostsSlugRoute
-  "/posts": typeof PostsIndexRoute
-  "/api/auth/$": typeof ApiAuthSplatRoute
-  "/api/trpc/$": typeof ApiTrpcSplatRoute
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/misc': typeof MiscRoute
+  '/posts/$slug': typeof PostsSlugRoute
+  '/posts': typeof PostsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute
-  "/about": typeof AboutRoute
-  "/misc": typeof MiscRoute
-  "/posts/$slug": typeof PostsSlugRoute
-  "/posts": typeof PostsIndexRoute
-  "/api/auth/$": typeof ApiAuthSplatRoute
-  "/api/trpc/$": typeof ApiTrpcSplatRoute
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/misc': typeof MiscRoute
+  '/posts/$slug': typeof PostsSlugRoute
+  '/posts': typeof PostsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  "/": typeof IndexRoute
-  "/about": typeof AboutRoute
-  "/misc": typeof MiscRoute
-  "/posts/$slug": typeof PostsSlugRoute
-  "/posts/": typeof PostsIndexRoute
-  "/api/auth/$": typeof ApiAuthSplatRoute
-  "/api/trpc/$": typeof ApiTrpcSplatRoute
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/misc': typeof MiscRoute
+  '/posts/$slug': typeof PostsSlugRoute
+  '/posts/': typeof PostsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/about"
-    | "/misc"
-    | "/posts/$slug"
-    | "/posts"
-    | "/api/auth/$"
-    | "/api/trpc/$"
+    | '/'
+    | '/about'
+    | '/misc'
+    | '/posts/$slug'
+    | '/posts'
+    | '/api/auth/$'
+    | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/about"
-    | "/misc"
-    | "/posts/$slug"
-    | "/posts"
-    | "/api/auth/$"
-    | "/api/trpc/$"
+    | '/'
+    | '/about'
+    | '/misc'
+    | '/posts/$slug'
+    | '/posts'
+    | '/api/auth/$'
+    | '/api/trpc/$'
   id:
-    | "__root__"
-    | "/"
-    | "/about"
-    | "/misc"
-    | "/posts/$slug"
-    | "/posts/"
-    | "/api/auth/$"
-    | "/api/trpc/$"
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/misc'
+    | '/posts/$slug'
+    | '/posts/'
+    | '/api/auth/$'
+    | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -121,54 +121,54 @@ export interface RootRouteChildren {
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/misc": {
-      id: "/misc"
-      path: "/misc"
-      fullPath: "/misc"
+    '/misc': {
+      id: '/misc'
+      path: '/misc'
+      fullPath: '/misc'
       preLoaderRoute: typeof MiscRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/about": {
-      id: "/about"
-      path: "/about"
-      fullPath: "/about"
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/": {
-      id: "/"
-      path: "/"
-      fullPath: "/"
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/posts/": {
-      id: "/posts/"
-      path: "/posts"
-      fullPath: "/posts"
+    '/posts/': {
+      id: '/posts/'
+      path: '/posts'
+      fullPath: '/posts'
       preLoaderRoute: typeof PostsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/posts/$slug": {
-      id: "/posts/$slug"
-      path: "/posts/$slug"
-      fullPath: "/posts/$slug"
+    '/posts/$slug': {
+      id: '/posts/$slug'
+      path: '/posts/$slug'
+      fullPath: '/posts/$slug'
       preLoaderRoute: typeof PostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/api/trpc/$": {
-      id: "/api/trpc/$"
-      path: "/api/trpc/$"
-      fullPath: "/api/trpc/$"
+    '/api/trpc/$': {
+      id: '/api/trpc/$'
+      path: '/api/trpc/$'
+      fullPath: '/api/trpc/$'
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/api/auth/$": {
-      id: "/api/auth/$"
-      path: "/api/auth/$"
-      fullPath: "/api/auth/$"
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -188,10 +188,9 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
-import type { createStart } from "@tanstack/react-start"
-import type { getRouter } from "./router.tsx"
-
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>

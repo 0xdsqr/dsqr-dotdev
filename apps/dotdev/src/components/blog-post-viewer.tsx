@@ -13,12 +13,13 @@ interface BlogPostViewerProps {
 }
 
 const calloutComponents = {
-  Important,
-  Note,
-  Tip,
-  Warning,
-  Caution,
-  MoreInfo,
+  important: Important,
+  note: Note,
+  tip: Tip,
+  warning: Warning,
+  caution: Caution,
+  moreinfo: MoreInfo,
+  purple: MoreInfo, // purple maps to MoreInfo
 }
 
 type CalloutType = keyof typeof calloutComponents
@@ -28,9 +29,11 @@ function processCallouts(content: string) {
     type: "markdown" | "callout"
     content: string
     calloutType?: CalloutType
+    label?: string
   }> = []
+  // Match :::type or :::type[label] followed by content and :::
   const calloutRegex =
-    /<(Important|Note|Tip|Warning|Caution|MoreInfo)>([\s\S]*?)<\/\1>/g
+    /^:::(note|tip|warning|important|caution|moreinfo|purple)(?:\[([^\]]*)\])?\s*\n([\s\S]*?)^:::/gm
 
   let lastIndex = 0
 
@@ -46,8 +49,9 @@ function processCallouts(content: string) {
 
     parts.push({
       type: "callout",
-      content: match[2],
-      calloutType: match[1] as CalloutType,
+      content: match[3].trim(),
+      calloutType: match[1].toLowerCase() as CalloutType,
+      label: match[2],
     })
 
     lastIndex = calloutRegex.lastIndex
@@ -64,8 +68,23 @@ function processCallouts(content: string) {
   return parts.length > 0 ? parts : [{ type: "markdown" as const, content }]
 }
 
+function stripFrontmatterAndTitle(content: string): string {
+  // Remove YAML frontmatter
+  let processed = content.replace(/^---[\s\S]*?---\s*\n?/, "")
+  // Remove first h1 if it exists (since BlogPostHeader shows the title)
+  processed = processed.replace(/^#\s+[^\n]+\n+/, "")
+  return processed.trim()
+}
+
 export function BlogPostViewer({ content }: BlogPostViewerProps) {
-  const parts = useMemo(() => processCallouts(content), [content])
+  const processedContent = useMemo(
+    () => stripFrontmatterAndTitle(content),
+    [content],
+  )
+  const parts = useMemo(
+    () => processCallouts(processedContent),
+    [processedContent],
+  )
 
   return (
     <article className="w-full font-sans">

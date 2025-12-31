@@ -6,82 +6,101 @@ import {
   Award,
   Briefcase,
   Cloud,
-  Code2,
   ExternalLink,
   Github,
   GraduationCap,
-  Heart,
   Linkedin,
   Mail,
   MapPin,
   Terminal,
 } from "lucide-react"
 
-// Mock data - fill these in!
 const profile = {
   name: "David Dennis",
   handle: "0xdsqr",
-  title: "Vice President - Software Engineer",
+  title: "Vice President, Software Engineer",
   company: "Goldman Sachs",
-  team: "Cloud Platform",
   location: "Dallas, Texas",
-  bio: "Dad of one. Building cloud platforms and developer tools. Interested in distributed systems, serverless architectures, and making infrastructure feel like magic.",
+  summary:
+    "10+ years of experience designing and building large-scale cloud platforms and developer tooling. Personally architected and built Reference Stack, the firm's Internal Developer Platform powering its cloud migration strategy. Deep hands-on expertise in AWS, TypeScript, Go, Nix, and developer workflows.",
   image: "/me.jpeg",
   links: {
     github: "https://github.com/0xdsqr",
     linkedin: "https://linkedin.com/in/davedennis93",
     email: "mailto:hello@dsqr.dev",
-    website: "https://dsqr.dev",
   },
 }
-
-const skills = [
-  { name: "TypeScript", category: "language" },
-  { name: "AWS", category: "cloud" },
-  { name: "Distributed Systems", category: "architecture" },
-  { name: "Serverless", category: "architecture" },
-  { name: "Nix", category: "tooling" },
-  { name: "DynamoDB", category: "database" },
-  { name: "CDK", category: "infrastructure" },
-  { name: "Node.js", category: "runtime" },
-]
 
 const experience = [
   {
     company: "Goldman Sachs",
+    location: "Dallas, TX",
+    logo: "GS",
     roles: [
       {
-        title: "VP - Software Engineer, Cloud Platform",
-        period: "Nov 2023 - Present",
-        description:
-          "Enabling others to design & build cool stuff in the cloud.",
-      },
-      {
-        title: "VP - Software Engineer, GS Innovation Center",
-        period: "Sep 2022 - Nov 2023",
-        description: "1x patent for cloud platform architecture.",
+        title: "Vice President, Software Engineer",
+        team: "Cloud Platform",
+        period: "Sep 2022 - Present",
+        highlights: [
+          "Architected and built Reference Stack, a TypeScript library of cloud patterns and constructs with a declarative YAML interface",
+          "Tech lead for team of 5 engineers; drove adoption from 0% to 33% of firm applications in year one",
+          "Built database migration tooling with custom DMS solutions for Sybase/DB2 to Aurora/DynamoDB migrations",
+          "Built reusable CI/CD library for GitLab enabling standardized pipelines for npm, Go, and container builds",
+          "Contributed upstream to AWS CDK, Nix, and other open source projects",
+          "Architected cloud incubation system for validating new cloud-native platforms — now patent-pending",
+        ],
       },
     ],
   },
   {
     company: "Capital Group",
+    location: "Irvine, CA",
+    logo: "CG",
     roles: [
       {
         title: "Software Engineer III",
+        team: "Tech Lead",
         period: "Sep 2020 - Sep 2022",
-        description:
-          "Built and scaled cloud platforms powering retirement plan services.",
+        highlights: [
+          "Built and scaled cloud platforms powering retirement plan management for Advisors, Sponsors, and TPAs",
+          "Led architecture and development of internal back-office systems",
+          "Led migration from legacy monolith to fully distributed microservices architecture",
+        ],
+      },
+    ],
+  },
+  {
+    company: "EY → KPMG",
+    location: "Irvine, CA → Denver, CO",
+    logo: "EY",
+    roles: [
+      {
+        title: "Senior Associate → Associate",
+        team: "Tech Lead",
+        period: "Nov 2018 - Sep 2020",
+        highlights: [
+          "Led development team of 5 onshore + 4 offshore engineers for Capital Group Private Client Services",
+          "Built Account Onboarding, Asset Allocation, Cash/Asset Movement workflows",
+          "Processed $100M+ daily with 99.99% production success rate",
+          "Converted to direct hire at Capital Group based on performance",
+        ],
       },
     ],
   },
   {
     company: "Viasat",
+    location: "Denver, CO",
+    logo: "VS",
     roles: [
       {
         title: "Software Engineer",
+        team: "Back Office",
         period: "May 2017 - Nov 2018",
-        description:
-          "Built cool stuff in the cloud. Also built cool stuff not in the cloud.",
+        highlights: [
+          "Core team member standing up initial AWS cloud infrastructure",
+          "Built VPC, subnets, EC2, Docker, load balancing, API gateways with Terraform",
+          "Developed web services using Java, Python, JAX-WS, WebLogic, Tomcat",
+        ],
       },
     ],
   },
@@ -91,14 +110,14 @@ const projects = [
   {
     name: "durable-lambda",
     description:
-      "Actor-based state management for AWS Lambda. Single-instance guarantees, distributed locking, and persistent state.",
+      "Actor-based state management for AWS Lambda with single-instance guarantees and distributed locking.",
     link: "https://github.com/0xdsqr/durable-lambda",
     tags: ["AWS", "TypeScript", "DynamoDB"],
   },
   {
     name: "dodo",
     description:
-      "A modern DynamoDB toolkit built on functional patterns, Zod validation, and clean, type-safe CRUD.",
+      "A modern DynamoDB toolkit built on functional patterns and Zod validation.",
     link: "https://github.com/0xdsqr/dodo",
     tags: ["TypeScript", "DynamoDB", "Zod"],
   },
@@ -111,43 +130,42 @@ const projects = [
   },
 ]
 
+const patent = {
+  title: "Cloud Incubation and Deployment Platform",
+  number: "US 20250348299",
+}
+
 const certifications = [
-  {
-    name: "AWS Solutions Architect – Professional",
-    issuer: "AWS",
-    year: "2023",
-  },
-  { name: "AWS DevOps Engineer – Professional", issuer: "AWS", year: "2023" },
+  { name: "AWS Solutions Architect – Professional" },
+  { name: "AWS DevOps Engineer – Professional" },
 ]
 
-const funFacts = [
-  "Became a dad and immediately made a parenthood exception joke",
-  "Built a TCG card value checker during paternity leave",
-  "Thinks Nix can serve web content (and proved it)",
-]
-
-const categoryColors: Record<string, string> = {
-  language:
-    "text-teal-600 dark:text-teal-400 border-teal-600 dark:border-teal-400",
-  cloud:
-    "text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400",
-  architecture:
-    "text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400",
-  tooling:
-    "text-rose-600 dark:text-rose-400 border-rose-600 dark:border-rose-400",
-  database:
-    "text-amber-600 dark:text-amber-400 border-amber-600 dark:border-amber-400",
-  infrastructure:
-    "text-cyan-600 dark:text-cyan-400 border-cyan-600 dark:border-cyan-400",
-  runtime:
-    "text-purple-600 dark:text-purple-400 border-purple-600 dark:border-purple-400",
+const skills = {
+  languages: ["TypeScript", "Go", "Java", "Python"],
+  cloud: [
+    "Lambda",
+    "ECS",
+    "EC2",
+    "DynamoDB",
+    "Aurora",
+    "S3",
+    "EventBridge",
+    "Step Functions",
+    "IAM",
+    "DMS",
+    "CDK",
+  ],
+  frameworks: ["Hono", "Gin", "Spring", "JAX-RS", "Bun"],
+  infrastructure: ["CDK", "Nix", "Docker", "Cloudflare"],
+  cicd: ["Gradle", "GitLab CI", "GitHub Actions"],
+  frontend: ["React", "Solid"],
 }
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { staggerChildren: 0.08 },
   },
 }
 
@@ -159,153 +177,125 @@ const item = {
 function AboutPage() {
   return (
     <motion.div
-      className="space-y-12 font-mono"
+      className="space-y-10 font-mono max-w-3xl mx-auto"
       variants={container}
       initial="hidden"
       animate="show"
     >
       {/* Hero Section */}
-      <motion.section
-        variants={item}
-        className="flex flex-col md:flex-row gap-8 items-start"
-      >
-        {/* Polaroid-style photo */}
-        <div className="group">
-          <div className="bg-card p-3 pb-12 border border-border rounded-sm shadow-sm rotate-[-2deg] hover:rotate-0 transition-transform duration-300">
-            <div className="w-32 h-32 md:w-40 md:h-40 overflow-hidden bg-muted">
-              <img
-                src="/me.jpeg"
-                alt={profile.name}
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-3 text-center">
-              probably studying or
-              <br />
-              playing with my kid
-            </p>
+      <motion.section variants={item} className="flex gap-6 items-start">
+        <div className="flex-shrink-0">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-border">
+            <img
+              src={profile.image}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
 
-        {/* Info */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-3">
           <div>
-            <h1 className="text-2xl md:text-3xl font-medium">{profile.name}</h1>
-            <p className="text-muted-foreground text-sm">@{profile.handle}</p>
+            <h1 className="text-xl md:text-2xl font-semibold">
+              {profile.name}
+            </h1>
+            <p className="text-sm text-muted-foreground">@{profile.handle}</p>
           </div>
 
-          <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm">
-            <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
-              <Briefcase className="w-4 h-4" />
-              <span className="border-b-2 border-dotted border-indigo-600 dark:border-indigo-400">
-                {profile.title}
-              </span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className="flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>{profile.title}</span>
             </span>
-            <span className="text-muted-foreground">at</span>
-            <span className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400">
-              <Cloud className="w-4 h-4" />
-              <span className="border-b-2 border-dotted border-teal-600 dark:border-teal-400">
-                {profile.company}
-              </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1.5">
+              <Cloud className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>{profile.company}</span>
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
+            <MapPin className="w-3.5 h-3.5" />
             <span>{profile.location}</span>
           </div>
 
-          <p className="text-sm leading-relaxed max-w-xl">{profile.bio}</p>
-
-          {/* Social Links */}
-          <div className="flex items-center gap-4 pt-2">
+          <div className="flex items-center gap-3 pt-1">
             <a
               href={profile.links.github}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="GitHub"
             >
-              <Github className="w-5 h-5" />
+              <Github className="w-4 h-4" />
             </a>
             <a
               href={profile.links.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="LinkedIn"
             >
-              <Linkedin className="w-5 h-5" />
+              <Linkedin className="w-4 h-4" />
             </a>
             <a
               href={profile.links.email}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Email"
             >
-              <Mail className="w-5 h-5" />
+              <Mail className="w-4 h-4" />
             </a>
           </div>
         </div>
       </motion.section>
 
-      {/* Skills */}
-      <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Code2 className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Skills</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill) => (
-            <span
-              key={skill.name}
-              className={`text-xs px-2.5 py-1 rounded-sm border-b-2 border-dotted ${
-                categoryColors[skill.category] ||
-                "text-foreground border-border"
-              }`}
-            >
-              {skill.name}
-            </span>
-          ))}
-        </div>
+      {/* Summary */}
+      <motion.section variants={item}>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {profile.summary}
+        </p>
       </motion.section>
 
-      {/* Experience */}
+      {/* Experience - LinkedIn Style */}
       <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Briefcase className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Experience</h2>
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <Briefcase className="w-4 h-4" />
+          <h2 className="font-semibold">Experience</h2>
         </div>
+
         <div className="space-y-6">
-          {experience.map((exp, i) => (
-            <div key={exp.company} className="relative">
-              {/* Timeline line */}
-              {i < experience.length - 1 && (
-                <div className="absolute left-[5px] top-8 bottom-0 w-px bg-border" />
-              )}
+          {experience.map((exp) => (
+            <div key={exp.company} className="flex gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                {exp.logo}
+              </div>
 
-              <div className="flex gap-4">
-                {/* Timeline dot */}
-                <div className="w-3 h-3 rounded-full bg-muted-foreground/30 border-2 border-border mt-1.5 flex-shrink-0" />
+              <div className="flex-1 space-y-1">
+                <div className="flex items-start justify-between">
+                  <h3 className="font-medium">{exp.company}</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {exp.location}
+                  </span>
+                </div>
 
-                <div className="flex-1 space-y-3">
-                  <h3 className="font-medium text-emerald-600 dark:text-emerald-400">
-                    {exp.company}
-                  </h3>
-                  {exp.roles.map((role) => (
-                    <div
-                      key={role.title}
-                      className="border border-border rounded-lg p-4 space-y-1"
-                    >
-                      <p className="text-sm font-medium">{role.title}</p>
+                {exp.roles.map((role) => (
+                  <div key={role.title} className="space-y-2">
+                    <div>
+                      <p className="text-sm">{role.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {role.period}
-                      </p>
-                      <p className="text-sm text-muted-foreground pt-1">
-                        {role.description}
+                        {role.team} · {role.period}
                       </p>
                     </div>
-                  ))}
-                </div>
+                    <ul className="space-y-1">
+                      {role.highlights.map((highlight) => (
+                        <li
+                          key={highlight}
+                          className="text-xs text-muted-foreground flex gap-2"
+                        >
+                          <span className="text-primary mt-1">•</span>
+                          <span>{highlight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
@@ -314,121 +304,156 @@ function AboutPage() {
 
       {/* Projects */}
       <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Projects</h2>
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <Terminal className="w-4 h-4" />
+          <h2 className="font-semibold">Projects</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+
+        <div className="grid gap-3">
           {projects.map((project) => (
             <a
               key={project.name}
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block border border-border rounded-lg p-4 hover:border-muted-foreground/50 transition-colors"
+              className="group flex items-start justify-between gap-4 p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors"
             >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-medium text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium group-hover:text-primary transition-colors">
                   {project.name}
                 </h3>
-                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs text-muted-foreground">
+                  {project.description}
+                </p>
+                <div className="flex gap-2 pt-1">
+                  {project.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                {project.description}
-              </p>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {project.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10px] px-1.5 py-0.5 bg-muted rounded-sm text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
             </a>
-          ))}
-        </div>
-      </motion.section>
-
-      {/* Certifications */}
-      <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Certifications</h2>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {certifications.map((cert) => (
-            <div
-              key={cert.name}
-              className="border border-border rounded-lg px-4 py-3 text-sm"
-            >
-              <p className="font-medium">{cert.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {cert.issuer} · {cert.year}
-              </p>
-            </div>
           ))}
         </div>
       </motion.section>
 
       {/* Education */}
       <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Education</h2>
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <GraduationCap className="w-4 h-4" />
+          <h2 className="font-semibold">Education</h2>
         </div>
-        <div className="border border-border rounded-lg p-4">
-          <p className="font-medium">Colorado State University</p>
-          <p className="text-sm text-muted-foreground">
-            {"Bachelor's Degree, Computer Science"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">2013 – 2018</p>
+
+        <div className="flex gap-4">
+          <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+            CSU
+          </div>
+          <div>
+            <h3 className="font-medium">Colorado State University</h3>
+            <p className="text-sm text-muted-foreground">
+              Bachelor of Science, Computer Science
+            </p>
+            <p className="text-xs text-muted-foreground">Fort Collins, CO</p>
+          </div>
         </div>
       </motion.section>
 
-      {/* Fun Section */}
+      {/* Certifications & Patent */}
       <motion.section variants={item} className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Heart className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Fun Facts</h2>
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <Award className="w-4 h-4" />
+          <h2 className="font-semibold">Licenses & Certifications</h2>
         </div>
-        <ul className="space-y-2">
-          {funFacts.map((fact) => (
-            <li
-              key={fact}
-              className="flex items-start gap-2 text-sm text-muted-foreground"
-            >
-              <span className="text-rose-600 dark:text-rose-400">→</span>
-              <span>{fact}</span>
-            </li>
+
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+              USPTO
+            </div>
+            <div>
+              <h3 className="font-medium text-sm">{patent.title}</h3>
+              <p className="text-xs text-muted-foreground">
+                Patent Pending · {patent.number}
+              </p>
+            </div>
+          </div>
+
+          {certifications.map((cert) => (
+            <div key={cert.name} className="flex gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                AWS
+              </div>
+              <div>
+                <h3 className="font-medium text-sm">{cert.name}</h3>
+                <p className="text-xs text-muted-foreground">
+                  Amazon Web Services
+                </p>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </motion.section>
 
-      {/* Footer CTA */}
+      {/* Skills */}
+      <motion.section variants={item} className="space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <h2 className="font-semibold">Skills</h2>
+        </div>
+
+        <div className="space-y-3 text-sm">
+          <div>
+            <span className="text-muted-foreground">Languages: </span>
+            <span>{skills.languages.join(", ")}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Cloud (AWS): </span>
+            <span>{skills.cloud.join(", ")}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Frameworks: </span>
+            <span>{skills.frameworks.join(", ")}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Infrastructure: </span>
+            <span>{skills.infrastructure.join(", ")}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Build / CI/CD: </span>
+            <span>{skills.cicd.join(", ")}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Frontend: </span>
+            <span>{skills.frontend.join(", ")}</span>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Footer */}
       <motion.section
         variants={item}
-        className="border-t border-border pt-8 text-center space-y-3"
+        className="border-t border-border pt-6 text-center space-y-2"
       >
-        <p className="text-sm text-muted-foreground">
-          {
-            "Want to chat? I'm always down to talk cloud, distributed systems, or dad jokes."
-          }
+        <p className="text-xs text-muted-foreground">
+          Want to chat about cloud, distributed systems, or developer tooling?
         </p>
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-3 text-xs">
           <Link
-            to="/"
-            className="text-sm text-purple-600 dark:text-purple-400 border-b-2 border-dotted border-purple-600 dark:border-purple-400 hover:opacity-80 transition-opacity"
+            to="/posts"
+            className="text-primary hover:underline underline-offset-4"
           >
             Read my posts
           </Link>
-          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">·</span>
           <a
             href={profile.links.email}
-            className="text-sm text-purple-600 dark:text-purple-400 border-b-2 border-dotted border-purple-600 dark:border-purple-400 hover:opacity-80 transition-opacity"
+            className="text-primary hover:underline underline-offset-4"
           >
-            Say hello
+            Get in touch
           </a>
         </div>
       </motion.section>
