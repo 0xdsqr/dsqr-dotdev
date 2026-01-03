@@ -85,3 +85,24 @@ export const protectedProcedure = t.procedure
       },
     })
   })
+
+export const adminProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" })
+    }
+    // Role is added by better-auth admin plugin
+    const user = ctx.session.user as typeof ctx.session.user & { role?: string }
+    if (user.role !== "admin") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Admin access required",
+      })
+    }
+    return next({
+      ctx: {
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    })
+  })

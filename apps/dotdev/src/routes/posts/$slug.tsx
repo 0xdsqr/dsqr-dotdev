@@ -31,7 +31,10 @@ export const Route = createFileRoute("/posts/$slug")({
     }
 
     const contentResult = await context.queryClient.fetchQuery(
-      context.trpc.post.content.queryOptions({ filePath: post.filePath }),
+      context.trpc.post.content.queryOptions({
+        postId: post.id,
+        filePath: post.filePath ?? undefined,
+      }),
     )
 
     return { post, contentResult }

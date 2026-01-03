@@ -11,11 +11,18 @@ export function initAuth(options: {
   baseUrl: string
   secret: string | undefined
   extraPlugins?: BetterAuthPlugin[]
+  trustedOrigins?: string[]
 }): ReturnType<typeof betterAuth> {
   const config: BetterAuthOptions = {
     database: drizzleAdapter(db, { provider: "pg" }),
     baseURL: options.baseUrl,
     secret: options.secret,
+
+    // Allow cross-origin requests from admin panel
+    trustedOrigins: options.trustedOrigins ?? [
+      "http://localhost:3001", // admin dev
+      "https://admin.dsqr.dev", // admin prod
+    ],
 
     plugins: [
       jwt(),

@@ -4,12 +4,13 @@ import {
   postComments,
   postCommentsView,
   posts,
+  updatePostSchema,
 } from "@dsqr-dotdev/db/schema"
 import type { TRPCRouterRecord } from "@trpc/server"
 import { and, desc, eq, sql } from "drizzle-orm"
 import { z } from "zod/v4"
-
-import { protectedProcedure, publicProcedure } from "../trpc"
+import { getPostContent, uploadPostContent } from "../lib/s3"
+import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
 
 const CDN_BASE = "https://cdn.dsqr.dev"
 
@@ -69,8 +70,49 @@ export const postRouter = {
     }),
 
   content: publicProcedure
-    .input(z.object({ filePath: z.string() }))
-    .query(async ({ input }) => {
+    .input(
+      z.object({
+        postId: z.string().optional(),
+        filePath: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // If postId provided, try to get content from database first
+      if (input.postId) {
+        const [post] = await ctx.db
+          .select({ content: posts.content, filePath: posts.filePath })
+          .from(posts)
+          .where(eq(posts.id, input.postId))
+
+        if (post?.content) {
+          return { success: true, content: post.content }
+        }
+
+        // Fall back to S3/CDN if no content in database
+        if (post?.filePath) {
+          input.filePath = post.filePath
+        }
+      }
+
+      if (!input.filePath) {
+        return {
+          success: false,
+          content: "",
+          error: "No content source available",
+        }
+      }
+
+      // Try S3 first, then fall back to CDN
+      try {
+        const s3Content = await getPostContent(input.filePath)
+        if (s3Content) {
+          return { success: true, content: s3Content }
+        }
+      } catch {
+        // S3 failed, try CDN
+      }
+
+      // Fetch from CDN as fallback
       try {
         const url = `${CDN_BASE}/${input.filePath}`
         const response = await fetch(url)
@@ -80,7 +122,6 @@ export const postRouter = {
         }
 
         const mdxContent = await response.text()
-
         return { success: true, content: mdxContent }
       } catch (error) {
         return {
@@ -91,15 +132,62 @@ export const postRouter = {
       }
     }),
 
-  create: protectedProcedure
+  // Admin-only routes
+  create: adminProcedure
     .input(createPostSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(posts).values(input)
+    .mutation(async ({ ctx, input }) => {
+      const [post] = await ctx.db.insert(posts).values(input).returning()
+      return post
     }),
 
-  delete: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(posts).where(eq(posts.id, input))
+  update: adminProcedure
+    .input(z.object({ id: z.string(), data: updatePostSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const [post] = await ctx.db
+        .update(posts)
+        .set(input.data)
+        .where(eq(posts.id, input.id))
+        .returning()
+      return post
+    }),
+
+  delete: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(posts).where(eq(posts.id, input.id))
+      return { success: true }
+    }),
+
+  // Admin: get all posts including drafts
+  adminAll: adminProcedure.query(async ({ ctx }) => {
+    return ctx.db.select().from(posts).orderBy(desc(posts.updatedAt))
   }),
+
+  // Admin: save post content to S3 and update filePath
+  saveContent: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        slug: z.string(),
+        content: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Upload content to S3
+      const filePath = await uploadPostContent(input.slug, input.content)
+
+      // Update the post with the new filePath
+      const [post] = await ctx.db
+        .update(posts)
+        .set({
+          filePath,
+          updatedAt: new Date(),
+        })
+        .where(eq(posts.id, input.id))
+        .returning()
+
+      return { success: true, filePath, post }
+    }),
 
   like: protectedProcedure
     .input(z.object({ postId: z.string(), increment: z.boolean() }))

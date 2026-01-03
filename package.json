@@ -4,14 +4,16 @@
   "type": "module",
   "scripts": {
     "all": "bun run clean && bun run build",
-    "build": "bun run --filter='@dsqr-dotdev/db' build && bun run --filter='@dsqr-dotdev/auth' build && bun run --filter='@dsqr-dotdev/api' build && bun run --filter='dotdev' build",
+    "build": "bun run --filter='@dsqr-dotdev/db' build && bun run --filter='@dsqr-dotdev/auth' build && bun run --filter='@dsqr-dotdev/api' build && bun run --filter='dotdev' build && bun run --filter='admin' build",
     "clean": "rm -rf packages/*/dist packages/*/coverage apps/*/dist apps/*/.output",
+    "dev:admin": "bun run --filter='admin' dev",
     "dev:dotdev": "bun run --filter='dotdev' dev",
     "style:fix": "nix fmt .",
     "sync:check": "syncpack list-mismatches",
     "sync:fix": "syncpack fix-mismatches"
   },
   "workspaces": [
+    "apps/admin",
     "apps/dotdev",
     "packages/api",
     "packages/auth",

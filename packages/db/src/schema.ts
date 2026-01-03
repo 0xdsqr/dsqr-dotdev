@@ -25,7 +25,9 @@ export const posts = pgTable(
     category: varchar("category", { length: 100 }).notNull(),
     description: text("description").notNull(),
 
-    filePath: varchar("file_path", { length: 512 }).notNull(),
+    // Content can be stored directly or fetched from CDN via filePath
+    content: text("content"),
+    filePath: varchar("file_path", { length: 512 }),
     headerImageUrl: varchar("header_image_url", { length: 512 }),
 
     likesCount: integer("likes_count").default(0).notNull(),
@@ -41,7 +43,7 @@ export const posts = pgTable(
       .defaultNow()
       .$onUpdate(() => sql`now()`),
 
-    published: boolean("published").default(true).notNull(),
+    published: boolean("published").default(false).notNull(),
   },
   (table) => [
     index("posts_slug_idx").on(table.slug),
@@ -166,17 +168,21 @@ export const createPostSchema = createInsertSchema(posts, {
   date: z.coerce.date(),
   category: z.string().min(1).max(100),
   description: z.string().min(1),
-  filePath: z.string().min(1).max(512),
+  content: z.string().optional(),
+  filePath: z.string().max(512).optional(),
   headerImageUrl: z.string().url().max(512).optional(),
   tags: z.array(z.string()).optional(),
   readingTimeMinutes: z.number().int().positive().optional(),
   likesCount: z.number().int().nonnegative().optional(),
+  published: z.boolean().optional(),
 }).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   viewCount: true,
 })
+
+export const updatePostSchema = createPostSchema.partial()
 
 export const createPostCommentSchema = createInsertSchema(postComments, {
   content: z.string().min(1).max(1000),

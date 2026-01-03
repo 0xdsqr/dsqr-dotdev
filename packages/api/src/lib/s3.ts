@@ -134,4 +134,81 @@ export async function getAvatar(
   }
 }
 
+/**
+ * Upload post MDX content to S3
+ * @param slug - Post slug used for the file path
+ * @param content - MDX content string
+ * @returns The file path key for storing in the database
+ */
+export async function uploadPostContent(
+  slug: string,
+  content: string,
+): Promise<string> {
+  // Match existing format: static/posts:slug/slug.mdx
+  const key = `static/posts/${slug}/${slug}.mdx`
+
+  const bucketExists = await ensureBucketExists()
+  if (!bucketExists) {
+    throw new Error(
+      `S3 bucket '${BUCKET_NAME}' does not exist. Please create it first.`,
+    )
+  }
+
+  try {
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: content,
+        ContentType: "text/mdx",
+      }),
+    )
+
+    // Return the file_path format used in the database
+    const filePath = `static/posts:${slug}/${slug}.mdx`
+
+    log.debug("Post content uploaded", { slug, key })
+    return filePath
+  } catch (error) {
+    log.error("Failed to upload post content", {
+      slug,
+      key,
+      error: error instanceof Error ? error.message : "Unknown error",
+    })
+    throw new Error("Failed to upload post content to storage")
+  }
+}
+
+/**
+ * Get post content from S3
+ * @param filePath - The file path in format "static/posts:slug/filename.mdx"
+ * @returns The MDX content string or null if not found
+ */
+export async function getPostContent(filePath: string): Promise<string | null> {
+  // Convert from DB format (static/posts:slug/file.mdx) to S3 key (static/posts/slug/file.mdx)
+  const key = filePath.replace("posts:", "posts/")
+
+  try {
+    const response = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      }),
+    )
+
+    if (!response.Body) {
+      return null
+    }
+
+    return await response.Body.transformToString()
+  } catch (error) {
+    log.error("Failed to get post content", {
+      filePath,
+      key,
+      error: error instanceof Error ? error.message : "Unknown error",
+    })
+    return null
+  }
+}
+
 export { s3Client, BUCKET_NAME }
