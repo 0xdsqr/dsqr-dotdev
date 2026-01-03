@@ -25,6 +25,7 @@ interface BlogEditorProps {
     tags: string[] | null
     published: boolean
     headerImageUrl: string | null
+    readingTimeMinutes: number | null
   }
 }
 
@@ -41,6 +42,12 @@ export function BlogEditor({ post }: BlogEditorProps) {
   const [tagInput, setTagInput] = useState("")
   const [activeTab, setActiveTab] = useState("write")
   const [published, setPublished] = useState(post?.published || false)
+  const [readingTimeMinutes, setReadingTimeMinutes] = useState(
+    post?.readingTimeMinutes || 5,
+  )
+  const [headerImageUrl, setHeaderImageUrl] = useState(
+    post?.headerImageUrl || "",
+  )
 
   const createMutation = useMutation(
     trpc.post.create.mutationOptions({
@@ -90,14 +97,16 @@ export function BlogEditor({ post }: BlogEditorProps) {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (publishState?: boolean) => {
     const postData = {
       title,
       slug,
       description,
       category,
       tags,
-      published,
+      published: publishState ?? published,
+      readingTimeMinutes,
+      headerImageUrl: headerImageUrl || undefined,
       date: new Date(),
     }
 
@@ -122,7 +131,15 @@ export function BlogEditor({ post }: BlogEditorProps) {
       // For new posts: create with content in DB (will be saved to S3 on first edit)
       createMutation.mutate({ ...postData, content })
     }
+
+    // Update local state if publish state changed
+    if (publishState !== undefined) {
+      setPublished(publishState)
+    }
   }
+
+  const handlePublish = () => handleSave(true)
+  const handleUnpublish = () => handleSave(false)
 
   const handleFormat = (format: string) => {
     const textarea = document.getElementById(
@@ -232,13 +249,14 @@ export function BlogEditor({ post }: BlogEditorProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPublished(!published)}
+            onClick={published ? handleUnpublish : handlePublish}
+            disabled={isSaving}
           >
             {published ? "Unpublish" : "Publish"}
           </Button>
-          <Button onClick={handleSave} size="sm" disabled={isSaving}>
+          <Button onClick={() => handleSave()} size="sm" disabled={isSaving}>
             <Save className="h-4 w-4 mr-1.5" />
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? "Saving..." : "Save Draft"}
           </Button>
         </div>
       </header>
@@ -268,7 +286,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
                   placeholder="post-slug"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="font-mono text-sm"
+                  className="font-mono text-sm rounded-lg"
                 />
               </div>
               <div>
@@ -283,7 +301,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
                   placeholder="engineering"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="text-sm"
+                  className="text-sm rounded-lg"
                 />
               </div>
             </div>
@@ -300,8 +318,47 @@ export function BlogEditor({ post }: BlogEditorProps) {
                 placeholder="Brief description of your post..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="text-sm"
+                className="text-sm rounded-lg"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="post-header-image"
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Header Image URL
+                </label>
+                <Input
+                  id="post-header-image"
+                  placeholder="https://cdn.dsqr.dev/..."
+                  value={headerImageUrl}
+                  onChange={(e) => setHeaderImageUrl(e.target.value)}
+                  className="text-sm rounded-lg"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="post-reading-time"
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Reading Time (minutes)
+                </label>
+                <Input
+                  id="post-reading-time"
+                  type="number"
+                  min={1}
+                  placeholder="5"
+                  value={readingTimeMinutes || ""}
+                  onChange={(e) =>
+                    setReadingTimeMinutes(
+                      e.target.value ? Number(e.target.value) : 0,
+                    )
+                  }
+                  className="text-sm rounded-lg"
+                />
+              </div>
             </div>
 
             {/* Tags */}

@@ -108,6 +108,12 @@ const experience = [
 
 const projects = [
   {
+    name: "tcg-price-guide",
+    description: "Quickly find the value or details of your TCG cards.",
+    link: "https://github.com/0xdsqr/tcg-price-guide",
+    tags: ["TypeScript", "Python"],
+  },
+  {
     name: "durable-lambda",
     description:
       "Actor-based state management for AWS Lambda with single-instance guarantees and distributed locking.",

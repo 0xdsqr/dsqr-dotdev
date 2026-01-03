@@ -61,6 +61,7 @@ function EditPost() {
         tags: post.tags,
         published: post.published,
         headerImageUrl: post.headerImageUrl,
+        readingTimeMinutes: post.readingTimeMinutes,
       }}
     />
   )
