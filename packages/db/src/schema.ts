@@ -41,7 +41,7 @@ export const posts = pgTable(
       .notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
-      .$onUpdate(() => sql`now()`),
+      .$onUpdate(() => new Date()),
 
     published: boolean("published").default(false).notNull(),
   },
@@ -76,7 +76,7 @@ export const postComments = pgTable(
       .notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
-      .$onUpdate(() => sql`now()`),
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     index("post_comments_post_id_idx").on(table.postId),

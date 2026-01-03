@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { trpcClient, useTRPC } from "@/lib/trpc"
+import { useTRPC } from "@/lib/trpc"
 
 interface BlogEditorProps {
   post?: {
@@ -41,7 +41,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
   const [tags, setTags] = useState<string[]>(post?.tags || [])
   const [tagInput, setTagInput] = useState("")
   const [activeTab, setActiveTab] = useState("write")
-  const [published, setPublished] = useState(post?.published || false)
+  const [published, _setPublished] = useState(post?.published || false)
   const [readingTimeMinutes, setReadingTimeMinutes] = useState(
     post?.readingTimeMinutes || 5,
   )
@@ -49,21 +49,55 @@ export function BlogEditor({ post }: BlogEditorProps) {
     post?.headerImageUrl || "",
   )
 
-  const createMutation = useMutation(
-    trpc.post.create.mutationOptions({
-      onSuccess: () => {
-        navigate({ to: "/posts" })
-      },
-    }),
-  )
+  const createMutation = useMutation(trpc.post.create.mutationOptions())
+  const updateMutation = useMutation(trpc.post.update.mutationOptions())
+  const uploadImageMutation = useMutation(trpc.post.uploadImage.mutationOptions())
 
-  const updateMutation = useMutation(
-    trpc.post.update.mutationOptions({
-      onSuccess: () => {
-        navigate({ to: "/posts" })
-      },
-    }),
-  )
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+
+  const handleImageUpload = async (file: File) => {
+    if (!slug) {
+      alert("Please set a slug before uploading images")
+      return
+    }
+
+    setIsUploadingImage(true)
+    try {
+      // Convert file to base64
+      const buffer = await file.arrayBuffer()
+      const base64 = btoa(
+        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      )
+
+      const result = await uploadImageMutation.mutateAsync({
+        slug,
+        fileName: file.name,
+        fileType: file.type,
+        fileData: base64,
+      })
+
+      // Insert markdown image at cursor position
+      const textarea = document.getElementById("content-editor") as HTMLTextAreaElement
+      if (textarea) {
+        const start = textarea.selectionStart
+        const imageMarkdown = `![${file.name}](${result.url})`
+        const newContent = content.substring(0, start) + imageMarkdown + content.substring(start)
+        setContent(newContent)
+
+        // Move cursor after inserted image
+        setTimeout(() => {
+          textarea.focus()
+          const newPos = start + imageMarkdown.length
+          textarea.setSelectionRange(newPos, newPos)
+        }, 0)
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error)
+      alert("Failed to upload image")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -97,47 +131,47 @@ export function BlogEditor({ post }: BlogEditorProps) {
     }
   }
 
-  const handleSave = async (publishState?: boolean) => {
-    const postData = {
-      title,
-      slug,
-      description,
-      category,
-      tags,
-      published: publishState ?? published,
-      readingTimeMinutes,
-      headerImageUrl: headerImageUrl || undefined,
-      date: new Date(),
-    }
-
-    if (post) {
-      // For existing posts: save content to S3, then update metadata
-      if (content) {
-        setIsSavingContent(true)
-        try {
-          // Use trpcClient directly since types haven't regenerated
-          // biome-ignore lint/suspicious/noExplicitAny: tRPC types need rebuild
-          await (trpcClient.post as any).saveContent.mutate({
-            id: post.id,
-            slug,
-            content,
-          })
-        } finally {
-          setIsSavingContent(false)
+  const handleSave = async (publishState: boolean) => {
+    try {
+      if (post) {
+        // Update existing post metadata
+        const updateData = {
+          title,
+          slug,
+          description,
+          category,
+          tags,
+          published: publishState,
+          readingTimeMinutes: readingTimeMinutes || 5,
+          headerImageUrl: headerImageUrl || undefined,
         }
+        console.log("Sending update:", { id: post.id, data: updateData })
+        await updateMutation.mutateAsync({
+          id: post.id,
+          data: updateData,
+        })
+      } else {
+        // Create new post
+        await createMutation.mutateAsync({
+          title,
+          slug,
+          description,
+          category,
+          tags,
+          published: publishState,
+          readingTimeMinutes: readingTimeMinutes || 5,
+          headerImageUrl: headerImageUrl || undefined,
+          content,
+          date: new Date(),
+        })
       }
-      updateMutation.mutate({ id: post.id, data: postData })
-    } else {
-      // For new posts: create with content in DB (will be saved to S3 on first edit)
-      createMutation.mutate({ ...postData, content })
-    }
-
-    // Update local state if publish state changed
-    if (publishState !== undefined) {
-      setPublished(publishState)
+    } catch (error) {
+      console.error("Save failed:", error)
     }
   }
 
+  // Save draft keeps current published state (or false for new posts)
+  const handleSaveDraft = () => handleSave(published)
   const handlePublish = () => handleSave(true)
   const handleUnpublish = () => handleSave(false)
 
@@ -215,7 +249,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
     }, 0)
   }
 
-  const [isSavingContent, setIsSavingContent] = useState(false)
+  const [isSavingContent] = useState(false)
   const isSaving =
     createMutation.isPending || updateMutation.isPending || isSavingContent
 
@@ -254,7 +288,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
           >
             {published ? "Unpublish" : "Publish"}
           </Button>
-          <Button onClick={() => handleSave()} size="sm" disabled={isSaving}>
+          <Button onClick={handleSaveDraft} size="sm" disabled={isSaving}>
             <Save className="h-4 w-4 mr-1.5" />
             {isSaving ? "Saving..." : "Save Draft"}
           </Button>
@@ -433,7 +467,11 @@ export function BlogEditor({ post }: BlogEditorProps) {
               </TabsList>
 
               {activeTab === "write" && (
-                <EditorToolbar onFormat={handleFormat} />
+                <EditorToolbar
+                  onFormat={handleFormat}
+                  onImageUpload={handleImageUpload}
+                  isUploadingImage={isUploadingImage}
+                />
               )}
             </div>
 

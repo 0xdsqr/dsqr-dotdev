@@ -9,7 +9,7 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server"
 import { and, desc, eq, sql } from "drizzle-orm"
 import { z } from "zod/v4"
-import { getPostContent, uploadPostContent } from "../lib/s3"
+import { getPostContent, uploadPostContent, uploadPostImage } from "../lib/s3"
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
 
 const CDN_BASE = "https://cdn.dsqr.dev"
@@ -143,12 +143,24 @@ export const postRouter = {
   update: adminProcedure
     .input(z.object({ id: z.string(), data: updatePostSchema }))
     .mutation(async ({ ctx, input }) => {
+      console.log("[post.update] input:", JSON.stringify(input, null, 2))
+
+      // Don't include undefined values in the update
+      const cleanData = Object.fromEntries(
+        Object.entries(input.data).filter(([_, v]) => v !== undefined),
+      )
+      console.log(
+        "[post.update] cleanData:",
+        JSON.stringify(cleanData, null, 2),
+      )
+
       const [post] = await ctx.db
         .update(posts)
-        .set(input.data)
+        .set(cleanData)
         .where(eq(posts.id, input.id))
-        .returning()
-      return post
+        .returning({ id: posts.id })
+      console.log("[post.update] success, post id:", post?.id)
+      return { success: true, id: post?.id }
     }),
 
   delete: adminProcedure
@@ -187,6 +199,27 @@ export const postRouter = {
         .returning()
 
       return { success: true, filePath, post }
+    }),
+
+  // Admin: upload image for a post
+  uploadImage: adminProcedure
+    .input(
+      z.object({
+        slug: z.string(),
+        fileName: z.string(),
+        fileType: z.string(),
+        fileData: z.string(), // base64 encoded
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const buffer = Buffer.from(input.fileData, "base64")
+      const imagePath = await uploadPostImage(
+        input.slug,
+        buffer,
+        input.fileName,
+        input.fileType,
+      )
+      return { success: true, url: imagePath }
     }),
 
   like: protectedProcedure

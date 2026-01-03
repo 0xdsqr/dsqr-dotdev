@@ -211,4 +211,88 @@ export async function getPostContent(filePath: string): Promise<string | null> {
   }
 }
 
+/**
+ * Upload an image for a blog post to S3
+ * @param slug - Post slug used for the file path
+ * @param file - Image buffer
+ * @param fileName - Original file name
+ * @param fileType - MIME type of the image
+ * @returns The relative URL path for the image
+ */
+export async function uploadPostImage(
+  slug: string,
+  file: Buffer,
+  fileName: string,
+  fileType: string,
+): Promise<string> {
+  // Sanitize filename and add timestamp to avoid conflicts
+  const timestamp = Date.now()
+  const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, "-")
+  const key = `static/posts/${slug}/images/${timestamp}-${sanitizedName}`
+
+  const bucketExists = await ensureBucketExists()
+  if (!bucketExists) {
+    throw new Error(
+      `S3 bucket '${BUCKET_NAME}' does not exist. Please create it first.`,
+    )
+  }
+
+  try {
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: file,
+        ContentType: fileType,
+      }),
+    )
+
+    // Return relative path that will be served via API route
+    const imagePath = `/api/posts/${slug}/images/${timestamp}-${sanitizedName}`
+
+    log.debug("Post image uploaded", { slug, key })
+    return imagePath
+  } catch (error) {
+    log.error("Failed to upload post image", {
+      slug,
+      key,
+      error: error instanceof Error ? error.message : "Unknown error",
+    })
+    throw new Error("Failed to upload image to storage")
+  }
+}
+
+/**
+ * Get a post image from S3
+ * @param slug - Post slug
+ * @param fileName - Image file name
+ * @returns The image stream and content type, or null if not found
+ */
+export async function getPostImage(
+  slug: string,
+  fileName: string,
+): Promise<{ body: ReadableStream; contentType: string } | null> {
+  const key = `static/posts/${slug}/images/${fileName}`
+
+  try {
+    const response = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      }),
+    )
+
+    if (!response.Body) {
+      return null
+    }
+
+    return {
+      body: response.Body.transformToWebStream(),
+      contentType: response.ContentType || "image/jpeg",
+    }
+  } catch {
+    return null
+  }
+}
+
 export { s3Client, BUCKET_NAME }

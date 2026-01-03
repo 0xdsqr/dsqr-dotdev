@@ -17,6 +17,7 @@ import { Route as PostsSlugRouteImport } from './routes/posts/$slug'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as ApiAvatarUserIdFileNameRouteImport } from './routes/api/avatar.$userId.$fileName'
+import { Route as ApiPostsSlugImagesFileNameRouteImport } from './routes/api/posts.$slug.images.$fileName'
 
 const MiscRoute = MiscRouteImport.update({
   id: '/misc',
@@ -58,6 +59,12 @@ const ApiAvatarUserIdFileNameRoute = ApiAvatarUserIdFileNameRouteImport.update({
   path: '/api/avatar/$userId/$fileName',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPostsSlugImagesFileNameRoute =
+  ApiPostsSlugImagesFileNameRouteImport.update({
+    id: '/api/posts/$slug/images/$fileName',
+    path: '/api/posts/$slug/images/$fileName',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +86,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +98,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/api/avatar/$userId/$fileName'
+    | '/api/posts/$slug/images/$fileName'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/api/avatar/$userId/$fileName'
+    | '/api/posts/$slug/images/$fileName'
   id:
     | '__root__'
     | '/'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/api/avatar/$userId/$fileName'
+    | '/api/posts/$slug/images/$fileName'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +145,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
   ApiAvatarUserIdFileNameRoute: typeof ApiAvatarUserIdFileNameRoute
+  ApiPostsSlugImagesFileNameRoute: typeof ApiPostsSlugImagesFileNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAvatarUserIdFileNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/posts/$slug/images/$fileName': {
+      id: '/api/posts/$slug/images/$fileName'
+      path: '/api/posts/$slug/images/$fileName'
+      fullPath: '/api/posts/$slug/images/$fileName'
+      preLoaderRoute: typeof ApiPostsSlugImagesFileNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +225,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
   ApiAvatarUserIdFileNameRoute: ApiAvatarUserIdFileNameRoute,
+  ApiPostsSlugImagesFileNameRoute: ApiPostsSlugImagesFileNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

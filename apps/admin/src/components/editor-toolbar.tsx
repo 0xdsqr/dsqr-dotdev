@@ -7,12 +7,14 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  ImageIcon,
   Italic,
   Link,
   List,
   ListOrdered,
   Quote,
 } from "lucide-react"
+import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -23,6 +25,8 @@ import {
 
 interface EditorToolbarProps {
   onFormat: (format: string) => void
+  onImageUpload?: (file: File) => void
+  isUploadingImage?: boolean
 }
 
 const tools = [
@@ -41,7 +45,24 @@ const tools = [
   { icon: FileCode, format: "codeblock", label: "Code Block" },
 ] as const
 
-export function EditorToolbar({ onFormat }: EditorToolbarProps) {
+export function EditorToolbar({
+  onFormat,
+  onImageUpload,
+  isUploadingImage,
+}: EditorToolbarProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && onImageUpload) {
+      onImageUpload(file)
+    }
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-0.5">
@@ -71,6 +92,35 @@ export function EditorToolbar({ onFormat }: EditorToolbarProps) {
             </Tooltip>
           )
         })}
+
+        {onImageUpload && (
+          <>
+            <div className="w-px h-4 bg-border mx-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {isUploadingImage ? "Uploading..." : "Upload Image"}
+              </TooltipContent>
+            </Tooltip>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </>
+        )}
       </div>
     </TooltipProvider>
   )
