@@ -24,6 +24,14 @@ export function initAuth(options: {
       "https://admin.dsqr.dev", // admin prod
     ],
 
+    // Share session cookies across subdomains
+    advanced: {
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: ".dsqr.dev", // Leading dot = all subdomains
+      },
+    },
+
     plugins: [
       jwt(),
       admin(),
