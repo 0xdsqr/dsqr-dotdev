@@ -2,15 +2,15 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { z } from "zod/v4"
-import { Button } from "@/components/ui/button.js"
+import { Button } from "@dsqr-dotdev/ui/components/button"
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form.js"
-import { Input } from "@/components/ui/input.js"
+} from "@dsqr-dotdev/ui/components/form"
+import { Input } from "@dsqr-dotdev/ui/components/input"
 import { useTRPC } from "@/lib/trpc"
 
 const formSchema = z.object({

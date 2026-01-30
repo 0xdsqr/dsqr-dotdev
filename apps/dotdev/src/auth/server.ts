@@ -1,4 +1,4 @@
-import { initAuth } from "@dsqr-dotdev/auth"
+import { initAuth } from "@dsqr-dotdev/core/auth"
 import { reactStartCookies } from "better-auth/react-start"
 
 const baseUrl = process.env.BASE_URL || "http://localhost:3000"

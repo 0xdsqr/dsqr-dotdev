@@ -4,12 +4,12 @@ import type React from "react"
 import { useState } from "react"
 import { z } from "zod"
 import { authClient } from "@/auth/client"
-import { Button } from "@/components/ui/button"
+import { Button } from "@dsqr-dotdev/ui/components/button"
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from "@/components/ui/input-otp"
+} from "@dsqr-dotdev/ui/components/input-otp"
 import { UserDropdown } from "./user-dropdown"
 
 const emailSchema = z.string().email("Invalid email")

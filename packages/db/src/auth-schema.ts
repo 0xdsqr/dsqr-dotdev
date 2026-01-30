@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -15,7 +15,7 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
-})
+});
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -32,7 +32,7 @@ export const session = pgTable("session", {
     .references(() => user.id, { onDelete: "cascade" }),
   impersonatedBy: text("impersonated_by"),
   activeOrganizationId: text("active_organization_id"),
-})
+});
 
 export const account = pgTable("account", {
   id: text("id").primaryKey(),
@@ -52,7 +52,7 @@ export const account = pgTable("account", {
   updatedAt: timestamp("updated_at")
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-})
+});
 
 export const verification = pgTable("verification", {
   id: text("id").primaryKey(),
@@ -64,14 +64,14 @@ export const verification = pgTable("verification", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-})
+});
 
 export const jwks = pgTable("jwks", {
   id: text("id").primaryKey(),
   publicKey: text("public_key").notNull(),
   privateKey: text("private_key").notNull(),
   createdAt: timestamp("created_at").notNull(),
-})
+});
 
 export const organization = pgTable("organization", {
   id: text("id").primaryKey(),
@@ -80,7 +80,7 @@ export const organization = pgTable("organization", {
   logo: text("logo"),
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
-})
+});
 
 export const member = pgTable("member", {
   id: text("id").primaryKey(),
@@ -92,7 +92,7 @@ export const member = pgTable("member", {
     .references(() => user.id, { onDelete: "cascade" }),
   role: text("role").default("member").notNull(),
   createdAt: timestamp("created_at").notNull(),
-})
+});
 
 export const invitation = pgTable("invitation", {
   id: text("id").primaryKey(),
@@ -106,4 +106,4 @@ export const invitation = pgTable("invitation", {
   inviterId: text("inviter_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-})
+});

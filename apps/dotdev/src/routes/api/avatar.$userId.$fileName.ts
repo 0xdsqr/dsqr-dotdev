@@ -1,4 +1,4 @@
-import { getAvatar } from "@dsqr-dotdev/api"
+import { getAvatar } from "@dsqr-dotdev/core/api"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/api/avatar/$userId/$fileName")({

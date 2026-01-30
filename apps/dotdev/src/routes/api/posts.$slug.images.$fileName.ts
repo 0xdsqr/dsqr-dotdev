@@ -1,4 +1,4 @@
-import { getPostImage } from "@dsqr-dotdev/api"
+import { getPostImage } from "@dsqr-dotdev/core/api"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/api/posts/$slug/images/$fileName")({

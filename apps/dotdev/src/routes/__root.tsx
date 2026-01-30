@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/api"
+import type { AppRouter } from "@dsqr-dotdev/core/api"
 import type { QueryClient } from "@tanstack/react-query"
 import {
   createRootRouteWithContext,

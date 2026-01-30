@@ -32,13 +32,6 @@ in
     ];
 
     shellHook = ''
-      # Initialize starship for the current shell
-      if [[ -n "$ZSH_VERSION" ]]; then
-        eval "$(starship init zsh)"
-      else
-        eval "$(starship init bash)"
-      fi
-
       echo "Bun version: $(bun --version)"
       echo "Node version: $(node --version)"
       echo "🚀 Development shell activated, you can now compile things"

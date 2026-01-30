@@ -7,7 +7,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@dsqr-dotdev/ui/components/tooltip"
 import { trpcClient } from "@/lib/trpc"
 import { cn } from "@/lib/utils"
 

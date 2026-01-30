@@ -9,8 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@dsqr-dotdev/api": "workspace:*",
-    "@dsqr-dotdev/auth": "workspace:*",
+    "@dsqr-dotdev/core": "workspace:*",
+    "@dsqr-dotdev/ui": "workspace:*",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/geist-sans": "^5.2.5",
     "@hookform/resolvers": "^5.2.2",

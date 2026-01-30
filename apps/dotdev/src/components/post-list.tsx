@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@dsqr-dotdev/api"
+import type { RouterOutputs } from "@dsqr-dotdev/core/api"
 import { Link } from "@tanstack/react-router"
 import {
   CalendarIcon,

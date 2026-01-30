@@ -2,14 +2,14 @@
 
 import { LogOut, Settings } from "lucide-react"
 import { useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@dsqr-dotdev/ui/components/dropdown-menu"
 import { SettingsModal } from "./settings-modal"
 
 interface UserDropdownProps {

@@ -3,16 +3,16 @@
 import { Camera, Loader2, X } from "lucide-react"
 import type React from "react"
 import { useRef, useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/ui/components/avatar"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+} from "@dsqr-dotdev/ui/components/dialog"
+import { Input } from "@dsqr-dotdev/ui/components/input"
+import { Label } from "@dsqr-dotdev/ui/components/label"
+import { Separator } from "@dsqr-dotdev/ui/components/separator"
 import { trpcClient } from "@/lib/trpc"
 
 interface SettingsModalProps {
