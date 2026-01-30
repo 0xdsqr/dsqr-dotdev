@@ -16,7 +16,8 @@
   "scripts": {
     "clean": "git clean -xdf node_modules",
     "ui:add": "bunx shadcn@latest add",
-    "ui:add:all": "bunx shadcn@latest add --all"
+    "ui:add:all": "bunx shadcn@latest add --all",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@dsqr-dotdev/tsconfig": "workspace:*"

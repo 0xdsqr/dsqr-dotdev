@@ -12,7 +12,7 @@ concurrency:
 jobs:
   biome:
     name: biome
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     permissions:
       contents: read
       id-token: write
@@ -28,7 +28,7 @@ jobs:
 
   nixfmt:
     name: nixfmt
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     permissions:
       contents: read
       id-token: write
@@ -44,7 +44,7 @@ jobs:
 
   typecheck:
     name: typecheck
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     permissions:
       contents: read
       id-token: write
@@ -66,7 +66,7 @@ jobs:
 
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     permissions:
       contents: read
       id-token: write
@@ -83,15 +83,36 @@ jobs:
       - name: run tests
         run: echo "TODO - add tests"
 
+  build:
+    name: build
+    needs: test
+    runs-on: [self-hosted, dotdev, dsqr]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: install dependencies
+        run: nix develop --command bun install
+
+      - name: build
+        run: nix develop --command bun run build
+
   required:
     name: all checks passed
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     if: always()
     needs:
       - biome
       - nixfmt
       - typecheck
       - test
+      - build
     steps:
       - name: verify all jobs passed
         run: |

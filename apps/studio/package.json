@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "PORT=3001 vite dev --port 3001",
     "build": "vite build",
-    "start": "NODE_ENV=production node dist/server/server.js"
+    "start": "NODE_ENV=production node dist/server/server.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dsqr-dotdev/core": "workspace:*",

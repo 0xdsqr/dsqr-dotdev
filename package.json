@@ -9,6 +9,7 @@
     "dev:studio": "bun run --filter='studio' dev",
     "dev:dotdev": "bun run --filter='dotdev' dev",
     "style:fix": "nix fmt .",
+    "typecheck": "bun run --filter typecheck",
     "sync:check": "syncpack list-mismatches",
     "sync:fix": "syncpack fix-mismatches"
   },

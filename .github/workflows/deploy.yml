@@ -17,7 +17,7 @@ env:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dotdev, dsqr]
     permissions:
       contents: read
       id-token: write
@@ -66,7 +66,7 @@ jobs:
   deploy:
     name: deploy
     needs: build
-    runs-on: self-hosted
+    runs-on: [self-hosted, dotdev, dsqr]
     steps:
       - name: download artifact
         uses: actions/download-artifact@v4

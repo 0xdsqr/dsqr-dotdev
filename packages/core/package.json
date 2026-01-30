@@ -6,7 +6,8 @@
   "scripts": {
     "auth:generate": "bunx @better-auth/cli generate --config src/auth/auth-cli.ts --output ../db/src/auth-schema.ts",
     "build": "bun run scripts/build.ts",
-    "clean": "git clean -xdf dist node_modules"
+    "clean": "git clean -xdf dist node_modules",
+    "typecheck": "tsc --noEmit"
   },
   "exports": {
     ".": {
