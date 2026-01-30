@@ -1,8 +1,10 @@
 "use client"
 
-import { LogOut, Settings } from "lucide-react"
-import { useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/ui/components/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@dsqr-dotdev/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@dsqr-dotdev/ui/components/dropdown-menu"
+import { LogOut, Settings } from "lucide-react"
+import { useState } from "react"
 import { SettingsModal } from "./settings-modal"
 
 interface UserDropdownProps {

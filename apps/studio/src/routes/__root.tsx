@@ -1,4 +1,8 @@
 import type { AppRouter } from "@dsqr-dotdev/api"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@dsqr-dotdev/ui/components/sidebar"
 import type { QueryClient } from "@tanstack/react-query"
 import {
   createRootRouteWithContext,
@@ -10,7 +14,6 @@ import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import { authClient } from "../auth/client"
 import { AppSidebar } from "../components/app-sidebar"
 import { ThemeProvider } from "../components/theme-provider"
-import { SidebarInset, SidebarProvider } from "@dsqr-dotdev/ui/components/sidebar"
 
 import appCss from "../styles.css?url"
 

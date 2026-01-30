@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { User, Shield, Palette, Bell } from "lucide-react"
+import { Bell, Palette, Shield, User } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
 export const Route = createFileRoute("/settings/")({
@@ -9,12 +9,7 @@ export const Route = createFileRoute("/settings/")({
 function SettingsPage() {
   return (
     <>
-      <SiteHeader
-        breadcrumbs={[
-          { label: "System" },
-          { label: "Settings" },
-        ]}
-      />
+      <SiteHeader breadcrumbs={[{ label: "System" }, { label: "Settings" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>

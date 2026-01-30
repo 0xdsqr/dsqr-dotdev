@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
-  Newspaper,
-  Server,
-  PenLine,
   Activity,
   ArrowRight,
   FileText,
+  Newspaper,
+  PenLine,
   Plus,
+  Server,
 } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 

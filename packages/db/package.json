@@ -12,6 +12,7 @@
   },
   "sideEffects": false,
   "devDependencies": {
+    "@dsqr-dotdev/build": "workspace:*",
     "@types/pg": "^8.15.6",
     "bun-types": "latest",
     "drizzle-kit": "^0.31.6",

@@ -1,12 +1,8 @@
 import {
-  ChevronsUpDown,
-  LogOut,
-  Moon,
-  Sun,
-  ExternalLink,
-} from "lucide-react"
-import { authClient } from "@/auth/client"
-import { useTheme } from "@/components/theme-provider"
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@dsqr-dotdev/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +15,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@dsqr-dotdev/ui/components/sidebar"
-import { useSidebar } from "@dsqr-dotdev/ui/components/sidebar"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@dsqr-dotdev/ui/components/avatar"
+import { ChevronsUpDown, ExternalLink, LogOut, Moon, Sun } from "lucide-react"
+import { authClient } from "@/auth/client"
+import { useTheme } from "@/components/theme-provider"
 
 export function NavUser() {
   const { data: session } = authClient.useSession()

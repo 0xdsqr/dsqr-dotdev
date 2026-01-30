@@ -1,7 +1,6 @@
-import * as React from "react"
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
-
 import { cn } from "@dsqr-dotdev/ui/lib/utils"
+import * as React from "react"
 
 function Slider({
   className,
@@ -18,7 +17,7 @@ function Slider({
         : Array.isArray(defaultValue)
           ? defaultValue
           : [min, max],
-    [value, defaultValue, min, max]
+    [value, defaultValue, min, max],
   )
 
   return (

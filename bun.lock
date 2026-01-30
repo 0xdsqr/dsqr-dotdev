@@ -144,42 +144,6 @@
         "vite-tsconfig-paths": "^4.3.2",
       },
     },
-    "packages/api": {
-      "name": "@dsqr-dotdev/api",
-      "version": "0.0.0",
-      "dependencies": {
-        "@aws-sdk/client-s3": "^3.958.0",
-        "@dsqr-dotdev/auth": "workspace:*",
-        "@dsqr-dotdev/db": "workspace:*",
-        "@dsqr-dotdev/tsconfig": "workspace:*",
-        "@trpc/server": "^11.7.1",
-        "drizzle-orm": "^0.44.7",
-        "superjson": "^2.2.5",
-        "zod": "^4.1.12",
-      },
-      "devDependencies": {
-        "bun-types": "latest",
-        "typescript": "5.8.3",
-      },
-    },
-    "packages/auth": {
-      "name": "@dsqr-dotdev/auth",
-      "version": "0.0.0",
-      "dependencies": {
-        "@dsqr-dotdev/db": "workspace:*",
-        "@dsqr-dotdev/tsconfig": "workspace:*",
-        "better-auth": "^1.3.34",
-        "resend": "^6.4.0",
-        "zod": "^4.1.12",
-      },
-      "devDependencies": {
-        "@better-auth/cli": "^1.3.34",
-        "@types/pg": "^8.15.6",
-        "bun-types": "latest",
-        "drizzle-kit": "^0.31.6",
-        "typescript": "5.8.3",
-      },
-    },
     "packages/blog-post": {
       "name": "@dsqr-dotdev/blog-post",
       "version": "0.0.0",
@@ -191,6 +155,7 @@
         "tailwind-merge": "^3.0.2",
       },
       "devDependencies": {
+        "@dsqr-dotdev/build": "workspace:*",
         "@dsqr-dotdev/tsconfig": "workspace:*",
         "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
@@ -216,6 +181,7 @@
       },
       "devDependencies": {
         "@better-auth/cli": "^1.3.34",
+        "@dsqr-dotdev/build": "workspace:*",
         "@dsqr-dotdev/tsconfig": "workspace:*",
         "@types/pg": "^8.15.6",
         "bun-types": "latest",
@@ -233,6 +199,7 @@
         "zod": "^4.1.12",
       },
       "devDependencies": {
+        "@dsqr-dotdev/build": "workspace:*",
         "@types/pg": "^8.15.6",
         "bun-types": "latest",
         "drizzle-kit": "^0.31.6",
@@ -267,6 +234,16 @@
       "peerDependencies": {
         "react": "^18 || ^19",
         "react-dom": "^18 || ^19",
+      },
+    },
+    "tooling/build": {
+      "name": "@dsqr-dotdev/build",
+      "version": "0.0.0",
+      "dependencies": {
+        "bun-types": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5.0.0",
       },
     },
     "tooling/typescript": {
@@ -479,11 +456,9 @@
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
-    "@dsqr-dotdev/api": ["@dsqr-dotdev/api@workspace:packages/api"],
-
-    "@dsqr-dotdev/auth": ["@dsqr-dotdev/auth@workspace:packages/auth"],
-
     "@dsqr-dotdev/blog-post": ["@dsqr-dotdev/blog-post@workspace:packages/blog-post"],
+
+    "@dsqr-dotdev/build": ["@dsqr-dotdev/build@workspace:tooling/build"],
 
     "@dsqr-dotdev/core": ["@dsqr-dotdev/core@workspace:packages/core"],
 

@@ -1,9 +1,10 @@
 "use client"
 
-import { Camera, Loader2, X } from "lucide-react"
-import type React from "react"
-import { useRef, useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/ui/components/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@dsqr-dotdev/ui/components/avatar"
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,9 @@ import {
 import { Input } from "@dsqr-dotdev/ui/components/input"
 import { Label } from "@dsqr-dotdev/ui/components/label"
 import { Separator } from "@dsqr-dotdev/ui/components/separator"
+import { Camera, Loader2, X } from "lucide-react"
+import type React from "react"
+import { useRef, useState } from "react"
 import { trpcClient } from "@/lib/trpc"
 
 interface SettingsModalProps {

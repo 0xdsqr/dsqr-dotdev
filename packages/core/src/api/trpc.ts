@@ -1,8 +1,8 @@
-import type { Auth } from "../auth"
 import { db } from "@dsqr-dotdev/db/client"
 import { initTRPC, TRPCError } from "@trpc/server"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
+import type { Auth } from "../auth"
 import { logger } from "./lib/logger"
 
 export const createTRPCContext = async (opts: {

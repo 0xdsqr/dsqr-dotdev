@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { Plus, FileText, Clock, CheckCircle } from "lucide-react"
-import { useTRPC } from "@/lib/trpc"
-import { useQuery } from "@tanstack/react-query"
-import { SiteHeader } from "@/components/site-header"
-import { Button } from "@dsqr-dotdev/ui/components/button"
 import { Badge } from "@dsqr-dotdev/ui/components/badge"
+import { Button } from "@dsqr-dotdev/ui/components/button"
+import { useQuery } from "@tanstack/react-query"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { CheckCircle, Clock, FileText, Plus } from "lucide-react"
+import { SiteHeader } from "@/components/site-header"
+import { useTRPC } from "@/lib/trpc"
 
 export const Route = createFileRoute("/blog/")({
   component: BlogPostsPage,
@@ -17,10 +17,7 @@ function BlogPostsPage() {
   return (
     <>
       <SiteHeader
-        breadcrumbs={[
-          { label: "Content", href: "/" },
-          { label: "Blog" },
-        ]}
+        breadcrumbs={[{ label: "Content", href: "/" }, { label: "Blog" }]}
         actions={
           <Link to="/blog/new">
             <Button size="sm">

@@ -12,7 +12,7 @@
       "*.json"
     ];
     excludes = [
-      "apps/dotdev/src/components/ui/*"
+      "packages/ui/*"
       "*.gen.ts"
     ];
     settings = {

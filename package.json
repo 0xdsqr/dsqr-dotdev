@@ -15,12 +15,11 @@
   "workspaces": [
     "apps/dotdev",
     "apps/studio",
-    "packages/api",
-    "packages/auth",
     "packages/blog-post",
     "packages/core",
     "packages/db",
     "packages/ui",
+    "tooling/build",
     "tooling/typescript"
   ],
   "devDependencies": {

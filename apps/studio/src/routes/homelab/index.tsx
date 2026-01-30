@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { Server, Container, Network, HardDrive, Activity } from "lucide-react"
+import { Activity, Container, HardDrive, Network, Server } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
 export const Route = createFileRoute("/homelab/")({
@@ -9,11 +9,7 @@ export const Route = createFileRoute("/homelab/")({
 function HomelabPage() {
   return (
     <>
-      <SiteHeader
-        breadcrumbs={[
-          { label: "Homelab" },
-        ]}
-      />
+      <SiteHeader breadcrumbs={[{ label: "Homelab" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Homelab</h1>

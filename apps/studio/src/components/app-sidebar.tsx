@@ -1,16 +1,4 @@
 import {
-  LayoutDashboard,
-  FileText,
-  Server,
-  Settings,
-  Newspaper,
-  PenLine,
-  Activity,
-  HardDrive,
-  Network,
-  Shield,
-} from "lucide-react"
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -18,8 +6,20 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@dsqr-dotdev/ui/components/sidebar"
-import { NavMain, type NavItem } from "@/components/nav-main"
-import { NavModules, type ModuleItem } from "@/components/nav-modules"
+import {
+  Activity,
+  FileText,
+  HardDrive,
+  LayoutDashboard,
+  Network,
+  Newspaper,
+  PenLine,
+  Server,
+  Settings,
+  Shield,
+} from "lucide-react"
+import { type NavItem, NavMain } from "@/components/nav-main"
+import { type ModuleItem, NavModules } from "@/components/nav-modules"
 import { NavUser } from "@/components/nav-user"
 
 const overviewItems: NavItem[] = [
@@ -101,9 +101,7 @@ export function AppSidebar() {
             <span className="text-sm font-semibold leading-none">
               dsqr studio
             </span>
-            <span className="text-xs text-muted-foreground">
-              personal hq
-            </span>
+            <span className="text-xs text-muted-foreground">personal hq</span>
           </div>
         </div>
       </SidebarHeader>

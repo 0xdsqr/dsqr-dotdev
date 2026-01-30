@@ -1,19 +1,15 @@
-import { $, Glob } from "bun"
+import { createBuild } from "@dsqr-dotdev/build"
+import * as path from "path"
 
-await $`rm -rf dist`
-
-const files = new Glob("./src/**/*.{ts,tsx}").scan() as AsyncIterable<string>
-const collectedFiles: string[] = []
-for await (const file of files) {
-  collectedFiles.push(file)
-}
-
-await Bun.build({
-  format: "esm",
-  outdir: "dist/esm",
-  external: ["*"],
-  root: "src",
-  entrypoints: collectedFiles,
+await createBuild({
+  rootDir: path.resolve(__dirname, ".."),
+  onSuccess: (result) => {
+    console.log(`✓ Build completed in ${result.duration}ms`)
+    console.log(`  Entrypoints: ${result.entrypoints.length}`)
+  },
+  onError: (error) => {
+    console.error(`✗ Build failed after ${error.duration}ms`)
+    console.error(error.error)
+    process.exit(1)
+  },
 })
-
-await $`tsc --outDir dist/types --declaration --emitDeclarationOnly --declarationMap`

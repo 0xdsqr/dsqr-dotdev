@@ -1,6 +1,5 @@
-import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@dsqr-dotdev/ui/lib/utils"
+import { cva, type VariantProps } from "class-variance-authority"
 
 function Empty({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -8,7 +7,7 @@ function Empty({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="empty"
       className={cn(
         "gap-4 rounded-lg border-dashed p-12 flex w-full min-w-0 flex-1 flex-col items-center justify-center text-center text-balance",
-        className
+        className,
       )}
       {...props}
     />
@@ -19,10 +18,7 @@ function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="empty-header"
-      className={cn(
-        "gap-2 flex max-w-sm flex-col items-center",
-        className
-      )}
+      className={cn("gap-2 flex max-w-sm flex-col items-center", className)}
       {...props}
     />
   )
@@ -40,7 +36,7 @@ const emptyMediaVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 )
 
 function EmptyMedia({
@@ -74,7 +70,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
       data-slot="empty-description"
       className={cn(
         "text-sm/relaxed text-muted-foreground [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
-        className
+        className,
       )}
       {...props}
     />
@@ -87,7 +83,7 @@ function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="empty-content"
       className={cn(
         "gap-4 text-sm flex w-full max-w-sm min-w-0 flex-col items-center text-balance",
-        className
+        className,
       )}
       {...props}
     />

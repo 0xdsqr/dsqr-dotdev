@@ -1,6 +1,3 @@
-import { Link, useRouterState } from "@tanstack/react-router"
-import { ChevronRight } from "lucide-react"
-import type { LucideIcon } from "lucide-react"
 import {
   Collapsible,
   CollapsibleContent,
@@ -8,8 +5,8 @@ import {
 } from "@dsqr-dotdev/ui/components/collapsible"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -17,6 +14,9 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@dsqr-dotdev/ui/components/sidebar"
+import { Link, useRouterState } from "@tanstack/react-router"
+import type { LucideIcon } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 export interface ModuleSubItem {
   title: string

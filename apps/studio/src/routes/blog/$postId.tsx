@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useTRPC } from "@/lib/trpc"
 import { useQuery } from "@tanstack/react-query"
-import { SiteHeader } from "@/components/site-header"
+import { createFileRoute } from "@tanstack/react-router"
 import { BlogEditor } from "@/components/blog-editor"
+import { SiteHeader } from "@/components/site-header"
+import { useTRPC } from "@/lib/trpc"
 
 export const Route = createFileRoute("/blog/$postId")({
   component: EditPostPage,

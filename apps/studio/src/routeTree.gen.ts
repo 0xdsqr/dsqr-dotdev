@@ -10,15 +10,34 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SocialIndexRouteImport } from './routes/social/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as HomelabIndexRouteImport } from './routes/homelab/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogNewRouteImport } from './routes/blog/new'
 import { Route as BlogPostIdRouteImport } from './routes/blog/$postId'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
+import { Route as ApiPostsSlugImagesFileNameRouteImport } from './routes/api/posts.$slug.images.$fileName'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialIndexRoute = SocialIndexRouteImport.update({
+  id: '/social/',
+  path: '/social/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomelabIndexRoute = HomelabIndexRouteImport.update({
+  id: '/homelab/',
+  path: '/homelab/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
@@ -46,22 +65,36 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPostsSlugImagesFileNameRoute =
+  ApiPostsSlugImagesFileNameRouteImport.update({
+    id: '/api/posts/$slug/images/$fileName',
+    path: '/api/posts/$slug/images/$fileName',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/blog/$postId': typeof BlogPostIdRoute
   '/blog/new': typeof BlogNewRoute
   '/blog': typeof BlogIndexRoute
+  '/homelab': typeof HomelabIndexRoute
+  '/settings': typeof SettingsIndexRoute
+  '/social': typeof SocialIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blog/$postId': typeof BlogPostIdRoute
   '/blog/new': typeof BlogNewRoute
   '/blog': typeof BlogIndexRoute
+  '/homelab': typeof HomelabIndexRoute
+  '/settings': typeof SettingsIndexRoute
+  '/social': typeof SocialIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,8 +102,12 @@ export interface FileRoutesById {
   '/blog/$postId': typeof BlogPostIdRoute
   '/blog/new': typeof BlogNewRoute
   '/blog/': typeof BlogIndexRoute
+  '/homelab/': typeof HomelabIndexRoute
+  '/settings/': typeof SettingsIndexRoute
+  '/social/': typeof SocialIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,24 +116,36 @@ export interface FileRouteTypes {
     | '/blog/$postId'
     | '/blog/new'
     | '/blog'
+    | '/homelab'
+    | '/settings'
+    | '/social'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/api/posts/$slug/images/$fileName'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/blog/$postId'
     | '/blog/new'
     | '/blog'
+    | '/homelab'
+    | '/settings'
+    | '/social'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/api/posts/$slug/images/$fileName'
   id:
     | '__root__'
     | '/'
     | '/blog/$postId'
     | '/blog/new'
     | '/blog/'
+    | '/homelab/'
+    | '/settings/'
+    | '/social/'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/api/posts/$slug/images/$fileName'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -104,8 +153,12 @@ export interface RootRouteChildren {
   BlogPostIdRoute: typeof BlogPostIdRoute
   BlogNewRoute: typeof BlogNewRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  HomelabIndexRoute: typeof HomelabIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+  SocialIndexRoute: typeof SocialIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  ApiPostsSlugImagesFileNameRoute: typeof ApiPostsSlugImagesFileNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +168,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social/': {
+      id: '/social/'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/homelab/': {
+      id: '/homelab/'
+      path: '/homelab'
+      fullPath: '/homelab'
+      preLoaderRoute: typeof HomelabIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/': {
@@ -152,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/posts/$slug/images/$fileName': {
+      id: '/api/posts/$slug/images/$fileName'
+      path: '/api/posts/$slug/images/$fileName'
+      fullPath: '/api/posts/$slug/images/$fileName'
+      preLoaderRoute: typeof ApiPostsSlugImagesFileNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -160,8 +241,12 @@ const rootRouteChildren: RootRouteChildren = {
   BlogPostIdRoute: BlogPostIdRoute,
   BlogNewRoute: BlogNewRoute,
   BlogIndexRoute: BlogIndexRoute,
+  HomelabIndexRoute: HomelabIndexRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+  SocialIndexRoute: SocialIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  ApiPostsSlugImagesFileNameRoute: ApiPostsSlugImagesFileNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

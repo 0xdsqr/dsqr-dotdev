@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { PenLine, Twitter, MessageSquare, Share2 } from "lucide-react"
+import { MessageSquare, PenLine, Share2, Twitter } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
 export const Route = createFileRoute("/social/")({
@@ -10,10 +10,7 @@ function SocialPage() {
   return (
     <>
       <SiteHeader
-        breadcrumbs={[
-          { label: "Content", href: "/" },
-          { label: "Social" },
-        ]}
+        breadcrumbs={[{ label: "Content", href: "/" }, { label: "Social" }]}
       />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div>

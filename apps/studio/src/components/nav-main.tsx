@@ -1,5 +1,3 @@
-import { Link, useRouterState } from "@tanstack/react-router"
-import type { LucideIcon } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -7,6 +5,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@dsqr-dotdev/ui/components/sidebar"
+import { Link, useRouterState } from "@tanstack/react-router"
+import type { LucideIcon } from "lucide-react"
 
 export interface NavItem {
   title: string

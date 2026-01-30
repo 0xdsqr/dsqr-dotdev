@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { SiteHeader } from "@/components/site-header"
 import { BlogEditor } from "@/components/blog-editor"
+import { SiteHeader } from "@/components/site-header"
 
 export const Route = createFileRoute("/blog/new")({
   component: NewPostPage,

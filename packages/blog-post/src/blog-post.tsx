@@ -861,8 +861,13 @@ const BlogPostImage = React.forwardRef<HTMLElement, BlogPostImageProps>(
 
         {isZoomed && (
           <div
+            role="button"
+            tabIndex={0}
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm cursor-zoom-out"
             onClick={() => setIsZoomed(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" || e.key === "Enter") setIsZoomed(false)
+            }}
           >
             <img
               src={src || "/placeholder.svg"}
