@@ -4,16 +4,27 @@ import { BlogEditor } from "@/components/blog-editor"
 import { SiteHeader } from "@/components/site-header"
 import { useTRPC } from "@/lib/trpc"
 
-export const Route = createFileRoute("/blog/$postId")({
+export const Route = createFileRoute("/_authenticated/blog/$postId")({
   component: EditPostPage,
 })
 
 function EditPostPage() {
   const { postId } = Route.useParams()
   const trpc = useTRPC()
-  const { data: post, isLoading } = useQuery(
+  const { data: post, isLoading: isPostLoading } = useQuery(
     trpc.post.byId.queryOptions({ id: postId }),
   )
+
+  // If the post has no inline content, fetch it from CDN via post.content procedure
+  const needsContentFetch = !!post && !post.content && !!post.filePath
+  const { data: contentResult, isLoading: isContentLoading } = useQuery({
+    ...trpc.post.content.queryOptions({
+      filePath: post?.filePath ?? undefined,
+    }),
+    enabled: needsContentFetch,
+  })
+
+  const isLoading = isPostLoading || (needsContentFetch && isContentLoading)
 
   if (isLoading) {
     return (
@@ -52,6 +63,12 @@ function EditPostPage() {
     )
   }
 
+  // Merge CDN content into the post object if it was fetched separately
+  const postWithContent =
+    needsContentFetch && contentResult?.success
+      ? { ...post, content: contentResult.content }
+      : post
+
   return (
     <>
       <SiteHeader
@@ -62,7 +79,7 @@ function EditPostPage() {
         ]}
       />
       <div className="flex flex-1 flex-col p-6">
-        <BlogEditor post={post} />
+        <BlogEditor post={postWithContent} />
       </div>
     </>
   )

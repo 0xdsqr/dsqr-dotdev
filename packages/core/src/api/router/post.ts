@@ -77,6 +77,8 @@ export const postRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
+      let filePath = input.filePath
+
       // If postId provided, try to get content from database first
       if (input.postId) {
         const [post] = await ctx.db
@@ -88,13 +90,13 @@ export const postRouter = {
           return { success: true, content: post.content }
         }
 
-        // Fall back to S3/CDN if no content in database
+        // Fall back to CDN if no content in database
         if (post?.filePath) {
-          input.filePath = post.filePath
+          filePath = post.filePath
         }
       }
 
-      if (!input.filePath) {
+      if (!filePath) {
         return {
           success: false,
           content: "",
@@ -102,32 +104,20 @@ export const postRouter = {
         }
       }
 
-      // Try S3 first, then fall back to CDN
+      // Fetch from CDN — S3 is only used for writes (studio uploads)
       try {
-        const s3Content = await getPostContent(input.filePath)
-        if (s3Content) {
-          return { success: true, content: s3Content }
-        }
-      } catch {
-        // S3 failed, try CDN
-      }
-
-      // Fetch from CDN as fallback
-      try {
-        const url = `${CDN_BASE}/${input.filePath}`
-        const response = await fetch(url)
-
+        const response = await fetch(`${CDN_BASE}/${filePath}`)
         if (!response.ok) {
-          throw new Error(`Failed to fetch content: ${response.statusText}`)
+          throw new Error(`CDN returned ${response.status}`)
         }
-
-        const mdxContent = await response.text()
-        return { success: true, content: mdxContent }
+        const content = await response.text()
+        return { success: true, content }
       } catch (error) {
         return {
           success: false,
           content: "",
-          error: error instanceof Error ? error.message : "Unknown error",
+          error:
+            error instanceof Error ? error.message : "Failed to fetch content",
         }
       }
     }),

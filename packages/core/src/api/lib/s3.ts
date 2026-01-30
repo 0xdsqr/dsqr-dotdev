@@ -26,6 +26,10 @@ function createS3Client() {
       secretAccessKey: process.env.S3_SECRET_KEY || "",
     },
     forcePathStyle: true, // Required for S3-compatible storage like RustFS/MinIO
+    requestHandler: {
+      requestTimeout: 5_000, // 5s timeout — fail fast if S3 is unreachable
+      connectionTimeout: 3_000,
+    },
   })
 }
 
@@ -189,6 +193,8 @@ export async function getPostContent(filePath: string): Promise<string | null> {
   const key = filePath.replace("posts:", "posts/")
 
   try {
+    // Skip ensureBucketExists on reads — GetObject will fail naturally if
+    // the bucket doesn't exist, avoiding an extra HeadBucket round-trip.
     const response = await s3Client.send(
       new GetObjectCommand({
         Bucket: BUCKET_NAME,
@@ -201,12 +207,7 @@ export async function getPostContent(filePath: string): Promise<string | null> {
     }
 
     return await response.Body.transformToString()
-  } catch (error) {
-    log.error("Failed to get post content", {
-      filePath,
-      key,
-      error: error instanceof Error ? error.message : "Unknown error",
-    })
+  } catch {
     return null
   }
 }

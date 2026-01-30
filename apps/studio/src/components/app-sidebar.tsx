@@ -7,14 +7,11 @@ import {
   SidebarSeparator,
 } from "@dsqr-dotdev/ui/components/sidebar"
 import {
-  Activity,
   FileText,
-  HardDrive,
   LayoutDashboard,
-  Network,
+  Monitor,
   Newspaper,
   PenLine,
-  Server,
   Settings,
   Shield,
 } from "lucide-react"
@@ -46,32 +43,9 @@ const contentModules: ModuleItem[] = [
 
 const homelabModules: ModuleItem[] = [
   {
-    title: "Services",
-    icon: Server,
+    title: "Virtual Machines",
+    icon: Monitor,
     url: "/homelab",
-    badge: "Soon",
-    items: [
-      { title: "Overview", url: "/homelab" },
-      { title: "Containers", url: "/homelab/containers" },
-    ],
-  },
-  {
-    title: "Network",
-    icon: Network,
-    url: "/homelab/network",
-    badge: "Soon",
-  },
-  {
-    title: "Storage",
-    icon: HardDrive,
-    url: "/homelab/storage",
-    badge: "Soon",
-  },
-  {
-    title: "Monitoring",
-    icon: Activity,
-    url: "/homelab/monitoring",
-    badge: "Soon",
   },
 ]
 

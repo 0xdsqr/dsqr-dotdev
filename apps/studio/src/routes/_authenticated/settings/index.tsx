@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Bell, Palette, Shield, User } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
-export const Route = createFileRoute("/settings/")({
+export const Route = createFileRoute("/_authenticated/settings/")({
   component: SettingsPage,
 })
 

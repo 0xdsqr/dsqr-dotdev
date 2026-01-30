@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@dsqr-dotdev/ui/components/alert-dialog"
 import { Button } from "@dsqr-dotdev/ui/components/button"
 import { Input } from "@dsqr-dotdev/ui/components/input"
 import {
@@ -9,7 +20,7 @@ import {
 import { Textarea } from "@dsqr-dotdev/ui/components/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Eye, FileEdit, Save, Send } from "lucide-react"
+import { Eye, FileEdit, Save, Send, Trash2 } from "lucide-react"
 import { useCallback, useState } from "react"
 import { BlogPostViewer } from "@/components/blog-post-viewer"
 import { useTRPC } from "@/lib/trpc"
@@ -19,11 +30,11 @@ interface Post {
   title: string
   slug: string
   content: string | null
-  excerpt: string | null
-  coverImage: string | null
-  category: string | null
-  tags: string | null
-  status: string
+  description: string
+  headerImageUrl: string | null
+  category: string
+  tags: string[] | null
+  published: boolean
 }
 
 interface BlogEditorProps {
@@ -38,10 +49,12 @@ export function BlogEditor({ post }: BlogEditorProps) {
   const [title, setTitle] = useState(post?.title || "")
   const [slug, setSlug] = useState(post?.slug || "")
   const [content, setContent] = useState(post?.content || "")
-  const [excerpt, setExcerpt] = useState(post?.excerpt || "")
+  const [description, setDescription] = useState(post?.description || "")
   const [category, setCategory] = useState(post?.category || "")
-  const [tags, setTags] = useState(post?.tags || "")
-  const [coverImage, setCoverImage] = useState(post?.coverImage || "")
+  const [tags, setTags] = useState(post?.tags?.join(", ") || "")
+  const [headerImageUrl, setHeaderImageUrl] = useState(
+    post?.headerImageUrl || "",
+  )
 
   const createMutation = useMutation(
     trpc.post.create.mutationOptions({
@@ -61,6 +74,15 @@ export function BlogEditor({ post }: BlogEditorProps) {
     }),
   )
 
+  const deleteMutation = useMutation(
+    trpc.post.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [["post"]] })
+        navigate({ to: "/blog" })
+      },
+    }),
+  )
+
   const generateSlug = useCallback(() => {
     const generated = title
       .toLowerCase()
@@ -69,34 +91,41 @@ export function BlogEditor({ post }: BlogEditorProps) {
     setSlug(generated)
   }, [title])
 
-  const handleSave = (status: string) => {
+  const parseTags = (input: string): string[] =>
+    input
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean)
+
+  const handleSave = (publish: boolean) => {
+    const postData = {
+      title,
+      slug,
+      content: content || undefined,
+      description: description || title,
+      category: category || "Blog",
+      tags: tags ? parseTags(tags) : undefined,
+      headerImageUrl: headerImageUrl || undefined,
+      published: publish,
+      date: new Date(),
+    }
+
     if (post) {
       updateMutation.mutate({
         id: post.id,
-        title,
-        slug,
-        content,
-        excerpt: excerpt || undefined,
-        category: category || undefined,
-        tags: tags || undefined,
-        coverImage: coverImage || undefined,
-        status,
+        data: postData,
       })
     } else {
       createMutation.mutate({
-        title,
-        slug,
-        content,
-        excerpt: excerpt || undefined,
-        category: category || undefined,
-        tags: tags || undefined,
-        coverImage: coverImage || undefined,
-        status,
+        ...postData,
+        description: postData.description,
+        category: postData.category,
       })
     }
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending
+  const isDeleting = deleteMutation.isPending
 
   return (
     <div className="flex flex-col gap-6">
@@ -157,24 +186,24 @@ export function BlogEditor({ post }: BlogEditorProps) {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="excerpt">
-            Excerpt
+          <label className="text-sm font-medium" htmlFor="description">
+            Description
           </label>
           <Input
-            id="excerpt"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="coverImage">
+          <label className="text-sm font-medium" htmlFor="headerImageUrl">
             Cover Image URL
           </label>
           <Input
-            id="coverImage"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
+            id="headerImageUrl"
+            value={headerImageUrl}
+            onChange={(e) => setHeaderImageUrl(e.target.value)}
             placeholder="https://..."
           />
         </div>
@@ -194,10 +223,44 @@ export function BlogEditor({ post }: BlogEditorProps) {
             </TabsTrigger>
           </TabsList>
           <div className="flex gap-2">
+            {post && (
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={isDeleting}
+                    />
+                  }
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete post?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete &quot;{title || post.title}
+                      &quot;. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={() => deleteMutation.mutate({ id: post.id })}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleSave("draft")}
+              onClick={() => handleSave(false)}
               disabled={isSaving || !title || !slug}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -205,7 +268,7 @@ export function BlogEditor({ post }: BlogEditorProps) {
             </Button>
             <Button
               size="sm"
-              onClick={() => handleSave("published")}
+              onClick={() => handleSave(true)}
               disabled={isSaving || !title || !slug || !content}
             >
               <Send className="mr-2 h-4 w-4" />

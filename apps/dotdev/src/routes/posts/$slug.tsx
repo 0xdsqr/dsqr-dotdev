@@ -30,9 +30,17 @@ export const Route = createFileRoute("/posts/$slug")({
       throw new Error("Post not found")
     }
 
+    // If the post has inline content in the DB, skip the content fetch entirely
+    if (post.content) {
+      return {
+        post,
+        contentResult: { success: true, content: post.content },
+      }
+    }
+
+    // Only fetch from S3/CDN if there's no inline content
     const contentResult = await context.queryClient.fetchQuery(
       context.trpc.post.content.queryOptions({
-        postId: post.id,
         filePath: post.filePath ?? undefined,
       }),
     )

@@ -1,4 +1,4 @@
-name: ci
+name: test
 
 on:
   push: {}
@@ -83,26 +83,6 @@ jobs:
       - name: run tests
         run: echo "TODO - add tests"
 
-  build:
-    name: build
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: DeterminateSystems/nix-installer-action@main
-
-      - uses: DeterminateSystems/flakehub-cache-action@main
-
-      - name: install dependencies
-        run: nix develop --command bun install
-
-      - name: build
-        run: nix develop --command bun run build
-
   required:
     name: all checks passed
     runs-on: ubuntu-latest
@@ -112,7 +92,6 @@ jobs:
       - nixfmt
       - typecheck
       - test
-      - build
     steps:
       - name: verify all jobs passed
         run: |

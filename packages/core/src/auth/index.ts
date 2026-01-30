@@ -35,6 +35,10 @@ export function initAuth(options: {
       "https://admin.dsqr.dev", // admin prod
     ],
 
+    emailAndPassword: {
+      enabled: true,
+    },
+
     plugins: [
       jwt(),
       admin(),

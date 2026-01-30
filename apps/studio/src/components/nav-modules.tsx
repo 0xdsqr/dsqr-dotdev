@@ -98,19 +98,20 @@ export function NavModules({ label, modules }: NavModulesProps) {
 
             return (
               <SidebarMenuItem key={mod.title}>
-                <SidebarMenuButton
-                  tooltip={mod.title}
-                  isActive={isModuleActive}
-                  render={(props) => <Link {...props} to={mod.url} />}
-                >
-                  <mod.icon />
-                  <span>{mod.title}</span>
-                  {mod.badge && (
-                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
-                      {mod.badge}
-                    </span>
-                  )}
-                </SidebarMenuButton>
+                <Link to={mod.url}>
+                  <SidebarMenuButton
+                    tooltip={mod.title}
+                    isActive={isModuleActive}
+                  >
+                    <mod.icon />
+                    <span>{mod.title}</span>
+                    {mod.badge && (
+                      <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                        {mod.badge}
+                      </span>
+                    )}
+                  </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
             )
           })}

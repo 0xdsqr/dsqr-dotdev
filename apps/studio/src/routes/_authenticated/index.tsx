@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: DashboardPage,
 })
 

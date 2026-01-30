@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { MessageSquare, PenLine, Share2, Twitter } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
-export const Route = createFileRoute("/social/")({
+export const Route = createFileRoute("/_authenticated/social/")({
   component: SocialPage,
 })
 

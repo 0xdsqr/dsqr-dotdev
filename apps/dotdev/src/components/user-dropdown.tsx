@@ -53,21 +53,16 @@ export function UserDropdown({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex items-center gap-2 text-xs font-mono focus:outline-none group"
-        >
-          <Avatar className="h-5 w-5 border border-purple-500/50">
-            <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-            <AvatarFallback className="text-[9px] bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-purple-600 dark:text-purple-400 border-b-2 border-dotted border-purple-600 dark:border-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-            {displayName}
-          </span>
-        </button>
+      <DropdownMenuTrigger className="flex items-center gap-2 text-xs font-mono focus:outline-none group">
+        <Avatar className="h-5 w-5 border border-purple-500/50">
+          <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+          <AvatarFallback className="text-[9px] bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-purple-600 dark:text-purple-400 border-b-2 border-dotted border-purple-600 dark:border-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+          {displayName}
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 font-mono">
         <div className="flex items-center gap-3 px-2 py-3">

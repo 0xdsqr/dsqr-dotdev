@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { BlogEditor } from "@/components/blog-editor"
 import { SiteHeader } from "@/components/site-header"
 
-export const Route = createFileRoute("/blog/new")({
+export const Route = createFileRoute("/_authenticated/blog/new")({
   component: NewPostPage,
 })
 
