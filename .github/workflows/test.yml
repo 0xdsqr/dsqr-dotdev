@@ -12,14 +12,14 @@ concurrency:
 jobs:
   biome:
     name: biome
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
@@ -28,14 +28,14 @@ jobs:
 
   nixfmt:
     name: nixfmt
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
@@ -44,14 +44,14 @@ jobs:
 
   typecheck:
     name: typecheck
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
@@ -66,14 +66,14 @@ jobs:
 
   test:
     name: test
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
@@ -86,14 +86,14 @@ jobs:
   build:
     name: build
     needs: test
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
@@ -102,7 +102,7 @@ jobs:
 
   required:
     name: all checks passed
-    runs-on: [self-hosted, dotdev, dsqr]
+    runs-on: ubuntu-latest
     if: always()
     needs:
       - biome
