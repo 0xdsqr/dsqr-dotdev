@@ -97,11 +97,8 @@ jobs:
 
       - uses: DeterminateSystems/flakehub-cache-action@main
 
-      - name: install dependencies
-        run: nix develop --command bun install
-
-      - name: build
-        run: nix develop --command bun run build
+      - name: build packages
+        run: nix build .#dotdev .#studio
 
   required:
     name: all checks passed

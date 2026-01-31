@@ -27,6 +27,7 @@
         "aarch64-darwin"
       ];
       forEachSystem = nixpkgs.lib.genAttrs systems;
+      bun2nixFor = system: import ./nix/bun2nix { pkgs = nixpkgs.legacyPackages.${system}; };
     in
     {
       # ------------------------------------------------------------
@@ -41,6 +42,50 @@
       );
 
       # ------------------------------------------------------------
+      # Packages
+      # ------------------------------------------------------------
+      packages = forEachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          bun2nix = bun2nixFor system;
+          appPackages = import ./nix/packages.nix { inherit pkgs self bun2nix; };
+        in
+        {
+          inherit (appPackages) dotdev studio generate-deps;
+          default = appPackages.dotdev;
+        }
+      );
+
+      # ------------------------------------------------------------
+      # Apps (nix run .#<name>)
+      # ------------------------------------------------------------
+      apps = forEachSystem (system: {
+        generate-deps = {
+          type = "app";
+          program = "${self.packages.${system}.generate-deps}/bin/generate-deps";
+        };
+        dotdev = {
+          type = "app";
+          program = "${self.packages.${system}.dotdev}/bin/dotdev";
+        };
+        studio = {
+          type = "app";
+          program = "${self.packages.${system}.studio}/bin/studio";
+        };
+      });
+
+      # ------------------------------------------------------------
+      # NixOS module (import in your server config)
+      # ------------------------------------------------------------
+      nixosModules.default = import ./nix/nixos-module.nix { inherit self; };
+
+      # ------------------------------------------------------------
+      # bun2nix library (for use by other flakes)
+      # ------------------------------------------------------------
+      lib.bun2nix = bun2nixFor;
+
+      # ------------------------------------------------------------
       # Formatter (nix fmt)
       # ------------------------------------------------------------
       formatter = forEachSystem (
@@ -50,13 +95,21 @@
 
       # ------------------------------------------------------------
       # Checks (nix flake check)
-      # Runs treefmt in check mode to ensure the repo is properly formatted.
-      # Useful in CI to fail builds if formatting or linting issues exist.
       # ------------------------------------------------------------
-      checks = forEachSystem (system: {
-        formatting =
-          (treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} ./nix/treefmt.nix).config.build.check
-            self;
-      });
+      checks = forEachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          bun2nix = bun2nixFor system;
+          appPackages = import ./nix/packages.nix { inherit pkgs self bun2nix; };
+        in
+        {
+          formatting = (treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix).config.build.check self;
+
+          # Build checks — catches regressions in the Nix packaging
+          build-dotdev = appPackages.dotdev;
+          build-studio = appPackages.studio;
+        }
+      );
     };
 }
