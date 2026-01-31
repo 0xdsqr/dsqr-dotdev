@@ -16,91 +16,31 @@ import {
 } from "lucide-react"
 
 const profile = {
-  name: "David Dennis",
-  handle: "0xdsqr",
-  title: "Vice President, Software Engineer",
-  company: "Goldman Sachs",
-  location: "Dallas, Texas",
-  summary:
-    "10+ years of experience designing and building large-scale cloud platforms and developer tooling. Personally architected and built Reference Stack, the firm's Internal Developer Platform powering its cloud migration strategy. Deep hands-on expertise in AWS, TypeScript, Go, Nix, and developer workflows.",
+  name: "TODO",
+  handle: "TODO",
+  title: "TODO",
+  company: "TODO",
+  location: "TODO",
+  summary: "TODO",
   image: "/me.jpeg",
   links: {
-    github: "https://github.com/0xdsqr",
-    linkedin: "https://linkedin.com/in/davedennis93",
-    email: "mailto:hello@dsqr.dev",
+    github: "https://github.com/TODO",
+    linkedin: "https://linkedin.com/in/TODO",
+    email: "mailto:TODO",
   },
 }
 
 const experience = [
   {
-    company: "Goldman Sachs",
-    location: "Dallas, TX",
-    logo: "GS",
+    company: "TODO",
+    location: "TODO",
+    logo: "TODO",
     roles: [
       {
-        title: "Vice President, Software Engineer",
-        team: "Cloud Platform",
-        period: "Sep 2022 - Present",
-        highlights: [
-          "Architected and built Reference Stack, a TypeScript library of cloud patterns and constructs with a declarative YAML interface",
-          "Tech lead for team of 5 engineers; drove adoption from 0% to 33% of firm applications in year one",
-          "Built database migration tooling with custom DMS solutions for Sybase/DB2 to Aurora/DynamoDB migrations",
-          "Built reusable CI/CD library for GitLab enabling standardized pipelines for npm, Go, and container builds",
-          "Contributed upstream to AWS CDK, Nix, and other open source projects",
-          "Architected cloud incubation system for validating new cloud-native platforms — now patent-pending",
-        ],
-      },
-    ],
-  },
-  {
-    company: "Capital Group",
-    location: "Irvine, CA",
-    logo: "CG",
-    roles: [
-      {
-        title: "Software Engineer III",
-        team: "Tech Lead",
-        period: "Sep 2020 - Sep 2022",
-        highlights: [
-          "Built and scaled cloud platforms powering retirement plan management for Advisors, Sponsors, and TPAs",
-          "Led architecture and development of internal back-office systems",
-          "Led migration from legacy monolith to fully distributed microservices architecture",
-        ],
-      },
-    ],
-  },
-  {
-    company: "EY → KPMG",
-    location: "Irvine, CA → Denver, CO",
-    logo: "EY",
-    roles: [
-      {
-        title: "Senior Associate → Associate",
-        team: "Tech Lead",
-        period: "Nov 2018 - Sep 2020",
-        highlights: [
-          "Led development team of 5 onshore + 4 offshore engineers for Capital Group Private Client Services",
-          "Built Account Onboarding, Asset Allocation, Cash/Asset Movement workflows",
-          "Processed $100M+ daily with 99.99% production success rate",
-          "Converted to direct hire at Capital Group based on performance",
-        ],
-      },
-    ],
-  },
-  {
-    company: "Viasat",
-    location: "Denver, CO",
-    logo: "VS",
-    roles: [
-      {
-        title: "Software Engineer",
-        team: "Back Office",
-        period: "May 2017 - Nov 2018",
-        highlights: [
-          "Core team member standing up initial AWS cloud infrastructure",
-          "Built VPC, subnets, EC2, Docker, load balancing, API gateways with Terraform",
-          "Developed web services using Java, Python, JAX-WS, WebLogic, Tomcat",
-        ],
+        title: "TODO",
+        team: "TODO",
+        period: "TODO",
+        highlights: ["TODO"],
       },
     ],
   },
@@ -108,63 +48,27 @@ const experience = [
 
 const projects = [
   {
-    name: "tcg-price-guide",
-    description: "Quickly find the value or details of your TCG cards.",
-    link: "https://github.com/0xdsqr/tcg-price-guide",
-    tags: ["TypeScript", "Python"],
-  },
-  {
-    name: "durable-lambda",
-    description:
-      "Actor-based state management for AWS Lambda with single-instance guarantees and distributed locking.",
-    link: "https://github.com/0xdsqr/durable-lambda",
-    tags: ["AWS", "TypeScript", "DynamoDB"],
-  },
-  {
-    name: "dodo",
-    description:
-      "A modern DynamoDB toolkit built on functional patterns and Zod validation.",
-    link: "https://github.com/0xdsqr/dodo",
-    tags: ["TypeScript", "DynamoDB", "Zod"],
-  },
-  {
-    name: "typescript-go-overlay",
-    description:
-      "Nix flake for the TypeScript Go compiler with nightly builds.",
-    link: "https://github.com/0xdsqr/typescript-go-overlay",
-    tags: ["Nix", "TypeScript"],
+    name: "TODO",
+    description: "TODO",
+    link: "https://github.com/TODO",
+    tags: ["TODO"],
   },
 ]
 
 const patent = {
-  title: "Cloud Incubation and Deployment Platform",
-  number: "US 20250348299",
+  title: "TODO",
+  number: "TODO",
 }
 
-const certifications = [
-  { name: "AWS Solutions Architect – Professional" },
-  { name: "AWS DevOps Engineer – Professional" },
-]
+const certifications = [{ name: "TODO" }]
 
 const skills = {
-  languages: ["TypeScript", "Go", "Java", "Python"],
-  cloud: [
-    "Lambda",
-    "ECS",
-    "EC2",
-    "DynamoDB",
-    "Aurora",
-    "S3",
-    "EventBridge",
-    "Step Functions",
-    "IAM",
-    "DMS",
-    "CDK",
-  ],
-  frameworks: ["Hono", "Gin", "Spring", "JAX-RS", "Bun"],
-  infrastructure: ["CDK", "Nix", "Docker", "Cloudflare"],
-  cicd: ["Gradle", "GitLab CI", "GitHub Actions"],
-  frontend: ["React", "Solid"],
+  languages: ["TODO"],
+  cloud: ["TODO"],
+  frameworks: ["TODO"],
+  infrastructure: ["TODO"],
+  cicd: ["TODO"],
+  frontend: ["TODO"],
 }
 
 const container = {
@@ -357,14 +261,12 @@ function AboutPage() {
 
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-            CSU
+            TODO
           </div>
           <div>
-            <h3 className="font-medium">Colorado State University</h3>
-            <p className="text-sm text-muted-foreground">
-              Bachelor of Science, Computer Science
-            </p>
-            <p className="text-xs text-muted-foreground">Fort Collins, CO</p>
+            <h3 className="font-medium">TODO</h3>
+            <p className="text-sm text-muted-foreground">TODO</p>
+            <p className="text-xs text-muted-foreground">TODO</p>
           </div>
         </div>
       </motion.section>
@@ -444,9 +346,7 @@ function AboutPage() {
         variants={item}
         className="border-t border-border pt-6 text-center space-y-2"
       >
-        <p className="text-xs text-muted-foreground">
-          Want to chat about cloud, distributed systems, or developer tooling?
-        </p>
+        <p className="text-xs text-muted-foreground">TODO</p>
         <div className="flex items-center justify-center gap-3 text-xs">
           <Link
             to="/posts"

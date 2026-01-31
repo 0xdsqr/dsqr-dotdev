@@ -2,95 +2,38 @@ name: deploy
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch: {}
 
 concurrency:
   group: deploy
   cancel-in-progress: false
 
-env:
-  DEPLOY_HOST: 192.168.50.27
-  DEPLOY_USER: sysdsqr
-  DEPLOY_PATH: /var/lib/dsqr-dotdev
-
 jobs:
-  build:
-    name: build
-    runs-on: [self-hosted, dotdev, dsqr]
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: DeterminateSystems/nix-installer-action@main
-
-      - uses: DeterminateSystems/flakehub-cache-action@main
-
-      - name: install dependencies
-        run: nix develop --command bun install
-
-      - name: build
-        run: nix develop --command bun run build
-
-      - name: package artifacts
-        run: |
-          mkdir -p staging
-
-          # App dist bundles
-          cp -r apps/dotdev/dist staging/dotdev
-          cp -r apps/studio/dist staging/studio
-
-          # Workspace node_modules + package manifests needed at runtime
-          cp -r node_modules staging/node_modules
-          cp package.json staging/package.json
-          cp -r packages staging/packages
-
-          # Per-app node_modules (hoisted deps may leave app-level symlinks)
-          mkdir -p staging/dotdev/node_modules staging/studio/node_modules
-          cp -r apps/dotdev/node_modules/* staging/dotdev/node_modules/ 2>/dev/null || true
-          cp -r apps/studio/node_modules/* staging/studio/node_modules/ 2>/dev/null || true
-          cp apps/dotdev/package.json staging/dotdev/package.json
-          cp apps/studio/package.json staging/studio/package.json
-
-          tar -czf deploy.tar.gz -C staging .
-
-      - name: upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: deploy-bundle
-          path: deploy.tar.gz
-          retention-days: 7
+  # Run the full test suite before deploying
+  test:
+    name: test
+    uses: ./.github/workflows/test.yml
 
   deploy:
     name: deploy
-    needs: build
+    needs: test
     runs-on: [self-hosted, dotdev, dsqr]
     steps:
-      - name: download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-bundle
-
       - name: deploy to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}       # e.g. 192.168.50.27
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}       # e.g. sysdsqr
+          NIXOS_CONFIG_PATH: ${{ secrets.NIXOS_CONFIG_PATH }}  # e.g. /home/sysdsqr/nixos-config
         run: |
           set -euo pipefail
 
-          RELEASE_DIR="$DEPLOY_PATH/releases/$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::8}"
+          echo "Updating dsqr-dotdev flake input..."
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd $NIXOS_CONFIG_PATH && nix flake update dsqr-dotdev"
 
-          # Create release directory and extract
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p $RELEASE_DIR"
-          scp deploy.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/deploy.tar.gz"
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "tar -xzf $RELEASE_DIR/deploy.tar.gz -C $RELEASE_DIR && rm $RELEASE_DIR/deploy.tar.gz"
+          echo "Rebuilding NixOS configuration..."
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd $NIXOS_CONFIG_PATH && sudo nixos-rebuild switch --flake ."
 
-          # Atomic symlink swap
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "ln -sfn $RELEASE_DIR $DEPLOY_PATH/current"
-
-          # Restart services
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "sudo systemctl restart dotdev studio"
-
-          # Clean up old releases (keep last 5)
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "ls -dt $DEPLOY_PATH/releases/*/ | tail -n +6 | xargs rm -rf 2>/dev/null || true"
-
-          echo "deployed $GITHUB_SHA to $RELEASE_DIR"
+          echo "Deployed dsqr-dotdev @ $GITHUB_SHA"
