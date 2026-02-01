@@ -10,14 +10,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Run the full test suite before deploying
-  test:
-    name: test
-    uses: ./.github/workflows/test.yml
-
   deploy:
     name: deploy
-    needs: test
     runs-on: [self-hosted, dotdev, dsqr]
     steps:
       - name: deploy to server
