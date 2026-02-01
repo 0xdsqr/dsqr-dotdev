@@ -267,7 +267,7 @@ function CommentThread({
 }
 
 interface CommentItemProps {
-  comment: PostComment
+  comment: PostComment & { replies?: PostComment[] }
   onReply: () => void
   onDelete: (commentId: string) => void
   isDeleting: boolean
@@ -286,7 +286,7 @@ function CommentItem({
   onDelete,
   isDeleting,
   isReply,
-  _isReplying,
+  isReplying: _isReplying,
   expandedReplies,
   toggleReplies,
 }: CommentItemProps) {

@@ -164,25 +164,23 @@ export function BlogPostHeader({
         {/* Engagement buttons */}
         <div className="flex items-center gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={handleLike}
-                disabled={!session?.user || likeMutation.isPending}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md border transition-all font-mono text-sm",
-                  liked
-                    ? "border-red-500/30 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"
-                    : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
-                  !session?.user && "opacity-50 cursor-not-allowed",
-                )}
-              >
-                <Heart
-                  className="w-4 h-4"
-                  fill={liked ? "currentColor" : "none"}
-                />
-                <span>{likeCount}</span>
-              </button>
+            <TooltipTrigger
+              render={<button type="button" />}
+              onClick={handleLike}
+              disabled={!session?.user || likeMutation.isPending}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md border transition-all font-mono text-sm",
+                liked
+                  ? "border-red-500/30 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"
+                  : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
+                !session?.user && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <Heart
+                className="w-4 h-4"
+                fill={liked ? "currentColor" : "none"}
+              />
+              <span>{likeCount}</span>
             </TooltipTrigger>
             {!session?.user && (
               <TooltipContent
@@ -195,15 +193,13 @@ export function BlogPostHeader({
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={onCommentClick}
-                className="flex items-center gap-2 px-3 py-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all font-mono text-sm"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>{commentCount}</span>
-              </button>
+            <TooltipTrigger
+              render={<button type="button" />}
+              onClick={onCommentClick}
+              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all font-mono text-sm"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>{commentCount}</span>
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
@@ -214,23 +210,21 @@ export function BlogPostHeader({
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setBookmarked(!bookmarked)}
-                className={cn(
-                  "p-2 rounded-md border transition-all",
-                  bookmarked
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
-                )}
-                aria-label="Bookmark post"
-              >
-                <Bookmark
-                  className="w-4 h-4"
-                  fill={bookmarked ? "currentColor" : "none"}
-                />
-              </button>
+            <TooltipTrigger
+              render={<button type="button" />}
+              onClick={() => setBookmarked(!bookmarked)}
+              className={cn(
+                "p-2 rounded-md border transition-all",
+                bookmarked
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
+              )}
+              aria-label="Bookmark post"
+            >
+              <Bookmark
+                className="w-4 h-4"
+                fill={bookmarked ? "currentColor" : "none"}
+              />
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
@@ -241,17 +235,15 @@ export function BlogPostHeader({
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() =>
-                  navigator.clipboard.writeText(window.location.href)
-                }
-                className="p-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all"
-                aria-label="Share post"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
+            <TooltipTrigger
+              render={<button type="button" />}
+              onClick={() =>
+                navigator.clipboard.writeText(window.location.href)
+              }
+              className="p-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all"
+              aria-label="Share post"
+            >
+              <Share2 className="w-4 h-4" />
             </TooltipTrigger>
             <TooltipContent
               side="bottom"

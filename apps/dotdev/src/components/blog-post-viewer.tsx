@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
@@ -7,6 +8,9 @@ import styles from "./blog-post-viewer.module.css"
 import { Caution, Important, MoreInfo, Note, Tip, Warning } from "./callouts"
 import { CopyButton } from "./copy-button"
 import { generateHeadingId } from "./on-this-page"
+
+// biome-ignore lint/suspicious/noExplicitAny: react-markdown component props are loosely typed
+type MdProps = { children?: ReactNode; [key: string]: any }
 
 interface BlogPostViewerProps {
   content: string
@@ -112,10 +116,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeHighlight]}
               components={{
-                h1: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h1: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -123,7 +125,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h1 id={id} {...props}>
@@ -131,10 +133,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h1>
                   )
                 },
-                h2: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h2: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -142,7 +142,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h2 id={id} {...props}>
@@ -150,10 +150,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h2>
                   )
                 },
-                h3: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h3: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -161,7 +159,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h3 id={id} {...props}>
@@ -169,10 +167,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h3>
                   )
                 },
-                h4: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h4: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -180,7 +176,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h4 id={id} {...props}>
@@ -188,10 +184,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h4>
                   )
                 },
-                h5: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h5: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -199,7 +193,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h5 id={id} {...props}>
@@ -207,10 +201,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h5>
                   )
                 },
-                h6: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                h6: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (Array.isArray(node))
                       return node.map(extractText).join("")
@@ -218,7 +210,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                       return extractText(node.props.children)
                     return ""
                   }
-                  const text = extractText(children)
+                  const text = extractText(children as MdProps)
                   const id = generateHeadingId(text)
                   return (
                     <h6 id={id} {...props}>
@@ -226,10 +218,8 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h6>
                   )
                 },
-                pre: ({ children, ...props }: Record<string, unknown>) => {
-                  const extractText = (
-                    node: Record<string, unknown>,
-                  ): string => {
+                pre: ({ children, ...props }: MdProps) => {
+                  const extractText = (node: MdProps): string => {
                     if (typeof node === "string") return node
                     if (!node) return ""
                     if (node.props?.children) {
@@ -248,7 +238,9 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                   const languageMatch = className.match(/language-(\w+)/)
                   const language = languageMatch ? languageMatch[1] : undefined
 
-                  const codeText = extractText({ props: { children } })
+                  const codeText = extractText({
+                    props: { children },
+                  } as MdProps)
                   const lineCount = codeText.trim().split("\n").length
 
                   return (
