@@ -10,7 +10,7 @@
  *
  * DO NOT refactor the if/else chains in wyhashFinal — they match the
  * original C implementation's per-remainder-length handling and must
- * produce byte-identical hashes.
+ * produce byte-identical hashes...
  */
 
 const MASK64 = (1n << 64n) - 1n
