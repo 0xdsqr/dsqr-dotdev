@@ -23,7 +23,7 @@ jobs:
           NIXOS_CONFIG_PATH: ${{ secrets.NIXOS_CONFIG_PATH }}
         run: |
           set -euo pipefail
-          SSH="ssh -i ~/.ssh/dsqr_homelab_ed25519"
+          SSH="ssh -i /var/lib/github-runners/.ssh/dsqr_homelab_ed25519"
 
           echo "Updating dsqr-dotdev flake input..."
           $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
