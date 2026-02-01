@@ -13,21 +13,24 @@ jobs:
   deploy:
     name: deploy
     runs-on: [self-hosted, dotdev, dsqr]
+    env:
+      PATH: /run/current-system/sw/bin:/usr/bin:/bin
     steps:
       - name: deploy to server
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}       # e.g. 192.168.50.27
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}       # e.g. sysdsqr
-          NIXOS_CONFIG_PATH: ${{ secrets.NIXOS_CONFIG_PATH }}  # e.g. /home/sysdsqr/nixos-config
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          NIXOS_CONFIG_PATH: ${{ secrets.NIXOS_CONFIG_PATH }}
         run: |
           set -euo pipefail
+          SSH="ssh -i ~/.ssh/dsqr_homelab_ed25519"
 
           echo "Updating dsqr-dotdev flake input..."
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+          $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd $NIXOS_CONFIG_PATH && nix flake update dsqr-dotdev"
 
           echo "Rebuilding NixOS configuration..."
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd $NIXOS_CONFIG_PATH && sudo nixos-rebuild switch --flake ."
+          $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd $NIXOS_CONFIG_PATH && sudo NIXPKGS_ALLOW_UNFREE=1 NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --impure --flake .#dsqr-server-vm-x86_64"
 
           echo "Deployed dsqr-dotdev @ $GITHUB_SHA"
