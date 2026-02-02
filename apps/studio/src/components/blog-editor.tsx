@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@dsqr-dotdev/ui/components/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Eye, FileEdit, Save, Send, Trash2 } from "lucide-react"
+import { Eye, EyeOff, FileEdit, Save, Send, Trash2 } from "lucide-react"
 import { useCallback, useState } from "react"
 import { BlogPostViewer } from "@/components/blog-post-viewer"
 import { useTRPC } from "@/lib/trpc"
@@ -256,6 +256,17 @@ export function BlogEditor({ post }: BlogEditorProps) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+            {post?.published && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleSave(false)}
+                disabled={isSaving}
+              >
+                <EyeOff className="mr-2 h-4 w-4" />
+                Unpublish
+              </Button>
             )}
             <Button
               variant="outline"
