@@ -48,11 +48,6 @@ export const Route = createRootRouteWithContext<{
         href: "/favicon.svg",
         type: "image/svg+xml",
       },
-      {
-        rel: "icon",
-        href: "/favicon.ico",
-        sizes: "any",
-      },
     ],
   }),
   shellComponent: RootDocument,
