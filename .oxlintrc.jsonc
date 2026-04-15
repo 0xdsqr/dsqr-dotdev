@@ -1,0 +1,17 @@
+{
+  "plugins": ["react", "typescript"],
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    ".output/**",
+    ".vinxi/**",
+    ".turbo/**",
+    ".tanstack/**",
+    "**/routeTree.gen.ts",
+    "**/*.gen.ts",
+    "**/*.gen.tsx",
+  ],
+  "rules": {
+    "typescript/no-explicit-any": "off",
+  },
+}

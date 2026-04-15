@@ -1,0 +1,15 @@
+.git
+.github
+.direnv
+.DS_Store
+node_modules
+**/node_modules
+apps/*/.output
+apps/*/dist
+packages/*/dist
+coverage
+dist
+.nitro
+.tanstackim
+.env
+.env.*

@@ -1,0 +1,60 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+.output
+*.tgz
+.vinxi
+
+# coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+
+# env files
+.env
+.env.*
+.dev.vars
+.prod.vars
+.envrc.local
+
+# private keys
+*.pem
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+
+# Direnv
+.direnv
+
+# Turbo
+.turbo
+
+# TanStack
+.tanstack
+.tanstackim
+
+# Temp/Reference files
+.temp
+result
+count.txt
+
+# Database (root level only)
+/data/
+
+# Large files
+*.iso

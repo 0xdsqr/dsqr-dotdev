@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "tabWidth": 2,
+  "semi": false,
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    ".output/**",
+    "helm/**/templates/**",
+    ".vinxi/**",
+    ".turbo/**",
+    ".tanstack/**",
+    "**/routeTree.gen.ts",
+    "**/*.gen.ts",
+    "**/*.gen.tsx"
+  ]
+}
