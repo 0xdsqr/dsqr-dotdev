@@ -1,37 +1,37 @@
 {
-  "name": "dsqr-dotdev",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "tooling/*"
-  ],
-  "type": "module",
-  "scripts": {
-    "build": "bun run --filter '@dsqr-dotdev/db' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/blog-post' build && bun run --filter './apps/*' build",
-    "db:push": "bun run --filter '@dsqr-dotdev/db' push",
-    "db:studio": "bun run --filter '@dsqr-dotdev/db' studio",
-    "db:generate": "bun run --filter '@dsqr-dotdev/db' generate",
-    "dev:dotdev": "bun run --filter 'dotdev' dev",
-    "dev:studio": "bun run --filter='studio' dev",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
-    "lint": "oxlint -c .oxlintrc.jsonc . --deny-warnings",
-    "lint:fix": "oxlint -c .oxlintrc.jsonc --fix .",
-    "typecheck": "bun run --filter '@dsqr-dotdev/db' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/blog-post' build && bun run --filter '@dsqr-dotdev/db' typecheck && bun run --filter '@dsqr-dotdev/core' typecheck && bun run --filter '@dsqr-dotdev/ui' typecheck && bun run --filter '@dsqr-dotdev/blog-post' typecheck && bun run --filter 'dotdev' typecheck",
-    "clean": "git clean -xdf node_modules dist .turbo"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "oxfmt": "^0.44.0",
-    "oxlint": "^1.56.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "engines": {
-    "bun": "1.3.x",
-    "node": "24.x"
-  },
-  "packageManager": "bun@1.3.11"
+    "name": "dsqr-dotdev",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*",
+        "tooling/*"
+    ],
+    "type": "module",
+    "scripts": {
+        "build": "bun run --filter '@dsqr-dotdev/db' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/blog-post' build && bun run --filter './apps/*' build",
+        "db:push": "bun run --filter '@dsqr-dotdev/db' push",
+        "db:studio": "bun run --filter '@dsqr-dotdev/db' studio",
+        "db:generate": "bun run --filter '@dsqr-dotdev/db' generate",
+        "dev:dotdev": "bun run --filter 'dotdev' dev",
+        "dev:studio": "bun run --filter='studio' dev",
+        "format": "oxfmt .",
+        "format:check": "oxfmt --check .",
+        "lint": "oxlint -c .oxlintrc.jsonc . --deny-warnings",
+        "lint:fix": "oxlint -c .oxlintrc.jsonc --fix .",
+        "typecheck": "bun run --filter '@dsqr-dotdev/db' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/blog-post' build && bun run --filter '@dsqr-dotdev/db' typecheck && bun run --filter '@dsqr-dotdev/core' typecheck && bun run --filter '@dsqr-dotdev/ui' typecheck && bun run --filter '@dsqr-dotdev/blog-post' typecheck && bun run --filter 'dotdev' typecheck",
+        "clean": "git clean -xdf node_modules dist .turbo"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "oxfmt": "^0.44.0",
+        "oxlint": "^1.56.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "engines": {
+        "bun": "1.3.x",
+        "node": "24.x"
+    },
+    "packageManager": "bun@1.3.11"
 }
