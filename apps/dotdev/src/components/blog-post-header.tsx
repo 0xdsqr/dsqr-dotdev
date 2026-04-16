@@ -78,17 +78,6 @@ export function BlogPostHeader({
     },
   })
 
-  const getCategoryStyles = (cat: string) => {
-    const styles: Record<string, string> = {
-      TIL: "text-emerald-600 dark:text-emerald-400 border-emerald-600/30 dark:border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/30",
-      Blog: "text-indigo-600 dark:text-indigo-400 border-indigo-600/30 dark:border-indigo-400/30 bg-indigo-50 dark:bg-indigo-950/30",
-      NixWithMe:
-        "text-cyan-600 dark:text-cyan-400 border-cyan-600/30 dark:border-cyan-400/30 bg-cyan-50 dark:bg-cyan-950/30",
-      Life: "text-rose-600 dark:text-rose-400 border-rose-600/30 dark:border-rose-400/30 bg-rose-50 dark:bg-rose-950/30",
-    }
-    return styles[cat] || "text-muted-foreground border-border bg-muted/30"
-  }
-
   return (
     <header className="mb-10">
       <Link
@@ -111,16 +100,10 @@ export function BlogPostHeader({
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span
-          className={cn(
-            "inline-flex items-center rounded-md border px-3 py-1 font-mono text-xs font-medium",
-            getCategoryStyles(category),
-          )}
-        >
-          {category}
-        </span>
-        <span className="text-sm text-muted-foreground font-mono">
+      <div className="mb-4 flex flex-wrap items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
+        <span>{category}</span>
+        <span className="text-muted-foreground/40">/</span>
+        <span>
           {date.toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -129,32 +112,28 @@ export function BlogPostHeader({
         </span>
         {readingTimeMinutes ? (
           <>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="text-sm text-muted-foreground font-mono">
-              {readingTimeMinutes} min read
-            </span>
+            <span className="text-muted-foreground/40">/</span>
+            <span>{readingTimeMinutes} min read</span>
           </>
         ) : null}
       </div>
 
-      <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-balance md:text-4xl lg:text-5xl">
+      <h1 className="mb-6 text-3xl font-semibold leading-tight tracking-tight text-balance md:text-4xl lg:text-[2.8rem]">
         {title}
       </h1>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border py-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-dashed border-border pt-5">
         <div className="flex items-center gap-3">
           <img
             src="/me.jpeg"
             alt="Dave Dennis"
             loading="lazy"
             decoding="async"
-            className="size-11 rounded-full border border-border object-cover"
+            className="size-10 rounded-full border border-border object-cover"
           />
           <div>
             <p className="text-sm font-medium font-mono">Dave Dennis</p>
-            <p className="text-xs font-mono text-muted-foreground">
-              infrastructure, systems, and engineering notes
-            </p>
+            <p className="text-xs font-mono text-muted-foreground">engineering notes</p>
           </div>
         </div>
 
@@ -214,7 +193,7 @@ export function BlogPostHeader({
       </div>
 
       {tags.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           {tags.map((tag) => (
             <span
               key={tag}

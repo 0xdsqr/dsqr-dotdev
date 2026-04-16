@@ -5,12 +5,58 @@
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 0.95rem;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.01em;
 }
 
 .prose p {
-  margin: 1.25em 0;
-  line-height: 1.75;
+  margin: 1.1rem 0;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.prose > *:first-child {
+  margin-top: 0;
+}
+
+.prose > *:last-child {
+  margin-bottom: 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  scroll-margin-top: 6rem;
+}
+
+.prose h1 {
+  margin: 2.75rem 0 1rem;
+  font-size: 2rem;
+}
+
+.prose h2 {
+  margin: 2.5rem 0 0.9rem;
+  padding-top: 0.15rem;
+  border-top: 1px dashed var(--border);
+  font-size: 1.5rem;
+}
+
+.prose h3 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  margin: 1.5rem 0 0.65rem;
   font-size: 1rem;
 }
 
@@ -40,6 +86,77 @@
   font-style: italic;
 }
 
+.prose ul,
+.prose ol {
+  margin: 1.1rem 0;
+  padding-left: 1.35rem;
+}
+
+.prose li {
+  margin: 0.45rem 0;
+  line-height: 1.8;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin: 0.45rem 0 0.7rem;
+}
+
+.prose blockquote {
+  margin: 1.5rem 0;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 2px dotted var(--border);
+  color: var(--muted-foreground);
+}
+
+.prose hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px dashed var(--border);
+}
+
+.prose table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.prose thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.prose tbody tr {
+  border-bottom: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.prose th,
+.prose td {
+  padding: 0.75rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+
+.prose details {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px dotted var(--border);
+}
+
+.prose summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+
 .prose code {
   color: var(--foreground);
   background-color: var(--muted);
@@ -65,12 +182,9 @@
   position: relative;
   margin: 1.5em 0;
   overflow: hidden;
-  border-radius: 0.75rem;
+  border-radius: 0.6rem;
   background-color: var(--card);
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-  box-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.02),
-    0 12px 32px rgba(15, 23, 42, 0.04);
 }
 
 .codeBlockContainer {
@@ -110,11 +224,7 @@
   min-height: 3rem;
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--muted) 84%, transparent),
-    color-mix(in srgb, var(--card) 92%, transparent)
-  );
+  background-color: color-mix(in srgb, var(--muted) 45%, transparent);
 }
 
 .codeBlockLanguage {
