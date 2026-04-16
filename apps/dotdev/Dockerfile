@@ -14,11 +14,9 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 COPY apps/dotdev/package.json apps/dotdev/package.json
-COPY apps/studio/package.json apps/studio/package.json
-COPY packages/blog-post/package.json packages/blog-post/package.json
 COPY packages/core/package.json packages/core/package.json
-COPY packages/db/package.json packages/db/package.json
-COPY packages/ui/package.json packages/ui/package.json
+COPY packages/database/package.json packages/database/package.json
+COPY packages/react/package.json packages/react/package.json
 COPY tooling/build/package.json tooling/build/package.json
 COPY tooling/typescript/package.json tooling/typescript/package.json
 
@@ -29,7 +27,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN bun run --filter '@dsqr-dotdev/db' build
+RUN bun run --filter '@dsqr-dotdev/database' build
 RUN bun run --filter '@dsqr-dotdev/core' build
 RUN bun run --filter 'dotdev' build
 

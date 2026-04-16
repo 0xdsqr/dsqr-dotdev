@@ -1,7 +1,6 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@dsqr-dotdev/ui/components/tooltip"
 import { useMutation } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { ArrowLeft, Bookmark, Heart, MessageCircle, Share2 } from "lucide-react"
+import { ArrowLeft, Heart, Link2, MessageCircle } from "lucide-react"
 import { useState } from "react"
 import { authClient } from "@/auth/client"
 import { trpcClient } from "@/lib/trpc"
@@ -14,12 +13,27 @@ interface BlogPostHeaderProps {
   postId: string
   readingTimeMinutes?: number
   tags?: string[]
-  headerImageUrl?: string
-  authorImageUrl?: string
-  authorName?: string
+  headerImageUrl?: string | null
   likes?: number
   commentCount?: number
   onCommentClick?: () => void
+}
+
+function copyPostUrl() {
+  if (typeof window === "undefined") {
+    return Promise.resolve(false)
+  }
+
+  const value = window.location.href
+
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard
+      .writeText(value)
+      .then(() => true)
+      .catch(() => false)
+  }
+
+  return Promise.resolve(false)
 }
 
 export function BlogPostHeader({
@@ -30,8 +44,6 @@ export function BlogPostHeader({
   readingTimeMinutes,
   tags = [],
   headerImageUrl,
-  authorImageUrl = "/me.jpeg",
-  authorName = "Dave Dennis",
   likes = 0,
   commentCount = 0,
   onCommentClick,
@@ -39,7 +51,7 @@ export function BlogPostHeader({
   const { data: session } = authClient.useSession()
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
-  const [bookmarked, setBookmarked] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const likeMutation = useMutation({
     mutationFn: (increment: boolean) =>
@@ -47,30 +59,24 @@ export function BlogPostHeader({
         postId,
         increment,
       }),
-    onMutate: async (increment: boolean) => {
+    onMutate: async (increment) => {
       const previousLiked = liked
-      const previousCount = likeCount
+      const previousLikeCount = likeCount
 
-      setLiked(!liked)
-      setLikeCount(increment ? likeCount + 1 : Math.max(likeCount - 1, 0))
+      setLiked(increment)
+      setLikeCount((current) => (increment ? current + 1 : Math.max(current - 1, 0)))
 
-      return { previousLiked, previousCount }
+      return { previousLiked, previousLikeCount }
     },
-    onSuccess: () => {},
-    onError: (_error, _variables, context) => {
-      if (context) {
-        setLiked(context.previousLiked)
-        setLikeCount(context.previousCount)
+    onError: (_error, _increment, context) => {
+      if (!context) {
+        return
       }
+
+      setLiked(context.previousLiked)
+      setLikeCount(context.previousLikeCount)
     },
   })
-
-  const handleLike = () => {
-    if (!session?.user) {
-      return
-    }
-    likeMutation.mutate(!liked)
-  }
 
   const getCategoryStyles = (cat: string) => {
     const styles: Record<string, string> = {
@@ -85,34 +91,30 @@ export function BlogPostHeader({
 
   return (
     <header className="mb-10">
-      {/* Back link */}
       <Link
-        to="/"
+        to="/posts"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-mono mb-6 transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         <span>back to posts</span>
       </Link>
 
-      {/* Hero image */}
-      {headerImageUrl && (
-        <div className="relative w-full overflow-hidden rounded-xl border border-border mb-8 group">
-          <div className="aspect-[21/9]">
-            <img
-              src={headerImageUrl}
-              alt={title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+      {headerImageUrl ? (
+        <div className="mb-8 overflow-hidden rounded-2xl border border-border/80 bg-card">
+          <img
+            src={headerImageUrl}
+            alt={title}
+            loading="eager"
+            decoding="async"
+            className="aspect-[16/7] w-full object-cover"
+          />
         </div>
-      )}
+      ) : null}
 
-      {/* Category and meta */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <span
           className={cn(
-            "inline-flex items-center px-3 py-1 rounded-md border font-mono text-xs font-medium",
+            "inline-flex items-center rounded-md border px-3 py-1 font-mono text-xs font-medium",
             getCategoryStyles(category),
           )}
         >
@@ -125,121 +127,104 @@ export function BlogPostHeader({
             day: "numeric",
           })}
         </span>
-        {readingTimeMinutes && (
+        {readingTimeMinutes ? (
           <>
             <span className="text-muted-foreground/40">•</span>
             <span className="text-sm text-muted-foreground font-mono">
               {readingTimeMinutes} min read
             </span>
           </>
-        )}
+        ) : null}
       </div>
 
-      {/* Title */}
-      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-6 text-balance">
+      <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-balance md:text-4xl lg:text-5xl">
         {title}
       </h1>
 
-      {/* Author and engagement row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-y border-border">
-        {/* Author */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-border bg-muted">
-            <img src={authorImageUrl} alt={authorName} className="w-full h-full object-cover" />
-          </div>
+          <img
+            src="/me.jpeg"
+            alt="Dave Dennis"
+            loading="lazy"
+            decoding="async"
+            className="size-11 rounded-full border border-border object-cover"
+          />
           <div>
-            <p className="text-sm font-medium font-mono">{authorName}</p>
-            <p className="text-xs text-muted-foreground font-mono">@0xdsqr</p>
+            <p className="text-sm font-medium font-mono">Dave Dennis</p>
+            <p className="text-xs font-mono text-muted-foreground">
+              infrastructure, systems, and engineering notes
+            </p>
           </div>
         </div>
 
-        {/* Engagement buttons */}
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={<button type="button" />}
-              onClick={handleLike}
-              disabled={!session?.user || likeMutation.isPending}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md border transition-all font-mono text-sm",
-                liked
-                  ? "border-red-500/30 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"
-                  : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
-                !session?.user && "opacity-50 cursor-not-allowed",
-              )}
-            >
-              <Heart className="w-4 h-4" fill={liked ? "currentColor" : "none"} />
-              <span>{likeCount}</span>
-            </TooltipTrigger>
-            {!session?.user && (
-              <TooltipContent side="bottom" className="bg-foreground text-background">
-                Just sign up bro...
-              </TooltipContent>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (!session?.user || likeMutation.isPending) {
+                return
+              }
+
+              likeMutation.mutate(!liked)
+            }}
+            disabled={!session?.user || likeMutation.isPending}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-md border px-3 py-2 font-mono text-sm transition-colors",
+              liked
+                ? "border-red-500/30 bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400"
+                : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
+              !session?.user && "cursor-not-allowed opacity-60",
             )}
-          </Tooltip>
+            title={session?.user ? "Like post" : "Sign in to like"}
+          >
+            <Heart className="size-4" fill={liked ? "currentColor" : "none"} />
+            <span>{likeCount}</span>
+          </button>
 
-          <Tooltip>
-            <TooltipTrigger
-              render={<button type="button" />}
-              onClick={onCommentClick}
-              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all font-mono text-sm"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>{commentCount}</span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-foreground text-background">
-              {commentCount === 0 ? "be first to comment" : "view comments"}
-            </TooltipContent>
-          </Tooltip>
+          <button
+            type="button"
+            onClick={onCommentClick}
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 font-mono text-sm text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+            title={commentCount === 0 ? "Be first to comment" : "Jump to comments"}
+          >
+            <MessageCircle className="size-4" />
+            <span>{commentCount}</span>
+          </button>
 
-          <Tooltip>
-            <TooltipTrigger
-              render={<button type="button" />}
-              onClick={() => setBookmarked(!bookmarked)}
-              className={cn(
-                "p-2 rounded-md border transition-all",
-                bookmarked
-                  ? "border-primary/30 bg-primary/10 text-primary"
-                  : "border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="Bookmark post"
-            >
-              <Bookmark className="w-4 h-4" fill={bookmarked ? "currentColor" : "none"} />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-foreground text-background">
-              Bookmark
-            </TooltipContent>
-          </Tooltip>
+          <button
+            type="button"
+            onClick={() => {
+              void copyPostUrl().then((copied) => {
+                if (!copied) {
+                  return
+                }
 
-          <Tooltip>
-            <TooltipTrigger
-              render={<button type="button" />}
-              onClick={() => navigator.clipboard.writeText(window.location.href)}
-              className="p-2 rounded-md border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all"
-              aria-label="Share post"
-            >
-              <Share2 className="w-4 h-4" />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-foreground text-background">
-              Share
-            </TooltipContent>
-          </Tooltip>
+                setLinkCopied(true)
+                window.setTimeout(() => setLinkCopied(false), 1500)
+              })
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 font-mono text-sm text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+            title={linkCopied ? "Link copied" : "Copy link"}
+          >
+            <Link2 className="size-4" />
+            <span>{linkCopied ? "copied" : "share"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
+      {tags.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs font-mono px-2 py-1 rounded border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer"
+              className="rounded border border-dashed border-border px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
             >
               #{tag}
             </span>
           ))}
         </div>
-      )}
+      ) : null}
     </header>
   )
 }

@@ -1,5 +1,5 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "src/routes/index.tsx.bak"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -22,7 +22,9 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@dsqr-dotdev/core/api": ["../../packages/core/src/api/index.ts"],
+      "@dsqr-dotdev/core/auth": ["../../packages/core/src/auth/index.ts"]
     }
   }
 }

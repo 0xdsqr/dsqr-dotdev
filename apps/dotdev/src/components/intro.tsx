@@ -3,6 +3,11 @@ import { Link } from "@tanstack/react-router"
 function Intro() {
   return (
     <div className="flex flex-col items-center justify-center space-y-4">
+      <div className="w-20 h-20 md:w-24 md:h-24 rounded overflow-hidden bg-muted mb-4 border border-border">
+        <div className="w-full h-full">
+          <img src="/me.jpeg" alt="0xdsqr" className="w-full h-full object-cover" />
+        </div>
+      </div>
       <div className="prose dark:prose-invert max-w-none text-center font-mono mt-4">
         <p className="text-sm sm:text-base leading-relaxed">
           Dad of one. Primarily focused on{" "}

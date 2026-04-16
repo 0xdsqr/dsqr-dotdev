@@ -1,4 +1,4 @@
-import { user } from "@dsqr-dotdev/db/auth-schema"
+import { user } from "@dsqr-dotdev/database/auth-schema"
 import type { TRPCRouterRecord } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { z } from "zod/v4"
@@ -34,7 +34,7 @@ export const authRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existingUser = await ctx.db
+      const existingUser = await ctx.database
         .select()
         .from(user)
         .where(eq(user.id, ctx.session.user.id))
@@ -44,7 +44,7 @@ export const authRouter = {
         throw new Error("User not found")
       }
 
-      const result = await ctx.db
+      const result = await ctx.database
         .update(user)
         .set({
           ...(input.name && { name: input.name }),

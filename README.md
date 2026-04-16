@@ -3,7 +3,6 @@
 <h1>dsqr-dotdev</h1>
 
 <p align="center">
-  <a href="https://github.com/0xdsqr/dsqr-dotdev/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/0xdsqr/dsqr-dotdev/test.yml?style=for-the-badge&branch=master&label=test" alt="Test"></a>
   <a href="https://github.com/0xdsqr/dsqr-dotdev/actions/workflows/publish-dotdev-web-artifacts.yml"><img src="https://img.shields.io/github/actions/workflow/status/0xdsqr/dsqr-dotdev/publish-dotdev-web-artifacts.yml?style=for-the-badge&branch=master&label=publish" alt="Publish"></a>
 </p>
 
@@ -15,17 +14,15 @@
 
 | App      | Port |
 | -------- | ---- |
-| `dotdev` | 3000 |
-| `studio` | 3001 |
+| `dotdev` | 3020 |
 
 ## Packages
 
-| Package                  |
-| ------------------------ |
-| `@dsqr-dotdev/core`      |
-| `@dsqr-dotdev/db`        |
-| `@dsqr-dotdev/ui`        |
-| `@dsqr-dotdev/blog-post` |
+| Package                 |
+| ----------------------- |
+| `@dsqr-dotdev/core`     |
+| `@dsqr-dotdev/database` |
+| `@dsqr-dotdev/react`    |
 
 ## Commands
 

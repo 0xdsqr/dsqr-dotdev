@@ -1,12 +1,12 @@
 @import "tailwindcss";
-@source "../../../packages/ui/src";
+@source "../../../packages/react/src";
 
 @import "tw-animate-css";
 
 @import "@fontsource/geist-sans";
 @import "@fontsource/geist-mono";
 
-@import "@dsqr-dotdev/ui/globals.css";
+@import "@dsqr-dotdev/react/globals.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -1,4 +1,4 @@
-import { Button } from "@dsqr-dotdev/ui/components/button"
+import { Button } from "@dsqr-dotdev/react/components/ui/button"
 import { MoonIcon, SunIcon } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 

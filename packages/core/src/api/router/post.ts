@@ -5,18 +5,16 @@ import {
   postCommentsView,
   posts,
   updatePostSchema,
-} from "@dsqr-dotdev/db/schema"
+} from "@dsqr-dotdev/database/schema"
 import type { TRPCRouterRecord } from "@trpc/server"
 import { and, desc, eq, sql } from "drizzle-orm"
 import { z } from "zod/v4"
-import { uploadPostContent, uploadPostImage } from "../lib/s3"
+import { getPostContent, uploadPostContent, uploadPostImage } from "../lib/s3"
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
-
-const CDN_BASE = "https://cdn.dsqr.dev"
 
 export const postRouter = {
   all: publicProcedure.query(async ({ ctx }) => {
-    const postsWithCommentCount = await ctx.db
+    const postsWithCommentCount = await ctx.database
       .select({
         id: posts.id,
         title: posts.title,
@@ -40,20 +38,24 @@ export const postRouter = {
         )`.as("commentCount"),
       })
       .from(posts)
+      .where(eq(posts.published, true))
       .orderBy(desc(posts.date))
-      .limit(10)
 
     return postsWithCommentCount
   }),
 
   byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    const [post] = await ctx.db.select().from(posts).where(eq(posts.id, input.id))
+    const [post] = await ctx.database.select().from(posts).where(eq(posts.id, input.id))
 
     return post
   }),
 
   bySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ ctx, input }) => {
-    const result = await ctx.db.select().from(posts).where(eq(posts.slug, input.slug)).limit(1)
+    const result = await ctx.database
+      .select()
+      .from(posts)
+      .where(and(eq(posts.slug, input.slug), eq(posts.published, true)))
+      .limit(1)
 
     return result[0] || null
   }),
@@ -70,7 +72,7 @@ export const postRouter = {
 
       // If postId provided, try to get content from database first
       if (input.postId) {
-        const [post] = await ctx.db
+        const [post] = await ctx.database
           .select({ content: posts.content, filePath: posts.filePath })
           .from(posts)
           .where(eq(posts.id, input.postId))
@@ -79,7 +81,7 @@ export const postRouter = {
           return { success: true, content: post.content }
         }
 
-        // Fall back to CDN if no content in database
+        // Fall back to object storage if no inline content is present.
         if (post?.filePath) {
           filePath = post.filePath
         }
@@ -93,13 +95,13 @@ export const postRouter = {
         }
       }
 
-      // Fetch from CDN — S3 is only used for writes (studio uploads)
       try {
-        const response = await fetch(`${CDN_BASE}/${filePath}`)
-        if (!response.ok) {
-          throw new Error(`CDN returned ${response.status}`)
+        const content = await getPostContent(filePath)
+
+        if (!content) {
+          throw new Error("Storage returned no content")
         }
-        const content = await response.text()
+
         return { success: true, content }
       } catch (error) {
         return {
@@ -112,7 +114,7 @@ export const postRouter = {
 
   // Admin-only routes
   create: adminProcedure.input(createPostSchema).mutation(async ({ ctx, input }) => {
-    const [post] = await ctx.db.insert(posts).values(input).returning()
+    const [post] = await ctx.database.insert(posts).values(input).returning()
     return post
   }),
 
@@ -127,7 +129,7 @@ export const postRouter = {
       )
       console.log("[post.update] cleanData:", JSON.stringify(cleanData, null, 2))
 
-      const [post] = await ctx.db
+      const [post] = await ctx.database
         .update(posts)
         .set(cleanData)
         .where(eq(posts.id, input.id))
@@ -137,13 +139,13 @@ export const postRouter = {
     }),
 
   delete: adminProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    await ctx.db.delete(posts).where(eq(posts.id, input.id))
+    await ctx.database.delete(posts).where(eq(posts.id, input.id))
     return { success: true }
   }),
 
   // Admin: get all posts including drafts
   adminAll: adminProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(posts).orderBy(desc(posts.updatedAt))
+    return ctx.database.select().from(posts).orderBy(desc(posts.updatedAt))
   }),
 
   // Admin: save post content to S3 and update filePath
@@ -160,7 +162,7 @@ export const postRouter = {
       const filePath = await uploadPostContent(input.slug, input.content)
 
       // Update the post with the new filePath
-      const [post] = await ctx.db
+      const [post] = await ctx.database
         .update(posts)
         .set({
           filePath,
@@ -191,7 +193,7 @@ export const postRouter = {
   like: protectedProcedure
     .input(z.object({ postId: z.string(), increment: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const post = await ctx.db.query.posts.findFirst({
+      const post = await ctx.database.query.posts.findFirst({
         where: eq(posts.id, input.postId),
       })
 
@@ -201,7 +203,7 @@ export const postRouter = {
 
       const newLikeCount = input.increment ? post.likesCount + 1 : Math.max(post.likesCount - 1, 0)
 
-      await ctx.db
+      await ctx.database
         .update(posts)
         .set({
           likesCount: newLikeCount,
@@ -215,7 +217,7 @@ export const postRouter = {
   getComments: publicProcedure
     .input(z.object({ postId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const allComments = await ctx.db
+      const allComments = await ctx.database
         .select()
         .from(postCommentsView)
         .where(and(eq(postCommentsView.postId, input.postId), eq(postCommentsView.isActive, true)))
@@ -247,7 +249,7 @@ export const postRouter = {
   commentCount: publicProcedure
     .input(z.object({ postId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const result = await ctx.db
+      const result = await ctx.database
         .select({ count: sql<number>`count(*)` })
         .from(postCommentsView)
         .where(and(eq(postCommentsView.postId, input.postId), eq(postCommentsView.isActive, true)))
@@ -258,7 +260,7 @@ export const postRouter = {
   createComment: protectedProcedure
     .input(createPostCommentSchema)
     .mutation(async ({ ctx, input }) => {
-      const [post] = await ctx.db
+      const [post] = await ctx.database
         .select({ id: posts.id })
         .from(posts)
         .where(eq(posts.id, input.postId))
@@ -268,7 +270,7 @@ export const postRouter = {
       }
 
       if (input.parentCommentId) {
-        const [parentComment] = await ctx.db
+        const [parentComment] = await ctx.database
           .select({ id: postComments.id })
           .from(postComments)
           .where(eq(postComments.id, input.parentCommentId))
@@ -278,7 +280,7 @@ export const postRouter = {
         }
       }
 
-      const result = await ctx.db
+      const result = await ctx.database
         .insert(postComments)
         .values({
           ...input,
@@ -292,7 +294,7 @@ export const postRouter = {
   deleteComment: protectedProcedure
     .input(z.object({ commentId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const [comment] = await ctx.db
+      const [comment] = await ctx.database
         .select()
         .from(postComments)
         .where(eq(postComments.id, input.commentId))
@@ -305,7 +307,7 @@ export const postRouter = {
         throw new Error("You can only delete your own comments")
       }
 
-      const result = await ctx.db
+      const result = await ctx.database
         .update(postComments)
         .set({
           isActive: false,

@@ -1,13 +1,13 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/ui/components/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@dsqr-dotdev/react/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@dsqr-dotdev/ui/components/dropdown-menu"
+} from "@dsqr-dotdev/react/components/ui/dropdown-menu"
 import { LogOut, Settings } from "lucide-react"
 import { useState } from "react"
 import { SettingsModal } from "./settings-modal"

@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@dsqr-dotdev/ui/components/button"
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@dsqr-dotdev/ui/components/input-otp"
+import { Button } from "@dsqr-dotdev/react/components/ui/button"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@dsqr-dotdev/react/components/ui/input-otp"
 import type React from "react"
 import { useState } from "react"
 import { z } from "zod"
@@ -10,6 +10,30 @@ import { UserDropdown } from "./user-dropdown"
 
 const emailSchema = z.string().email("Invalid email")
 const otpSchema = z.string().length(6, "OTP must be 6 digits")
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") {
+    return fallback
+  }
+
+  const maybeMessage = ["message", "error", "statusText", "status"].find(
+    (key) => typeof Reflect.get(error, key) === "string",
+  )
+
+  if (maybeMessage) {
+    return String(Reflect.get(error, maybeMessage))
+  }
+
+  const nestedError = Reflect.get(error, "error")
+  if (nestedError && typeof nestedError === "object") {
+    const nestedMessage = Reflect.get(nestedError, "message")
+    if (typeof nestedMessage === "string") {
+      return nestedMessage
+    }
+  }
+
+  return fallback
+}
 
 export function InlineSignIn() {
   const { data: session, isPending } = authClient.useSession()
@@ -38,15 +62,15 @@ export function InlineSignIn() {
       })
 
       if (sendError) {
-        setError("Failed to send OTP")
+        setError(getErrorMessage(sendError, "Failed to send OTP"))
         setLoading(false)
         return
       }
 
       setStep("otp")
       setLoading(false)
-    } catch {
-      setError("Failed to send OTP")
+    } catch (sendError) {
+      setError(getErrorMessage(sendError, "Failed to send OTP"))
       setLoading(false)
     }
   }
@@ -69,7 +93,7 @@ export function InlineSignIn() {
     })
 
     if (verifyError) {
-      setError("Invalid OTP")
+      setError(getErrorMessage(verifyError, "Invalid OTP"))
       setLoading(false)
       return
     }

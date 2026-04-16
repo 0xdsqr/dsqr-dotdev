@@ -1,17 +1,20 @@
 "use client"
 
-import type { PostComment } from "@dsqr-dotdev/db/schema"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { ChevronDown, ChevronUp, Reply, Trash2 } from "lucide-react"
 import { useState } from "react"
+import type { RouterOutputs } from "@dsqr-dotdev/core/api"
 import { authClient } from "@/auth/client"
-import { trpcClient } from "@/lib/trpc"
+import { trpcClient, useTRPC } from "@/lib/trpc"
 
 interface BlogCommentsProps {
   postId: string
 }
 
+type CommentNode = RouterOutputs["post"]["getComments"][number]
+
 export function BlogComments({ postId }: BlogCommentsProps) {
+  const trpc = useTRPC()
   const { data: session } = authClient.useSession()
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [commentText, setCommentText] = useState("")
@@ -19,8 +22,7 @@ export function BlogComments({ postId }: BlogCommentsProps) {
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
 
   const { data: comments = [], refetch } = useQuery({
-    queryKey: ["post.comments", postId],
-    queryFn: () => trpcClient.post.getComments.query({ postId }),
+    ...trpc.post.getComments.queryOptions({ postId }),
   })
 
   const createMutation = useMutation({
@@ -34,17 +36,15 @@ export function BlogComments({ postId }: BlogCommentsProps) {
       setCommentText("")
       setReplyingTo(null)
       setReplyText("")
-      refetch()
+      void refetch()
     },
-    onError: (_error) => {},
   })
 
   const deleteMutation = useMutation({
     mutationFn: (commentId: string) => trpcClient.post.deleteComment.mutate({ commentId }),
     onSuccess: () => {
-      refetch()
+      void refetch()
     },
-    onError: (_error) => {},
   })
 
   const handleSubmit = (e: React.FormEvent, parentId?: string) => {
@@ -123,7 +123,6 @@ export function BlogComments({ postId }: BlogCommentsProps) {
             <CommentThread
               key={comment.id}
               comment={comment}
-              postId={postId}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               replyText={replyText}
@@ -143,8 +142,7 @@ export function BlogComments({ postId }: BlogCommentsProps) {
 }
 
 interface CommentThreadProps {
-  comment: PostComment & { replies?: PostComment[] }
-  postId: string
+  comment: CommentNode
   replyingTo: string | null
   setReplyingTo: (id: string | null) => void
   replyText: string
@@ -160,7 +158,6 @@ interface CommentThreadProps {
 
 function CommentThread({
   comment,
-  postId,
   replyingTo,
   setReplyingTo,
   replyText,
@@ -235,7 +232,6 @@ function CommentThread({
             <CommentThread
               key={reply.id}
               comment={reply}
-              postId={postId}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               replyText={replyText}
@@ -256,7 +252,7 @@ function CommentThread({
 }
 
 interface CommentItemProps {
-  comment: PostComment & { replies?: PostComment[] }
+  comment: CommentNode
   onReply: () => void
   onDelete: (commentId: string) => void
   isDeleting: boolean
