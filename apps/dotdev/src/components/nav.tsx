@@ -2,8 +2,8 @@
 
 import { Link, useRouterState } from "@tanstack/react-router"
 import { motion } from "framer-motion"
+import { ThemeToggle } from "@dsqr-dotdev/react/components/theme-toggle"
 import { InlineSignIn } from "@/components/inline-sign-in"
-import { ThemeToggle } from "@/components/theme-toggle"
 
 function Nav() {
   const router = useRouterState()
@@ -21,7 +21,6 @@ function Nav() {
     { label: "0xdsqr", href: "/" },
     { label: "posts", href: "/posts" },
     { label: "misc", href: "/misc" },
-    { label: "about", href: "/about" },
   ]
 
   return (

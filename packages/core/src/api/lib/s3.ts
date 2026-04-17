@@ -57,68 +57,6 @@ async function ensureBucketAccessible(): Promise<void> {
   }
 }
 
-export async function uploadAvatar(
-  userId: string,
-  file: Buffer,
-  fileName: string,
-  fileType: string,
-): Promise<string> {
-  const key = `avatars/${userId}/${fileName}`
-
-  await ensureBucketAccessible()
-
-  try {
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Body: file,
-        ContentType: fileType,
-      }),
-    )
-
-    // Return relative path (best practice: avoids hardcoded domains, works across environments)
-    const avatarPath = `/api/avatar/${userId}/${fileName}`
-
-    log.debug("Avatar uploaded", { userId, key })
-    return avatarPath
-  } catch (error) {
-    log.error("Failed to upload avatar", {
-      userId,
-      key,
-      error: error instanceof Error ? error.message : "Unknown error",
-    })
-    throw new Error("Failed to upload image to storage")
-  }
-}
-
-export async function getAvatar(
-  userId: string,
-  fileName: string,
-): Promise<{ body: ReadableStream; contentType: string } | null> {
-  const key = `avatars/${userId}/${fileName}`
-
-  try {
-    const response = await s3Client.send(
-      new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-      }),
-    )
-
-    if (!response.Body) {
-      return null
-    }
-
-    return {
-      body: response.Body.transformToWebStream(),
-      contentType: response.ContentType || "image/jpeg",
-    }
-  } catch {
-    return null
-  }
-}
-
 /**
  * Upload post MDX content to S3
  * @param slug - Post slug used for the file path

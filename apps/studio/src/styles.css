@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@source "../../../packages/react/src";
+
+@import "@fontsource/geist-sans";
+@import "@fontsource/geist-mono";
+
+@import "@dsqr-dotdev/react/globals.css";
+
+:root {
+  --font-sans: "Geist", "Geist Fallback", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --radius: 1rem;
+}
+
+body {
+  @apply m-0 bg-background text-foreground;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

@@ -1,11 +1,12 @@
 import type { AppRouter } from "@dsqr-dotdev/core/api"
+import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
+import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router"
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import { lazy, Suspense } from "react"
 import { Footer } from "../components/footer"
 import { Nav } from "../components/nav"
-import { ThemeProvider } from "../components/theme-provider"
 
 import appCss from "../styles.css?url"
 
@@ -71,6 +72,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Nav />
           <main className="container max-w-4xl mx-auto px-4 py-12">{children}</main>
           <Footer />
+          <Toaster position="top-center" richColors />
           {import.meta.env.DEV && import.meta.env.VITE_SHOW_DEVTOOLS === "true" && (
             <Suspense fallback={null}>
               <TanStackDevtools

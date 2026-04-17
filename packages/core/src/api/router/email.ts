@@ -1,7 +1,8 @@
 import { createSubscriberSchema, subscribers } from "@dsqr-dotdev/database/schema"
 import type { TRPCRouterRecord } from "@trpc/server"
+import { desc } from "drizzle-orm"
 import { logger } from "../lib/logger"
-import { publicProcedure } from "../trpc"
+import { adminProcedure, publicProcedure } from "../trpc"
 
 const log = logger
 
@@ -18,5 +19,18 @@ export const emailRouter = {
       })
       throw error
     }
+  }),
+  adminSubscribers: adminProcedure.query(async ({ ctx }) => {
+    return ctx.database
+      .select({
+        id: subscribers.id,
+        email: subscribers.email,
+        active: subscribers.active,
+        subscribedAt: subscribers.subscribedAt,
+        unsubscribedAt: subscribers.unsubscribedAt,
+        unsubscribeToken: subscribers.unsubscribeToken,
+      })
+      .from(subscribers)
+      .orderBy(desc(subscribers.subscribedAt))
   }),
 } satisfies TRPCRouterRecord

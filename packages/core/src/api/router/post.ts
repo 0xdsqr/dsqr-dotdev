@@ -121,20 +121,15 @@ export const postRouter = {
   update: adminProcedure
     .input(z.object({ id: z.string(), data: updatePostSchema }))
     .mutation(async ({ ctx, input }) => {
-      console.log("[post.update] input:", JSON.stringify(input, null, 2))
-
-      // Don't include undefined values in the update
       const cleanData = Object.fromEntries(
         Object.entries(input.data).filter(([_, v]) => v !== undefined),
       )
-      console.log("[post.update] cleanData:", JSON.stringify(cleanData, null, 2))
 
       const [post] = await ctx.database
         .update(posts)
         .set(cleanData)
         .where(eq(posts.id, input.id))
         .returning({ id: posts.id })
-      console.log("[post.update] success, post id:", post?.id)
       return { success: true, id: post?.id }
     }),
 
@@ -145,7 +140,33 @@ export const postRouter = {
 
   // Admin: get all posts including drafts
   adminAll: adminProcedure.query(async ({ ctx }) => {
-    return ctx.database.select().from(posts).orderBy(desc(posts.updatedAt))
+    return ctx.database
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        category: posts.category,
+        description: posts.description,
+        content: posts.content,
+        filePath: posts.filePath,
+        headerImageUrl: posts.headerImageUrl,
+        likesCount: posts.likesCount,
+        viewCount: posts.viewCount,
+        tags: posts.tags,
+        readingTimeMinutes: posts.readingTimeMinutes,
+        createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
+        published: posts.published,
+        date: posts.date,
+        commentCount: sql<number>`(
+          SELECT COUNT(*)::int
+          FROM ${postCommentsView}
+          WHERE ${postCommentsView.postId} = ${posts.id}
+          AND ${postCommentsView.isActive} = true
+        )`.as("commentCount"),
+      })
+      .from(posts)
+      .orderBy(desc(posts.updatedAt))
   }),
 
   // Admin: save post content to S3 and update filePath

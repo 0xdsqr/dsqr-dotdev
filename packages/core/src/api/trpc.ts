@@ -1,5 +1,7 @@
 import { database } from "@dsqr-dotdev/database/client"
+import { user } from "@dsqr-dotdev/database/auth-schema"
 import { initTRPC, TRPCError } from "@trpc/server"
+import { eq } from "drizzle-orm"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
 import type { Auth } from "../auth"
@@ -81,21 +83,72 @@ export const protectedProcedure = t.procedure.use(timingMiddleware).use(({ ctx, 
   })
 })
 
-export const adminProcedure = t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
+function normalizeRole(role: string | string[] | null | undefined) {
+  if (Array.isArray(role)) {
+    return role[0]?.trim()?.toLowerCase() ?? null
+  }
+
+  return role?.trim()?.toLowerCase() ?? null
+}
+
+type SessionUser = {
+  id?: string | null
+  email?: string | null
+  role?: string | string[] | null
+}
+
+async function resolveAdminSessionUser(currentUser: SessionUser | null | undefined) {
+  if (!currentUser) {
+    return null
+  }
+
+  if (normalizeRole((currentUser as { role?: string | string[] | null }).role) === "admin") {
+    return currentUser
+  }
+
+  if (currentUser.id) {
+    const dbUser =
+      (await database.query.user.findFirst({
+        where: (fields, operators) => operators.eq(fields.id, currentUser.id!),
+      })) ?? null
+
+    if (normalizeRole(dbUser?.role) === "admin") {
+      return dbUser
+    }
+  }
+
+  if (currentUser.email) {
+    const [dbUser] = await database
+      .select()
+      .from(user)
+      .where(eq(user.email, currentUser.email))
+      .limit(1)
+
+    if (normalizeRole(dbUser?.role) === "admin") {
+      return dbUser
+    }
+  }
+
+  return null
+}
+
+export const adminProcedure = t.procedure.use(timingMiddleware).use(async ({ ctx, next }) => {
   if (!ctx.session?.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" })
   }
-  // Role is added by better-auth admin plugin
-  const user = ctx.session.user as typeof ctx.session.user & { role?: string }
-  if (user.role !== "admin") {
+
+  const adminUser = await resolveAdminSessionUser(ctx.session.user)
+
+  if (!adminUser) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
     })
   }
+
   return next({
     ctx: {
-      session: { ...ctx.session, user: ctx.session.user },
+      session: { ...ctx.session, user: { ...ctx.session.user, role: "admin" } },
     },
   })
 })

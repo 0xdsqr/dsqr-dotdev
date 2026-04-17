@@ -1,8 +1,10 @@
+"use client"
+
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light" | "system"
+export type Theme = "dark" | "light" | "system"
 
-interface ThemeProviderProps {
+export interface ThemeProviderProps {
   children: React.ReactNode
   defaultTheme?: Theme
   storageKey?: string
@@ -20,22 +22,26 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-function ThemeProvider({
+export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "vite-ui-theme",
+  storageKey = "dsqr-theme",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return defaultTheme
+    if (typeof window === "undefined") {
+      return defaultTheme
+    }
+
     return (localStorage.getItem(storageKey) as Theme) || defaultTheme
   })
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") {
+      return
+    }
 
     const root = window.document.documentElement
-
     root.classList.remove("light", "dark")
 
     if (theme === "system") {
@@ -56,6 +62,7 @@ function ThemeProvider({
       if (typeof window !== "undefined") {
         localStorage.setItem(storageKey, newTheme)
       }
+
       setTheme(newTheme)
     },
   }
@@ -67,12 +74,12 @@ function ThemeProvider({
   )
 }
 
-const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeProviderContext)
 
-  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider")
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider")
+  }
 
   return context
 }
-
-export { ThemeProvider, useTheme, type Theme, type ThemeProviderProps }

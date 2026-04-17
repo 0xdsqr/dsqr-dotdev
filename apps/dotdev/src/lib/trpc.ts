@@ -22,9 +22,20 @@ export const trpcClient = createTRPCClient<AppRouter>({
     httpBatchLink({
       transformer: SuperJSON,
       url: `${getBaseUrl()}/api/trpc`,
-      headers() {
+      async headers() {
         const headers = new Headers()
         headers.set("x-trpc-source", "dsqr-dotdev-react")
+
+        if (typeof window === "undefined") {
+          const { getRequestHeaders } = await import("@tanstack/react-start/server")
+          const requestHeaders = getRequestHeaders()
+          const cookie = requestHeaders.get("cookie")
+
+          if (cookie) {
+            headers.set("cookie", cookie)
+          }
+        }
+
         return headers
       },
     }),

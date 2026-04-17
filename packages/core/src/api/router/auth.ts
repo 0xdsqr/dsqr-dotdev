@@ -1,10 +1,9 @@
 import { user } from "@dsqr-dotdev/database/auth-schema"
 import type { TRPCRouterRecord } from "@trpc/server"
-import { eq } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 import { z } from "zod/v4"
 import { logger } from "../lib/logger"
-import { uploadAvatar } from "../lib/s3"
-import { protectedProcedure, publicProcedure } from "../trpc"
+import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
 
 const log = logger
 
@@ -19,80 +18,46 @@ export const authRouter = {
   getSecretMessage: protectedProcedure.query(() => {
     return "you can see this secret message!"
   }),
-  updateProfile: protectedProcedure
+  adminUsers: adminProcedure.query(async ({ ctx }) => {
+    return ctx.database
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+        banned: user.banned,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      })
+      .from(user)
+      .orderBy(desc(user.createdAt))
+  }),
+  updateUserRole: adminProcedure
     .input(
       z.object({
-        name: z.string().min(1).max(255).optional(),
-        // Accept relative paths (e.g., /api/avatar/...) or full URLs
-        image: z
-          .string()
-          .refine(
-            (val) => val.startsWith("/") || val.startsWith("http"),
-            "Image must be a relative path or URL",
-          )
-          .optional(),
+        userId: z.string().min(1),
+        role: z.enum(["admin", "user"]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existingUser = await ctx.database
-        .select()
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1)
+      const [updatedUser] = await ctx.database
+        .update(user)
+        .set({
+          role: input.role,
+        })
+        .where(eq(user.id, input.userId))
+        .returning({
+          id: user.id,
+          role: user.role,
+          updatedAt: user.updatedAt,
+        })
 
-      if (!existingUser.length) {
+      if (!updatedUser) {
         throw new Error("User not found")
       }
 
-      const result = await ctx.database
-        .update(user)
-        .set({
-          ...(input.name && { name: input.name }),
-          ...(input.image && { image: input.image }),
-        })
-        .where(eq(user.id, ctx.session.user.id))
-        .returning()
-
-      return result[0]
-    }),
-  uploadAvatar: protectedProcedure
-    .input(
-      z.object({
-        fileData: z.string(), // base64 encoded file data
-        fileName: z.string(),
-        fileType: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id
-      log.debug("Avatar upload started", { userId, fileName: input.fileName })
-
-      const buffer = Buffer.from(input.fileData, "base64")
-
-      if (buffer.length > 5 * 1024 * 1024) {
-        log.warn("Avatar file too large", { userId, size: buffer.length })
-        throw new Error("File size must be less than 5MB")
-      }
-
-      if (!input.fileType.startsWith("image/")) {
-        log.warn("Invalid file type", { userId, fileType: input.fileType })
-        throw new Error("File must be an image")
-      }
-
-      try {
-        const cdnUrl = await uploadAvatar(userId, buffer, input.fileName, input.fileType)
-        log.info("Avatar uploaded successfully", {
-          userId,
-          fileName: input.fileName,
-        })
-        return { url: cdnUrl }
-      } catch (error) {
-        log.error("Avatar upload failed", {
-          userId,
-          fileName: input.fileName,
-          error: error instanceof Error ? error.message : "Unknown error",
-        })
-        throw error
-      }
+      return updatedUser
     }),
 } satisfies TRPCRouterRecord

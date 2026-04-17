@@ -13,11 +13,12 @@
     "database:studio": "bun run --filter '@dsqr-dotdev/database' studio",
     "database:generate": "bun run --filter '@dsqr-dotdev/database' generate",
     "dev:dotdev": "bun run --filter 'dotdev' dev",
+    "dev:studio": "bun run --filter 'studio' dev",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint -c .oxlintrc.jsonc . --deny-warnings",
     "lint:fix": "oxlint -c .oxlintrc.jsonc --fix .",
-    "typecheck": "bun run --filter '@dsqr-dotdev/database' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/database' typecheck && bun run --filter '@dsqr-dotdev/core' typecheck && bun run --filter '@dsqr-dotdev/react' typecheck && bun run --filter 'dotdev' typecheck",
+    "typecheck": "bun run --filter '@dsqr-dotdev/database' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/database' typecheck && bun run --filter '@dsqr-dotdev/core' typecheck && bun run --filter '@dsqr-dotdev/react' typecheck && bun run --filter 'dotdev' typecheck && bun run --filter 'studio' typecheck",
     "clean": "git clean -xdf node_modules dist .turbo"
   },
   "devDependencies": {

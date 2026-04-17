@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url"
+import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
@@ -5,21 +7,43 @@ import { nitro } from "nitro/vite"
 import { defineConfig } from "vite"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 
-const config = defineConfig({
+const rootDir = fileURLToPath(new URL(".", import.meta.url))
+
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      external: ["pg", "pg-native"],
+    },
+  },
   plugins: [
+    tanstackStart(),
+    viteReact(),
+    tailwindcss(),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
-    tailwindcss(),
-    tanstackStart(),
-    viteReact(),
-    nitro(),
+    nitro({ preset: "node-server" }),
   ],
+  nitro: {
+    preset: "node-server",
+    rollupConfig: {
+      external: ["pg", "pg-native"],
+    },
+  },
+  ssr: {
+    external: ["pg", "pg-native"],
+  },
+  resolve: {
+    alias: {
+      "tanstack-start-injected-head-scripts:v": path.resolve(
+        rootDir,
+        "../../tooling/build/src/tanstack-start-injected-head-scripts.ts",
+      ),
+    },
+  },
   server: {
     host: "0.0.0.0",
     port: 3020,
-    allowedHosts: true, // Allow all hosts - use reverse proxy for security
+    allowedHosts: true,
   },
 })
-
-export default config

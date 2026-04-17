@@ -113,7 +113,6 @@ export function InlineSignIn() {
       <UserDropdown
         email={session.user.email || ""}
         username={session.user.name ?? undefined}
-        avatarUrl={session.user.image ?? undefined}
         onSignOut={async () => {
           await authClient.signOut()
         }}

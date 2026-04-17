@@ -16,7 +16,6 @@ import { Route as PostsIndexRouteImport } from './routes/posts/index'
 import { Route as PostsSlugRouteImport } from './routes/posts/$slug'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
-import { Route as ApiAvatarUserIdFileNameRouteImport } from './routes/api/avatar.$userId.$fileName'
 import { Route as ApiPostsSlugImagesFileNameRouteImport } from './routes/api/posts.$slug.images.$fileName'
 
 const MiscRoute = MiscRouteImport.update({
@@ -54,11 +53,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAvatarUserIdFileNameRoute = ApiAvatarUserIdFileNameRouteImport.update({
-  id: '/api/avatar/$userId/$fileName',
-  path: '/api/avatar/$userId/$fileName',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPostsSlugImagesFileNameRoute =
   ApiPostsSlugImagesFileNameRouteImport.update({
     id: '/api/posts/$slug/images/$fileName',
@@ -74,7 +68,6 @@ export interface FileRoutesByFullPath {
   '/posts': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
   '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesByTo {
@@ -85,7 +78,6 @@ export interface FileRoutesByTo {
   '/posts': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
   '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRoutesById {
@@ -97,7 +89,6 @@ export interface FileRoutesById {
   '/posts/': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/api/avatar/$userId/$fileName': typeof ApiAvatarUserIdFileNameRoute
   '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
 }
 export interface FileRouteTypes {
@@ -110,7 +101,6 @@ export interface FileRouteTypes {
     | '/posts'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/api/avatar/$userId/$fileName'
     | '/api/posts/$slug/images/$fileName'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,7 +111,6 @@ export interface FileRouteTypes {
     | '/posts'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/api/avatar/$userId/$fileName'
     | '/api/posts/$slug/images/$fileName'
   id:
     | '__root__'
@@ -132,7 +121,6 @@ export interface FileRouteTypes {
     | '/posts/'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/api/avatar/$userId/$fileName'
     | '/api/posts/$slug/images/$fileName'
   fileRoutesById: FileRoutesById
 }
@@ -144,7 +132,6 @@ export interface RootRouteChildren {
   PostsIndexRoute: typeof PostsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
-  ApiAvatarUserIdFileNameRoute: typeof ApiAvatarUserIdFileNameRoute
   ApiPostsSlugImagesFileNameRoute: typeof ApiPostsSlugImagesFileNameRoute
 }
 
@@ -199,13 +186,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/avatar/$userId/$fileName': {
-      id: '/api/avatar/$userId/$fileName'
-      path: '/api/avatar/$userId/$fileName'
-      fullPath: '/api/avatar/$userId/$fileName'
-      preLoaderRoute: typeof ApiAvatarUserIdFileNameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/posts/$slug/images/$fileName': {
       id: '/api/posts/$slug/images/$fileName'
       path: '/api/posts/$slug/images/$fileName'
@@ -224,7 +204,6 @@ const rootRouteChildren: RootRouteChildren = {
   PostsIndexRoute: PostsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
-  ApiAvatarUserIdFileNameRoute: ApiAvatarUserIdFileNameRoute,
   ApiPostsSlugImagesFileNameRoute: ApiPostsSlugImagesFileNameRoute,
 }
 export const routeTree = rootRouteImport

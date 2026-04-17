@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dotdev-studio
+description: Helm chart for the dsqr.dev studio app
+type: application
+version: 0.1.0
+appVersion: latest

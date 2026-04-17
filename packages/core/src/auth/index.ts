@@ -48,6 +48,34 @@ function getResend(): Resend {
   return resend
 }
 
+function getCrossSubdomainCookieDomain(baseUrl: string): string | null {
+  const explicitDomain = process.env.AUTH_COOKIE_DOMAIN?.trim()
+  if (explicitDomain) {
+    return explicitDomain
+  }
+
+  try {
+    const hostname = new URL(baseUrl).hostname
+
+    if (hostname === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
+      return null
+    }
+
+    if (hostname.endsWith(".dsqr.dev")) {
+      return "dsqr.dev"
+    }
+
+    const parts = hostname.split(".").filter(Boolean)
+    if (parts.length >= 2) {
+      return parts.slice(-2).join(".")
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
 export function initAuth(options: {
   baseUrl: string
   secret: string | undefined
@@ -57,7 +85,7 @@ export function initAuth(options: {
   logger.info("Initializing auth configuration", {
     baseUrl: options.baseUrl,
     hasAuthSecret: Boolean(options.secret),
-    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3001", "https://admin.dsqr.dev"],
+    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
     hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
     resendApiKeyPreview: maskSecretPrefix(process.env.RESEND_API_KEY),
   })
@@ -67,7 +95,15 @@ export function initAuth(options: {
     baseURL: options.baseUrl,
     secret: options.secret,
 
-    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3001", "https://admin.dsqr.dev"],
+    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
+    advanced: {
+      crossSubDomainCookies: {
+        enabled: true,
+        ...(getCrossSubdomainCookieDomain(options.baseUrl)
+          ? { domain: getCrossSubdomainCookieDomain(options.baseUrl)! }
+          : {}),
+      },
+    },
 
     emailAndPassword: {
       enabled: true,
@@ -109,14 +145,20 @@ export function initAuth(options: {
           }
 
           if (result.error) {
+            const statusCode =
+              "statusCode" in result.error ? String(result.error.statusCode ?? "") : ""
+            const errorName = result.error.name ?? ""
+            const errorMessage = result.error.message ?? "Failed to send OTP email"
+
             logger.error("Auth OTP email send failed", {
               email: maskEmail(email),
-              error: result.error.message ?? "Unknown Resend error",
-              statusCode: "statusCode" in result.error ? result.error.statusCode : undefined,
-              name: result.error.name,
+              error: errorMessage,
+              statusCode: statusCode || undefined,
+              name: errorName || undefined,
               raw: JSON.stringify(result.error),
             })
-            throw new Error(result.error.message ?? "Failed to send OTP email")
+
+            throw new Error([statusCode, errorName, errorMessage].filter(Boolean).join(" ").trim())
           }
 
           logger.info("Auth OTP email sent", {

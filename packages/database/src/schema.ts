@@ -148,6 +148,14 @@ export const postCommentsRelations = relations(postComments, ({ one, many }) => 
 
 export const subscribersRelations = relations(subscribers, () => ({}))
 
+const postAssetUrlSchema = z
+  .string()
+  .max(512)
+  .refine(
+    (value) => value.startsWith("/") || /^https?:\/\//.test(value),
+    "Header image URL must be absolute or root-relative.",
+  )
+
 export const createPostSchema = createInsertSchema(posts, {
   title: z.string().min(1).max(256),
   slug: z
@@ -160,7 +168,7 @@ export const createPostSchema = createInsertSchema(posts, {
   description: z.string().min(1),
   content: z.string().optional(),
   filePath: z.string().max(512).optional(),
-  headerImageUrl: z.string().url().max(512).optional(),
+  headerImageUrl: postAssetUrlSchema.optional(),
   tags: z.array(z.string()).optional(),
   readingTimeMinutes: z.number().int().positive().optional(),
   likesCount: z.number().int().nonnegative().optional(),
