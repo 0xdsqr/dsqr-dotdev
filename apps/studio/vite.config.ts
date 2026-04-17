@@ -35,6 +35,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "#tanstack-start-entry": path.resolve(
+        rootDir,
+        "../../tooling/build/src/tanstack-start-entry.ts",
+      ),
       "tanstack-start-injected-head-scripts:v": path.resolve(
         rootDir,
         "../../tooling/build/src/tanstack-start-injected-head-scripts.ts",
