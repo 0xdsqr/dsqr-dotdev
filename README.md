@@ -3,8 +3,7 @@
 <h1>dsqr-dotdev</h1>
 
 <p align="center">
-  <a href="https://github.com/0xdsqr/dsqr-dotdev/actions/workflows/publish-dotdev-web-artifacts.yml"><img src="https://img.shields.io/github/actions/workflow/status/0xdsqr/dsqr-dotdev/publish-dotdev-web-artifacts.yml?style=for-the-badge&branch=master&label=publish" alt="Publish"></a>
-  <a href="https://github.com/0xdsqr/dsqr-dotdev/actions/workflows/publish-dotdev-studio-artifacts.yml"><img src="https://img.shields.io/github/actions/workflow/status/0xdsqr/dsqr-dotdev/publish-dotdev-studio-artifacts.yml?style=for-the-badge&branch=master&label=studio" alt="Studio Publish"></a>
+  <a href="https://github.com/0xdsqr/dsqr-dotdev/actions/workflows/publish.yml"><img src="https://img.shields.io/github/actions/workflow/status/0xdsqr/dsqr-dotdev/publish.yml?style=for-the-badge&branch=master&label=publish" alt="Publish"></a>
 </p>
 
 </div>
