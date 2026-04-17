@@ -14,6 +14,7 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 COPY apps/dotdev/package.json apps/dotdev/package.json
+COPY apps/studio/package.json apps/studio/package.json
 COPY packages/core/package.json packages/core/package.json
 COPY packages/database/package.json packages/database/package.json
 COPY packages/react/package.json packages/react/package.json
