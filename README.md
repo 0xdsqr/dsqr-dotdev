@@ -25,6 +25,15 @@
 | `@dsqr-dotdev/database` |
 | `@dsqr-dotdev/react`    |
 
+## Helm
+
+Helm chart source now lives in the shared homelab repo:
+
+- `../homelab/infra/kubernetes/charts/dotdev-web`
+- `../homelab/infra/kubernetes/charts/dotdev-studio`
+
+This repo only builds and publishes application images.
+
 ## Commands
 
 ```bash
