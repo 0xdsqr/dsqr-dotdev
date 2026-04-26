@@ -41,9 +41,7 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
         updatedAt: posts.updatedAt,
         published: posts.published,
         date: posts.date,
-        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
-          "commentCount",
-        ),
+        commentCount: postCommentCounts.commentCount,
       })
       .from(posts)
       .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
@@ -77,7 +75,10 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
 
   return {
     adminUser,
-    posts: allPosts,
+    posts: allPosts.map((post) => ({
+      ...post,
+      commentCount: post.commentCount ?? 0,
+    })),
     users: allUsers,
     subscribers: allSubscribers,
   }

@@ -40,16 +40,17 @@ export const postRouter = {
         readingTimeMinutes: posts.readingTimeMinutes,
         tags: posts.tags,
         likesCount: posts.likesCount,
-        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
-          "commentCount",
-        ),
+        commentCount: postCommentCounts.commentCount,
       })
       .from(posts)
       .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .where(eq(posts.published, true))
       .orderBy(desc(posts.date))
 
-    return postsWithCommentCount
+    return postsWithCommentCount.map((post) => ({
+      ...post,
+      commentCount: post.commentCount ?? 0,
+    }))
   }),
 
   byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
@@ -158,7 +159,7 @@ export const postRouter = {
       .groupBy(postCommentsView.postId)
       .as("post_comment_counts")
 
-    return ctx.database
+    const postsWithCommentCount = await ctx.database
       .select({
         id: posts.id,
         title: posts.title,
@@ -176,13 +177,16 @@ export const postRouter = {
         updatedAt: posts.updatedAt,
         published: posts.published,
         date: posts.date,
-        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
-          "commentCount",
-        ),
+        commentCount: postCommentCounts.commentCount,
       })
       .from(posts)
       .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .orderBy(desc(posts.updatedAt))
+
+    return postsWithCommentCount.map((post) => ({
+      ...post,
+      commentCount: post.commentCount ?? 0,
+    }))
   }),
 
   // Admin: save post content to S3 and update filePath
