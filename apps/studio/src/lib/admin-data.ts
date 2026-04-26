@@ -2,7 +2,7 @@ import { database } from "@dsqr-dotdev/database/client"
 import { user } from "@dsqr-dotdev/database/auth-schema"
 import { postCommentsView, posts, subscribers } from "@dsqr-dotdev/database/schema"
 import { createServerFn } from "@tanstack/react-start"
-import { desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { getAdminSessionUser } from "./admin-access"
 
 export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async () => {
@@ -11,16 +11,6 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
   if (!adminUser) {
     throw new Error("UNAUTHORIZED")
   }
-
-  const postCommentCounts = database
-    .select({
-      postId: postCommentsView.postId,
-      commentCount: sql<number>`count(*)::int`.as("commentCount"),
-    })
-    .from(postCommentsView)
-    .where(eq(postCommentsView.isActive, true))
-    .groupBy(postCommentsView.postId)
-    .as("post_comment_counts")
 
   const [allPosts, allUsers, allSubscribers] = await Promise.all([
     database
@@ -41,10 +31,8 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
         updatedAt: posts.updatedAt,
         published: posts.published,
         date: posts.date,
-        commentCount: postCommentCounts.commentCount,
       })
       .from(posts)
-      .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .orderBy(desc(posts.updatedAt)),
     database
       .select({
@@ -73,11 +61,28 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
       .orderBy(desc(subscribers.subscribedAt)),
   ])
 
+  const postIds = allPosts.map((post) => post.id)
+  const commentCounts =
+    postIds.length === 0
+      ? []
+      : await database
+          .select({
+            postId: postCommentsView.postId,
+            commentCount: sql<number>`count(*)::int`.as("commentCount"),
+          })
+          .from(postCommentsView)
+          .where(
+            and(eq(postCommentsView.isActive, true), inArray(postCommentsView.postId, postIds)),
+          )
+          .groupBy(postCommentsView.postId)
+
+  const commentCountByPostId = new Map(commentCounts.map((row) => [row.postId, row.commentCount]))
+
   return {
     adminUser,
     posts: allPosts.map((post) => ({
       ...post,
-      commentCount: post.commentCount ?? 0,
+      commentCount: commentCountByPostId.get(post.id) ?? 0,
     })),
     users: allUsers,
     subscribers: allSubscribers,
