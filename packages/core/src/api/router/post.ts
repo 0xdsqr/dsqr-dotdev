@@ -14,6 +14,16 @@ import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
 
 export const postRouter = {
   all: publicProcedure.query(async ({ ctx }) => {
+    const postCommentCounts = ctx.database
+      .select({
+        postId: postCommentsView.postId,
+        commentCount: sql<number>`count(*)::int`.as("commentCount"),
+      })
+      .from(postCommentsView)
+      .where(eq(postCommentsView.isActive, true))
+      .groupBy(postCommentsView.postId)
+      .as("post_comment_counts")
+
     const postsWithCommentCount = await ctx.database
       .select({
         id: posts.id,
@@ -30,14 +40,12 @@ export const postRouter = {
         readingTimeMinutes: posts.readingTimeMinutes,
         tags: posts.tags,
         likesCount: posts.likesCount,
-        commentCount: sql<number>`(
-          SELECT COUNT(*)::int
-          FROM ${postCommentsView}
-          WHERE ${postCommentsView.postId} = ${posts.id}
-          AND ${postCommentsView.isActive} = true
-        )`.as("commentCount"),
+        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
+          "commentCount",
+        ),
       })
       .from(posts)
+      .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .where(eq(posts.published, true))
       .orderBy(desc(posts.date))
 
@@ -140,6 +148,16 @@ export const postRouter = {
 
   // Admin: get all posts including drafts
   adminAll: adminProcedure.query(async ({ ctx }) => {
+    const postCommentCounts = ctx.database
+      .select({
+        postId: postCommentsView.postId,
+        commentCount: sql<number>`count(*)::int`.as("commentCount"),
+      })
+      .from(postCommentsView)
+      .where(eq(postCommentsView.isActive, true))
+      .groupBy(postCommentsView.postId)
+      .as("post_comment_counts")
+
     return ctx.database
       .select({
         id: posts.id,
@@ -158,14 +176,12 @@ export const postRouter = {
         updatedAt: posts.updatedAt,
         published: posts.published,
         date: posts.date,
-        commentCount: sql<number>`(
-          SELECT COUNT(*)::int
-          FROM ${postCommentsView}
-          WHERE ${postCommentsView.postId} = ${posts.id}
-          AND ${postCommentsView.isActive} = true
-        )`.as("commentCount"),
+        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
+          "commentCount",
+        ),
       })
       .from(posts)
+      .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .orderBy(desc(posts.updatedAt))
   }),
 

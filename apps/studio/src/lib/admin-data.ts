@@ -2,7 +2,7 @@ import { database } from "@dsqr-dotdev/database/client"
 import { user } from "@dsqr-dotdev/database/auth-schema"
 import { postCommentsView, posts, subscribers } from "@dsqr-dotdev/database/schema"
 import { createServerFn } from "@tanstack/react-start"
-import { desc, sql } from "drizzle-orm"
+import { desc, eq, sql } from "drizzle-orm"
 import { getAdminSessionUser } from "./admin-access"
 
 export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async () => {
@@ -11,6 +11,16 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
   if (!adminUser) {
     throw new Error("UNAUTHORIZED")
   }
+
+  const postCommentCounts = database
+    .select({
+      postId: postCommentsView.postId,
+      commentCount: sql<number>`count(*)::int`.as("commentCount"),
+    })
+    .from(postCommentsView)
+    .where(eq(postCommentsView.isActive, true))
+    .groupBy(postCommentsView.postId)
+    .as("post_comment_counts")
 
   const [allPosts, allUsers, allSubscribers] = await Promise.all([
     database
@@ -31,14 +41,12 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
         updatedAt: posts.updatedAt,
         published: posts.published,
         date: posts.date,
-        commentCount: sql<number>`(
-          SELECT COUNT(*)::int
-          FROM ${postCommentsView}
-          WHERE ${postCommentsView.postId} = ${posts.id}
-          AND ${postCommentsView.isActive} = true
-        )`.as("commentCount"),
+        commentCount: sql<number>`coalesce(${postCommentCounts.commentCount}, 0)`.as(
+          "commentCount",
+        ),
       })
       .from(posts)
+      .leftJoin(postCommentCounts, eq(postCommentCounts.postId, posts.id))
       .orderBy(desc(posts.updatedAt)),
     database
       .select({
