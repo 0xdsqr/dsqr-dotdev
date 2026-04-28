@@ -1,4 +1,6 @@
 {
+  coreutils,
+  gnused,
   lib,
   nginx,
   nodejs_24,
@@ -87,8 +89,8 @@ stdenvNoCC.mkDerivation {
     set -eu
     port="\''${PORT:-3022}"
     runtime_dir="\''${TMPDIR:-/tmp}/dotdev-labs-nginx"
-    mkdir -p "\$runtime_dir"
-    sed \
+    ${coreutils}/bin/mkdir -p "\$runtime_dir"
+    ${gnused}/bin/sed \
       -e "s|@PORT@|\$port|g" \
       -e "s|@PUBLIC_ROOT@|$out/share/dotdev-labs/public|g" \
       "$out/share/dotdev-labs/nginx/nginx.conf" > "\$runtime_dir/nginx.conf"
