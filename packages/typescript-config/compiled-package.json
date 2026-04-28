@@ -2,10 +2,13 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./base.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": false,
     "declaration": true,
+    "declarationDir": "${configDir}/dist/types",
     "declarationMap": true,
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": false,
     "noEmit": false,
-    "outDir": "${configDir}/dist"
+    "outDir": "${configDir}/dist/esm",
+    "rootDir": "${configDir}/src"
   }
 }

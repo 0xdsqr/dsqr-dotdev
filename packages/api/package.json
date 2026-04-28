@@ -23,7 +23,7 @@
   },
   "scripts": {
     "auth:generate": "better-auth generate --config src/auth/auth-cli.ts --output ../database/src/auth-schema.ts",
-    "build": "node ../../scripts/build-package.mjs",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
     "clean": "git clean -xdf dist node_modules",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit"
