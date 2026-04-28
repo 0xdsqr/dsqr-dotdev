@@ -1,4 +1,12 @@
 { pkgs, ... }:
+let
+  oxfmtConfig = pkgs.writeText "oxfmt.json" ''
+    {
+      "tabWidth": 2,
+      "semi": false
+    }
+  '';
+in
 {
   projectRootFile = "flake.nix";
 
@@ -26,7 +34,7 @@
       command = "${pkgs.oxfmt}/bin/oxfmt";
       options = [
         "--config"
-        ".oxfmtrc.json"
+        "${oxfmtConfig}"
       ];
       includes = [
         "*.js"
