@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 3022",
-    "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 3022",
+    "build": "vite build && nitro build",
+    "start": "PORT=${PORT:-3022} node .output/server/index.mjs",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },
@@ -23,6 +23,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "nitro": "^3.0.1-alpha.2",
     "tailwindcss": "^4.0.6",
     "vite": "7.1.7",
     "vite-tsconfig-paths": "^5.1.4"
