@@ -1,13 +1,9 @@
-import { fileURLToPath } from "node:url"
-import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite"
 import viteTsConfigPaths from "vite-tsconfig-paths"
-
-const rootDir = fileURLToPath(new URL(".", import.meta.url))
 
 export default defineConfig({
   build: {
@@ -32,18 +28,6 @@ export default defineConfig({
   },
   ssr: {
     external: ["pg", "pg-native"],
-  },
-  resolve: {
-    alias: {
-      "#tanstack-start-entry": path.resolve(
-        rootDir,
-        "../../packages/tanstack-start/tanstack-start-entry.ts",
-      ),
-      "tanstack-start-injected-head-scripts:v": path.resolve(
-        rootDir,
-        "../../packages/tanstack-start/tanstack-start-injected-head-scripts.ts",
-      ),
-    },
   },
   server: {
     host: "0.0.0.0",
