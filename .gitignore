@@ -50,7 +50,7 @@ logs
 
 # Temp/Reference files
 .temp
-result
+result*
 count.txt
 
 # Database (root level only)

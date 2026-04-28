@@ -1,37 +1,38 @@
 {
   "name": "dsqr-dotdev",
+  "version": "0.0.0",
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "tooling/*"
+    "packages/*"
   ],
   "type": "module",
   "scripts": {
-    "build": "bun run --filter '@dsqr-dotdev/database' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter './apps/*' build",
-    "database:push": "bun run --filter '@dsqr-dotdev/database' push",
-    "database:studio": "bun run --filter '@dsqr-dotdev/database' studio",
-    "database:generate": "bun run --filter '@dsqr-dotdev/database' generate",
-    "dev:dotdev": "bun run --filter 'dotdev' dev",
-    "dev:studio": "bun run --filter 'studio' dev",
+    "build:database": "npm run build -w @dsqr-dotdev/database",
+    "build:api": "npm run build -w @dsqr-dotdev/api",
+    "build:dotdev": "npm run build -w dotdev",
+    "build:studio": "npm run build -w studio",
+    "build": "npm run build:database && npm run build:api && npm run build:dotdev && npm run build:studio",
+    "database:push": "npm run push -w @dsqr-dotdev/database",
+    "database:studio": "npm run studio -w @dsqr-dotdev/database",
+    "database:generate": "npm run generate -w @dsqr-dotdev/database",
+    "dev:dotdev": "npm run dev -w dotdev",
+    "dev:studio": "npm run dev -w studio",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint -c .oxlintrc.jsonc . --deny-warnings",
     "lint:fix": "oxlint -c .oxlintrc.jsonc --fix .",
-    "typecheck": "bun run --filter '@dsqr-dotdev/database' build && bun run --filter '@dsqr-dotdev/core' build && bun run --filter '@dsqr-dotdev/database' typecheck && bun run --filter '@dsqr-dotdev/core' typecheck && bun run --filter '@dsqr-dotdev/react' typecheck && bun run --filter 'dotdev' typecheck && bun run --filter 'studio' typecheck",
-    "clean": "git clean -xdf node_modules dist .turbo"
+    "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio",
+    "typecheck:tsc": "npm run build:database && npm run build:api && npm run typecheck:tsc --workspaces --if-present",
+    "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
+    "setup": "npm ci"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "oxfmt": "^0.44.0",
-    "oxlint": "^1.56.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "@typescript/native-preview": "latest",
+    "esbuild": "^0.25.11",
+    "typescript": "^5.9.0"
   },
   "engines": {
-    "bun": "1.3.x",
     "node": "24.x"
-  },
-  "packageManager": "bun@1.3.11"
+  }
 }

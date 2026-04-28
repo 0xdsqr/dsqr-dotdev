@@ -59,7 +59,8 @@ const timingMiddleware = t.middleware(async ({ next, path, ctx }) => {
   if (result.ok) {
     logger.trpc(path, duration, userId)
   } else {
-    logger.error(`[TRPC] ${path}`, {
+    logger.error("trpc.error", {
+      procedure: path,
       duration,
       userId,
       code: result.error.code,

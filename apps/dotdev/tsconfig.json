@@ -20,11 +20,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@dsqr-dotdev/core/api": ["../../packages/core/src/api/index.ts"],
-      "@dsqr-dotdev/core/auth": ["../../packages/core/src/auth/index.ts"]
+      "@dsqr-dotdev/api": ["../../packages/api/src/index.ts"],
+      "@dsqr-dotdev/api/auth": ["../../packages/api/src/auth/index.ts"]
     }
   }
 }

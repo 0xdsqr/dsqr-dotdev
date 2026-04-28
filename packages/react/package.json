@@ -14,11 +14,12 @@
     "./lib/*": "./src/lib/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
-    "@dsqr-dotdev/core": "workspace:*",
+    "@dsqr-dotdev/api": "0.0.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
@@ -47,7 +48,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@dsqr-dotdev/tsconfig": "workspace:*",
+    "@dsqr-dotdev/tsconfig": "0.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "vite": "7.1.7"

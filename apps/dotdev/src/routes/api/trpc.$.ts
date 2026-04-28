@@ -1,4 +1,4 @@
-import { appRouter, createTRPCContext } from "@dsqr-dotdev/core/api"
+import { appRouter, createTRPCContext } from "@dsqr-dotdev/api"
 import { createFileRoute } from "@tanstack/react-router"
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch"
 

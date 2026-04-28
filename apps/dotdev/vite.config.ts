@@ -37,11 +37,11 @@ export default defineConfig({
     alias: {
       "#tanstack-start-entry": path.resolve(
         rootDir,
-        "../../tooling/build/src/tanstack-start-entry.ts",
+        "../../packages/tanstack-start/tanstack-start-entry.ts",
       ),
       "tanstack-start-injected-head-scripts:v": path.resolve(
         rootDir,
-        "../../tooling/build/src/tanstack-start-injected-head-scripts.ts",
+        "../../packages/tanstack-start/tanstack-start-injected-head-scripts.ts",
       ),
     },
   },

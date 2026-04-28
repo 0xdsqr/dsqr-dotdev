@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/core/api"
+import type { AppRouter } from "@dsqr-dotdev/api"
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
 import type { QueryClient } from "@tanstack/react-query"

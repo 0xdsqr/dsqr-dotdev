@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@dsqr-dotdev/core/api"
+import type { RouterOutputs } from "@dsqr-dotdev/api"
 import { Link } from "@tanstack/react-router"
 import { CalendarIcon, ChevronDownIcon, ChevronUpIcon, Clock, TagIcon } from "lucide-react"
 import { useMemo, useState } from "react"

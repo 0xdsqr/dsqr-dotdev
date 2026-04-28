@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@dsqr-dotdev/core/api"
+import type { RouterOutputs } from "@dsqr-dotdev/api"
 import { Badge } from "@dsqr-dotdev/react/components/ui/badge"
 import { BlogPostViewer } from "@dsqr-dotdev/react/components/blog-post-viewer"
 import { Button } from "@dsqr-dotdev/react/components/ui/button"

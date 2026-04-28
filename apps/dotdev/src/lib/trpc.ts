@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/core/api"
+import type { AppRouter } from "@dsqr-dotdev/api"
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import SuperJSON from "superjson"

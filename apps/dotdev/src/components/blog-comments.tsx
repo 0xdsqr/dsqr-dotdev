@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { ChevronDown, ChevronUp, Reply, Trash2 } from "lucide-react"
 import { useState } from "react"
-import type { RouterOutputs } from "@dsqr-dotdev/core/api"
+import type { RouterOutputs } from "@dsqr-dotdev/api"
 import { authClient } from "@/auth/client"
 import { trpcClient, useTRPC } from "@/lib/trpc"
 
