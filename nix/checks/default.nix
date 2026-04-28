@@ -12,5 +12,6 @@
     nodeModules = packages.nodeModules;
   };
   dotdev = packages.dotdev;
+  labs = packages.labs;
   studio = packages.studio;
 }

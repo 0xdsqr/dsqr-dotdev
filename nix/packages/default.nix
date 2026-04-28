@@ -16,17 +16,31 @@ let
     inherit nodeModules;
   };
 
+  labs = pkgs.callPackage ./labs.nix {
+    inherit nodeModules;
+  };
+
   studio = pkgs.callPackage ./studio.nix {
     inherit nodeModules;
   };
 in
 {
-  inherit dotdev nodeModules studio;
+  inherit
+    dotdev
+    labs
+    nodeModules
+    studio
+    ;
 
   nodeModulesUpdater = nodeModules.override {
     npmDepsHash = pkgs.lib.fakeHash;
   };
 }
 // (import ./images.nix {
-  inherit dotdev pkgs studio;
+  inherit
+    dotdev
+    labs
+    pkgs
+    studio
+    ;
 })

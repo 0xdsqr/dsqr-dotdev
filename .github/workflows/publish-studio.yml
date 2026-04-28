@@ -1,4 +1,4 @@
-name: Publish
+name: Publish Studio Image
 
 on:
   push:
@@ -11,12 +11,12 @@ permissions:
   packages: write
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-studio-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  publish-images:
-    name: Publish Nix Images
+  publish-studio-image:
+    name: Publish dotdev-studio
     runs-on: ubuntu-latest
 
     steps:
@@ -36,21 +36,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build dotdev image
-        run: nix build .#dotdevImage --out-link result-dotdev
-
-      - name: Build studio image
+      - name: Build image
         run: nix build .#studioImage --out-link result-studio
 
-      - name: Load and push dotdev image
-        run: |
-          docker load < result-dotdev
-          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
-          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
-
-      - name: Load and push studio image
+      - name: Load and push image
         run: |
           docker load < result-studio
           docker tag dotdev-studio:latest ghcr.io/${{ github.repository_owner }}/dotdev-studio:latest

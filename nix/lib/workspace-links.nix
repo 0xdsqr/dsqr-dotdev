@@ -2,12 +2,14 @@
   linkWorkspacePackages = ''
     mkdir -p node_modules/@dsqr-dotdev
     rm -rf node_modules/dotdev
+    rm -rf node_modules/labs
     rm -rf node_modules/studio
     rm -rf node_modules/@dsqr-dotdev/api
     rm -rf node_modules/@dsqr-dotdev/database
     rm -rf node_modules/@dsqr-dotdev/react
     rm -rf node_modules/@dsqr-dotdev/tsconfig
     ln -sfn "$PWD/apps/dotdev" node_modules/dotdev
+    ln -sfn "$PWD/apps/labs" node_modules/labs
     ln -sfn "$PWD/apps/studio" node_modules/studio
     ln -sfn "$PWD/packages/api" node_modules/@dsqr-dotdev/api
     ln -sfn "$PWD/packages/database" node_modules/@dsqr-dotdev/database
@@ -17,6 +19,7 @@
 
   removeWorkspacePackageLinks = ''
     rm -f "$out/app/node_modules/dotdev"
+    rm -f "$out/app/node_modules/labs"
     rm -f "$out/app/node_modules/studio"
     rm -f "$out/app/node_modules/@dsqr-dotdev/api"
     rm -f "$out/app/node_modules/@dsqr-dotdev/database"

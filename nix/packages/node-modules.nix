@@ -29,6 +29,7 @@ in
     cp -R node_modules "$out/node_modules"
     find . -mindepth 2 -maxdepth 3 -type d -name node_modules -exec cp -R --parents {} "$out/" \;
     rm -f "$out/node_modules/dotdev"
+    rm -f "$out/node_modules/labs"
     rm -f "$out/node_modules/studio"
     rm -f "$out/node_modules/@dsqr-dotdev/"*
     runHook postInstall

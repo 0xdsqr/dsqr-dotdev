@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@source "../../../packages/react/src";
+
+@import "@fontsource/geist-sans";
+@import "@fontsource/geist-mono";
+
+@import "@dsqr-dotdev/react/globals.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-sans: "Geist", "Geist Fallback", sans-serif;
+  --font-serif: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --tracking-normal: -0.025em;
+  --spacing: 0.27rem;
+}
+
+@theme inline {
+  --font-family-sans: var(--font-sans);
+  --font-family-mono: var(--font-mono);
+  --font-family-serif: var(--font-serif);
+
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes labs-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-labs-marquee {
+  animation: labs-marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-labs-marquee {
+    animation: none;
+    transform: translateX(0);
+  }
+}

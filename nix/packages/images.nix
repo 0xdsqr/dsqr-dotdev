@@ -1,6 +1,7 @@
 {
   pkgs,
   dotdev,
+  labs,
   studio,
 }:
 let
@@ -57,5 +58,12 @@ in
     package = studio;
     port = 3021;
     command = "/bin/studio";
+  };
+
+  labsImage = mkImage {
+    name = "dotdev-labs";
+    package = labs;
+    port = 3022;
+    command = "/bin/labs";
   };
 }
