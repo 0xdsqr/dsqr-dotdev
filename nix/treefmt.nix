@@ -1,5 +1,7 @@
 { pkgs, ... }:
 let
+  # oxfmt only accepts style policy through a config file path. Generate that
+  # file in the Nix store so the repo does not need a root .oxfmtrc.json.
   oxfmtConfig = pkgs.writeText "oxfmt.json" ''
     {
       "tabWidth": 2,
