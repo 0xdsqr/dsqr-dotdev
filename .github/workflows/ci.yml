@@ -47,3 +47,6 @@ jobs:
 
       - name: Build studio image
         run: nix build .#studioImage --out-link result-studio
+
+      - name: Build labs image
+        run: nix build .#labsImage --out-link result-labs

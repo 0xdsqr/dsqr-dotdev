@@ -1,0 +1,112 @@
+name: Publish Images
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-dotdev:
+    name: Publish dotdev-web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Enable FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        run: nix build .#dotdevImage --out-link result-dotdev
+
+      - name: Load and push image
+        run: |
+          docker load < result-dotdev
+          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
+          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
+
+  publish-studio:
+    name: Publish dotdev-studio
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Enable FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        run: nix build .#studioImage --out-link result-studio
+
+      - name: Load and push image
+        run: |
+          docker load < result-studio
+          docker tag dotdev-studio:latest ghcr.io/${{ github.repository_owner }}/dotdev-studio:latest
+          docker tag dotdev-studio:latest ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-studio:latest
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${{ github.sha }}
+
+  publish-labs:
+    name: Publish dotdev-labs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Enable FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        run: nix build .#labsImage --out-link result-labs
+
+      - name: Load and push image
+        run: |
+          docker load < result-labs
+          docker tag dotdev-labs:latest ghcr.io/${{ github.repository_owner }}/dotdev-labs:latest
+          docker tag dotdev-labs:latest ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:latest
+          docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
