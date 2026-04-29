@@ -1,4 +1,5 @@
 import { appRouter, createTRPCContext } from "@dsqr-dotdev/api"
+import { traceApiRequest } from "@dsqr-dotdev/api/runtime"
 import { createFileRoute } from "@tanstack/react-router"
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch"
 
@@ -20,8 +21,8 @@ const handler = (req: Request) =>
 export const Route = createFileRoute("/api/trpc/$")({
   server: {
     handlers: {
-      GET: ({ request }) => handler(request),
-      POST: ({ request }) => handler(request),
+      GET: ({ request }) => traceApiRequest("http.trpc.request", request, () => handler(request)),
+      POST: ({ request }) => traceApiRequest("http.trpc.request", request, () => handler(request)),
     },
   },
 })

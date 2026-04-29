@@ -28,7 +28,7 @@ jobs:
         run: nix flake check
 
   build-images:
-    name: Build Images
+    name: build
     runs-on: ubuntu-latest
     needs: check
 

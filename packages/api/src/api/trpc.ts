@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
 import type { Auth } from "../auth"
+import { Effect, runApiEffect } from "../runtime"
 import { logger } from "./lib/logger"
 
 export const createTRPCContext = async (opts: { headers: Headers; auth: Auth }) => {
@@ -51,7 +52,16 @@ const timingMiddleware = t.middleware(async ({ next, path, ctx }) => {
     await new Promise((resolve) => setTimeout(resolve, waitMs))
   }
 
-  const result = await next()
+  const result = await runApiEffect(
+    Effect.promise(() => next()).pipe(
+      Effect.withSpan("trpc.procedure", {
+        attributes: {
+          "trpc.path": path,
+          "trpc.authenticated": ctx.session?.user ? "true" : "false",
+        },
+      }),
+    ),
+  )
 
   const duration = Date.now() - start
   const userId = ctx.session?.user?.id

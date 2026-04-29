@@ -1,0 +1,22 @@
+{
+  "name": "@dsqr-dotdev/observability",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./effect-otel": "./src/effect-otel.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "typecheck:tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/opentelemetry": "^0.63.0",
+    "@effect/platform": "^0.96.1",
+    "effect": "^3.21.0"
+  },
+  "devDependencies": {
+    "@dsqr-dotdev/tsconfig": "0.0.0",
+    "@types/node": "^22.10.2"
+  }
+}

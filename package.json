@@ -24,7 +24,7 @@
     "format:check": "sh -c 'nix build .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).format --no-link'",
     "lint": "oxlint . --deny-warnings",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio && npm run typecheck -w labs",
+    "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/observability && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio && npm run typecheck -w labs",
     "typecheck:tsc": "npm run build:database && npm run build:api && npm run typecheck:tsc --workspaces --if-present",
     "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
     "setup": "npm ci"

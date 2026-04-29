@@ -6,15 +6,15 @@
 }:
 let
   imageEtc = pkgs.runCommand "homelab-image-etc" { } ''
-    mkdir -p "$out/etc"
-    cat > "$out/etc/passwd" <<EOF
-root:x:0:0:root:/root:/bin/sh
-nobody:x:65534:65534:nobody:/var/empty:/sbin/nologin
-EOF
-    cat > "$out/etc/group" <<EOF
-root:x:0:
-nobody:x:65534:
-EOF
+        mkdir -p "$out/etc"
+        cat > "$out/etc/passwd" <<EOF
+    root:x:0:0:root:/root:/bin/sh
+    nobody:x:65534:65534:nobody:/var/empty:/sbin/nologin
+    EOF
+        cat > "$out/etc/group" <<EOF
+    root:x:0:
+    nobody:x:65534:
+    EOF
   '';
 
   mkImage =

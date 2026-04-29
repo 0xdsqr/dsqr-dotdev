@@ -31,6 +31,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
     "@dsqr-dotdev/database": "0.0.0",
+    "@dsqr-dotdev/observability": "0.0.0",
     "@trpc/server": "^11.7.1",
     "better-auth": "1.4.21",
     "drizzle-orm": "^0.45.2",
