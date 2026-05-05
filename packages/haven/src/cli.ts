@@ -159,7 +159,8 @@ function ensurePulumiProject(stackName: StackName) {
   const stack = getStack(stackName)
   const projectDirectory = path.join(rootDir, stack.projectDirectory)
 
-  const catchFileError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)))
+  const catchFileError = (error: unknown) =>
+    error instanceof Error ? error : new Error(String(error))
 
   return Effect.gen(function* () {
     yield* Effect.tryPromise({
@@ -168,7 +169,8 @@ function ensurePulumiProject(stackName: StackName) {
     })
 
     yield* Effect.tryPromise({
-      try: () => writeFile(path.join(projectDirectory, "Pulumi.yaml"), pulumiProjectYaml(stackName)),
+      try: () =>
+        writeFile(path.join(projectDirectory, "Pulumi.yaml"), pulumiProjectYaml(stackName)),
       catch: catchFileError,
     })
   })
