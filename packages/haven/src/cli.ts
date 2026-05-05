@@ -159,12 +159,18 @@ function ensurePulumiProject(stackName: StackName) {
   const stack = getStack(stackName)
   const projectDirectory = path.join(rootDir, stack.projectDirectory)
 
-  return Effect.tryPromise({
-    try: async () => {
-      await mkdir(projectDirectory, { recursive: true })
-      await writeFile(path.join(projectDirectory, "Pulumi.yaml"), pulumiProjectYaml(stackName))
-    },
-    catch: (error) => (error instanceof Error ? error : new Error(String(error))),
+  const catchFileError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)))
+
+  return Effect.gen(function* () {
+    yield* Effect.tryPromise({
+      try: () => mkdir(projectDirectory, { recursive: true }),
+      catch: catchFileError,
+    })
+
+    yield* Effect.tryPromise({
+      try: () => writeFile(path.join(projectDirectory, "Pulumi.yaml"), pulumiProjectYaml(stackName)),
+      catch: catchFileError,
+    })
   })
 }
 
