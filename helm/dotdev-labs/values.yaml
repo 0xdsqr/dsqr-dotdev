@@ -1,0 +1,75 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/0xdsqr/dotdev-labs
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-creds
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+  containerPort: 3022
+
+env:
+  BASE_URL: https://labs.dsqr.dev
+  TRUSTED_ORIGINS: https://labs.dsqr.dev,https://dsqr.dev
+  OTEL_SERVICE_NAME: dotdev-labs
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment=dev,k8s.namespace.name=dsqr
+
+existingSecret: dotdev-web-secrets
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 5
+  failureThreshold: 24
+
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 5
+  failureThreshold: 3
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations: {}
+  hosts:
+    - host: labs.dsqr.dev
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

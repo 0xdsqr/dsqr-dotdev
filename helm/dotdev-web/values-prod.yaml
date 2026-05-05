@@ -1,0 +1,42 @@
+fullnameOverride: dotdev-web
+
+image:
+  repository: ghcr.io/0xdsqr/dotdev-web
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-creds
+
+env:
+  BASE_URL: https://dsqr.dev
+  TRUSTED_ORIGINS: https://dsqr.dev
+  S3_BUCKET: dsqr-dotdev
+  S3_ENDPOINT: s3.dsqr.dev
+  S3_USE_SSL: "true"
+  S3_FORCE_PATH_STYLE: "true"
+  S3_REGION: us-east-1
+  OTEL_SERVICE_NAME: dotdev-web
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=dsqr
+
+existingSecret: dotdev-web-secrets
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: dsqr.dev
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 1Gi
+  limits:
+    cpu: 500m
+    memory: 2Gi

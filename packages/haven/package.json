@@ -1,0 +1,25 @@
+{
+  "name": "@dsqr-dotdev/haven",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "haven": "src/cli.ts",
+    "homelab": "src/cli.ts"
+  },
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "effect": "^3.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

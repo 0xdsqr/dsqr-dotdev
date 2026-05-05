@@ -1,0 +1,70 @@
+name: Publish Helm Charts
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  HELM_REGISTRY_REPOSITORY: oci://ghcr.io/${{ github.repository }}/charts
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-helm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  charts:
+    name: Publish charts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart:
+          - name: dotdev-web
+            namespace: dsqr
+          - name: dotdev-studio
+            namespace: dsqr
+          - name: dotdev-labs
+            namespace: dsqr
+          - name: tastingswithtay-web
+            namespace: twt
+          - name: tastingswithtay-admin
+            namespace: twt
+    env:
+      CHART_VERSION: 0.1.${{ github.run_number }}-r${{ github.run_attempt }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username "${{ github.repository_owner }}" \
+            --password-stdin
+
+      - name: Verify chart
+        run: helm lint ./helm/${{ matrix.chart.name }}
+
+      - name: Render chart
+        run: |
+          helm template "${{ matrix.chart.name }}" ./helm/${{ matrix.chart.name }} \
+            --namespace "${{ matrix.chart.namespace }}" \
+            -f ./helm/${{ matrix.chart.name }}/values-prod.yaml
+
+      - name: Publish chart
+        run: |
+          package_dir="$(mktemp -d)"
+          helm package ./helm/${{ matrix.chart.name }} \
+            --version "${CHART_VERSION}" \
+            --destination "${package_dir}"
+          helm push "${package_dir}/${{ matrix.chart.name }}-${CHART_VERSION}.tgz" \
+            "${HELM_REGISTRY_REPOSITORY}"

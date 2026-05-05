@@ -4,11 +4,17 @@
 }:
 pkgs.mkShell {
   packages = with pkgs; [
+    age
     git
+    jq
+    kubectl
+    kubernetes-helm
     nodejs_24
     oxfmt
     oxlint
     postgresql
+    pulumi-bin
+    sops
     treefmtWrapper
     typescript
   ];
