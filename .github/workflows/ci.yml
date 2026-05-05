@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   check:
     name: Check
@@ -16,14 +19,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@v3
-
-      - name: Enable FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@main
-
       - name: Run checks
         run: nix flake check
 
@@ -41,14 +40,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@v3
-
-      - name: Enable FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@main
-
       - name: Build dotdev image
         run: nix build .#dotdevImage --out-link result-dotdev
 
