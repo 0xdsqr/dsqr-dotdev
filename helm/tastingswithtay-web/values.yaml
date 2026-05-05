@@ -32,7 +32,7 @@ env:
   BASE_URL: https://tastingswithtay.com
   CDN_BASE: https://cdn.dsqr.dev
   DISCORD_CLIENT_ID: "1465977766485688370"
-  S3_BUCKET: dsqr-dotdev
+  S3_BUCKET: tastingswithtay
   S3_ENDPOINT: s3.dsqr.dev
   S3_FORCE_PATH_STYLE: "true"
   S3_REGION: us-east-1
