@@ -24,11 +24,4 @@ npm run gitops:render
 npm run typecheck:infra:native
 ```
 
-Argo CD is LAN-only by default. Cloudflare Access for Argo CD can be enabled with these `.envrc.local` values:
-
-```sh
-CLOUDFLARE_ENABLE_ACCESS=true
-CLOUDFLARE_ACCESS_ADMIN_EMAILS=you@example.com,ops@example.com
-```
-
-That also requires the Cloudflare API token to have account-level Access application/policy permissions. R2 bucket management is also opt-in with `CLOUDFLARE_ENABLE_R2=true` because it needs Workers R2 Storage permissions.
+Argo CD is LAN-only during this migration slice. Cloudflare Access and R2 bucket management are paused until the Cloudflare API token has the required account permissions.

@@ -32,29 +32,8 @@ export const cloudflare = {
       ttl: 1,
     },
   ],
-  r2Buckets: [
-    {
-      name: "dsqr-homelab-backups",
-      location: "wnam",
-      storageClass: "Standard",
-    },
-  ],
-  accessApplications: [
-    {
-      name: "Argo CD",
-      hostname: "argocd.dsqr.dev",
-      sessionDuration: "8h",
-    },
-  ],
+  r2Buckets: [],
   ingressRules: [
-    {
-      hostname: "argocd.dsqr.dev",
-      zone: "dsqrDev",
-      service: "http://10.10.30.200",
-      originRequest: {
-        httpHostHeader: "argocd.dsqr.dev",
-      },
-    },
     {
       hostname: "dsqr.dev",
       zone: "dsqrDev",

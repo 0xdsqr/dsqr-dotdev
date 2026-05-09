@@ -13,20 +13,6 @@ const hetznerMail = new pulumi.StackReference(cloudflareConfig.hetznerMailStack)
 
 const mailIpv4 = hetznerMail.getOutput("ipv4Address")
 
-const accessApplications = cloudflareConfig.enableAccess
-  ? haven.cloudflare.accessApplications.map((application) => ({
-      ...application,
-      allowedEmails: cloudflareConfig.accessAdminEmails,
-    }))
-  : []
-
-const ingressRules = haven.cloudflare.ingressRules.filter(
-  (rule) =>
-    rule.hostname !== "argocd.dsqr.dev" ||
-    cloudflareConfig.enableAccess ||
-    cloudflareConfig.exposeArgocdWithoutAccess,
-)
-
 export const cloudflareEdge = createCloudflareEdge({
   accountId: cloudflareConfig.accountId,
   tunnelSecret: pulumi.secret(cloudflareConfig.tunnelSecret),
@@ -44,7 +30,6 @@ export const cloudflareEdge = createCloudflareEdge({
     },
     ...haven.cloudflare.dnsRecords,
   ],
-  r2Buckets: cloudflareConfig.enableR2 ? haven.cloudflare.r2Buckets : [],
-  accessApplications,
-  ingressRules,
+  r2Buckets: haven.cloudflare.r2Buckets,
+  ingressRules: haven.cloudflare.ingressRules,
 })
