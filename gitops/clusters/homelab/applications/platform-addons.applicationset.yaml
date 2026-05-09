@@ -63,7 +63,7 @@ spec:
             valueFiles:
               - '$values/{{.valuesFile}}'
         - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-          targetRevision: master
+          targetRevision: codex/homelab-migration
           ref: values
       destination:
         server: https://kubernetes.default.svc

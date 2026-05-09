@@ -17,31 +17,31 @@ spec:
             path: helm/dotdev-web
             releaseName: dotdev-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: master
+            targetRevision: codex/homelab-migration
           - name: dotdev-studio
             namespace: dsqr
             path: helm/dotdev-studio
             releaseName: dotdev-studio
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: master
+            targetRevision: codex/homelab-migration
           - name: dotdev-labs
             namespace: dsqr
             path: helm/dotdev-labs
             releaseName: dotdev-labs
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: master
+            targetRevision: codex/homelab-migration
           - name: twt-web
             namespace: twt
             path: helm/tastingswithtay-web
             releaseName: twt-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: master
+            targetRevision: codex/homelab-migration
           - name: twt-admin
             namespace: twt
             path: helm/tastingswithtay-admin
             releaseName: twt-admin
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: master
+            targetRevision: codex/homelab-migration
   template:
     metadata:
       name: '{{.name}}'
