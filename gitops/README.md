@@ -12,6 +12,8 @@ Current split:
 
 The first migration slice intentionally does not auto-sync generated applications. That lets the existing Pulumi-owned Helm releases remain live until we cut over deliberately.
 
+The root `homelab` application does auto-sync the GitOps control layer itself: namespace, projects, and ApplicationSets. Generated workload and platform applications are created with automated sync explicitly disabled until ownership moves away from Pulumi.
+
 Ownership split:
 
 - `platform` project: cluster add-ons such as Cilium, MetalLB, Traefik, and observability exporters/monitors.
@@ -36,6 +38,8 @@ Cutover plan:
 1. Preview and install Argo CD with `npm run infra:k8s:preview` and `npm run infra:k8s:up`.
 2. Preview and apply the Cloudflare stack for the existing public app hostnames.
 3. Apply `gitops/bootstrap` so Argo CD sees the `homelab` root application.
-4. Disable or remove the matching Pulumi-owned app Helm releases.
-5. Manually sync the generated Argo CD applications once each diff is understood.
-6. Enable automated sync with prune/self-heal after Argo owns the app resources cleanly.
+4. Sync `homelab` so the `dsqr-apps` and `platform-addons` ApplicationSets create one Argo CD app per service/add-on.
+5. Cut over `dotdev-labs` first by disabling or removing the matching Pulumi-owned Helm release.
+6. Manually sync `dotdev-labs` once its diff is understood.
+7. Repeat the same ownership move for the remaining app releases.
+8. Enable automated sync with prune/self-heal after Argo owns each app cleanly.

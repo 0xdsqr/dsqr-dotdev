@@ -3,8 +3,12 @@ kind: ApplicationSet
 metadata:
   name: platform-addons
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
+    app.kubernetes.io/name: platform-addons
     app.kubernetes.io/part-of: dsqr-gitops
+    homelab.dev/tier: platform
 spec:
   goTemplate: true
   goTemplateOptions:
@@ -19,6 +23,8 @@ spec:
             targetRevision: 1.19.1
             releaseName: cilium
             valuesFile: infra/inventory/values/kubernetes/cilium.yaml
+            owner: platform
+            partOf: cluster-networking
           - name: metallb
             namespace: metallb-system
             chart: metallb
@@ -26,6 +32,8 @@ spec:
             targetRevision: 0.15.3
             releaseName: metallb
             valuesFile: infra/inventory/values/kubernetes/metallb.yaml
+            owner: platform
+            partOf: cluster-networking
           - name: traefik
             namespace: traefik
             chart: traefik
@@ -33,6 +41,8 @@ spec:
             targetRevision: 39.0.7
             releaseName: traefik
             valuesFile: infra/inventory/values/kubernetes/traefik.yaml
+            owner: platform
+            partOf: cluster-ingress
           - name: kube-state-metrics
             namespace: kube-system
             chart: kube-state-metrics
@@ -40,6 +50,8 @@ spec:
             targetRevision: 7.2.2
             releaseName: kube-state-metrics
             valuesFile: infra/inventory/values/kubernetes/kube-state-metrics.yaml
+            owner: platform
+            partOf: observability
           - name: k8s-monitoring
             namespace: observability
             chart: k8s-monitoring
@@ -47,11 +59,24 @@ spec:
             targetRevision: 3.5.3
             releaseName: k8s-monitoring
             valuesFile: infra/inventory/values/kubernetes/k8s-monitoring.yaml
+            owner: platform
+            partOf: observability
   template:
     metadata:
       name: '{{.name}}'
+      annotations:
+        homelab.dev/chart: '{{.chart}}'
+        homelab.dev/chart-repository: '{{.chartRepoURL}}'
+        homelab.dev/chart-version: '{{.targetRevision}}'
+        homelab.dev/values-file: '{{.valuesFile}}'
       labels:
-        app.kubernetes.io/part-of: dsqr-gitops
+        app.kubernetes.io/instance: '{{.releaseName}}'
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: '{{.name}}'
+        app.kubernetes.io/part-of: '{{.partOf}}'
+        app.kubernetes.io/version: '{{.targetRevision}}'
+        homelab.dev/owner: '{{.owner}}'
+        homelab.dev/tier: platform-addon
     spec:
       project: platform
       sources:
@@ -69,5 +94,15 @@ spec:
         server: https://kubernetes.default.svc
         namespace: '{{.namespace}}'
       syncPolicy:
+        automated:
+          enabled: false
+        retry:
+          limit: 3
+          refresh: true
+          backoff:
+            duration: 20s
+            factor: 2
+            maxDuration: 2m
         syncOptions:
           - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

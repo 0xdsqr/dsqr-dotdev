@@ -3,8 +3,12 @@ kind: ApplicationSet
 metadata:
   name: dsqr-apps
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
+    app.kubernetes.io/name: dsqr-apps
     app.kubernetes.io/part-of: dsqr-gitops
+    homelab.dev/tier: apps
 spec:
   goTemplate: true
   goTemplateOptions:
@@ -18,35 +22,77 @@ spec:
             releaseName: dotdev-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
             targetRevision: codex/homelab-migration
+            owner: dsqr
+            partOf: dsqr-dotdev
+            hostname: dsqr.dev
+            imageRepository: ghcr.io/0xdsqr/dotdev-web
+            imageTag: latest
+            syncStage: manual
           - name: dotdev-studio
             namespace: dsqr
             path: helm/dotdev-studio
             releaseName: dotdev-studio
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
             targetRevision: codex/homelab-migration
+            owner: dsqr
+            partOf: dsqr-dotdev
+            hostname: studio.dsqr.dev
+            imageRepository: ghcr.io/0xdsqr/dotdev-studio
+            imageTag: latest
+            syncStage: manual
           - name: dotdev-labs
             namespace: dsqr
             path: helm/dotdev-labs
             releaseName: dotdev-labs
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
             targetRevision: codex/homelab-migration
+            owner: dsqr
+            partOf: dsqr-dotdev
+            hostname: labs.dsqr.dev
+            imageRepository: ghcr.io/0xdsqr/dotdev-labs
+            imageTag: latest
+            syncStage: canary
           - name: twt-web
             namespace: twt
             path: helm/tastingswithtay-web
             releaseName: twt-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
             targetRevision: codex/homelab-migration
+            owner: twt
+            partOf: tastingswithtay
+            hostname: tastingswithtay.com
+            imageRepository: ghcr.io/0xdsqr/tastingswithtay-web
+            imageTag: latest
+            syncStage: manual
           - name: twt-admin
             namespace: twt
             path: helm/tastingswithtay-admin
             releaseName: twt-admin
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
             targetRevision: codex/homelab-migration
+            owner: twt
+            partOf: tastingswithtay
+            hostname: admin.tastingswithtay.com
+            imageRepository: ghcr.io/0xdsqr/tastingswithtay-admin
+            imageTag: latest
+            syncStage: manual
   template:
     metadata:
       name: '{{.name}}'
+      annotations:
+        homelab.dev/hostname: '{{.hostname}}'
+        homelab.dev/image-repository: '{{.imageRepository}}'
+        homelab.dev/image-tag: '{{.imageTag}}'
+        homelab.dev/source-path: '{{.path}}'
+        homelab.dev/sync-stage: '{{.syncStage}}'
       labels:
-        app.kubernetes.io/part-of: dsqr-gitops
+        app.kubernetes.io/instance: '{{.releaseName}}'
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: '{{.name}}'
+        app.kubernetes.io/part-of: '{{.partOf}}'
+        app.kubernetes.io/version: '{{.imageTag}}'
+        homelab.dev/owner: '{{.owner}}'
+        homelab.dev/tier: application
     spec:
       project: dsqr
       source:
@@ -61,5 +107,15 @@ spec:
         server: https://kubernetes.default.svc
         namespace: '{{.namespace}}'
       syncPolicy:
+        automated:
+          enabled: false
+        retry:
+          limit: 3
+          refresh: true
+          backoff:
+            duration: 20s
+            factor: 2
+            maxDuration: 2m
         syncOptions:
           - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

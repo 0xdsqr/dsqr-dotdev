@@ -3,8 +3,12 @@ kind: AppProject
 metadata:
   name: dsqr
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
   labels:
+    app.kubernetes.io/name: dsqr
     app.kubernetes.io/part-of: dsqr-gitops
+    homelab.dev/tier: apps
 spec:
   description: dsqr.dev application workloads
   sourceRepos:
