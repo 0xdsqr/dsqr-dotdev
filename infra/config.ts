@@ -21,12 +21,23 @@ function requireCsvEnv(name: string) {
   return values
 }
 
+function optionalBooleanEnv(name: string) {
+  const value = process.env[name]?.toLowerCase()
+
+  return value === "1" || value === "true" || value === "yes"
+}
+
 export const cloudflareConfig = {
   accountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
   dsqrDevZoneId: requireEnv("CLOUDFLARE_DSQR_DEV_ZONE_ID"),
   tastingswithtayZoneId: requireEnv("CLOUDFLARE_TWT_ZONE_ID"),
   tunnelSecret: requireEnv("CLOUDFLARE_TUNNEL_SECRET"),
-  accessAdminEmails: requireCsvEnv("CLOUDFLARE_ACCESS_ADMIN_EMAILS"),
+  enableAccess: optionalBooleanEnv("CLOUDFLARE_ENABLE_ACCESS"),
+  exposeArgocdWithoutAccess: optionalBooleanEnv("CLOUDFLARE_EXPOSE_ARGOCD_WITHOUT_ACCESS"),
+  enableR2: optionalBooleanEnv("CLOUDFLARE_ENABLE_R2"),
+  accessAdminEmails: optionalBooleanEnv("CLOUDFLARE_ENABLE_ACCESS")
+    ? requireCsvEnv("CLOUDFLARE_ACCESS_ADMIN_EMAILS")
+    : [],
   hetznerMailStack: "0xdsqr/hetzner-mail/dev",
 } as const
 

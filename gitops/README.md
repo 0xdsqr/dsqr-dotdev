@@ -8,7 +8,7 @@ Current split:
 - Argo CD reads this directory and manages platform add-ons plus dsqr.dev application deployments.
 - Helm remains the package format for apps.
 - Kustomize composes the cluster/environment manifests that define Argo CD projects and application generation.
-- Cloudflare publishes `argocd.dsqr.dev` through the tunnel and protects it with Cloudflare Access before traffic reaches Argo CD.
+- Cloudflare can publish `argocd.dsqr.dev` through the tunnel when Access is explicitly enabled; otherwise Argo CD remains reachable on the LAN through the cluster ingress.
 
 The first migration slice intentionally does not auto-sync generated applications. That lets the existing Pulumi-owned Helm releases remain live until we cut over deliberately.
 
@@ -34,7 +34,7 @@ kubectl apply -k gitops/bootstrap
 Cutover plan:
 
 1. Preview and install Argo CD with `npm run infra:k8s:preview` and `npm run infra:k8s:up`.
-2. Preview and apply the Cloudflare stack with `CLOUDFLARE_ACCESS_ADMIN_EMAILS` set to the email addresses allowed through Access.
+2. Preview and apply the Cloudflare stack. Set `CLOUDFLARE_ENABLE_ACCESS=true` and `CLOUDFLARE_ACCESS_ADMIN_EMAILS` only when the API token has Access permissions.
 3. Apply `gitops/bootstrap` so Argo CD sees the `homelab` root application.
 4. Disable or remove the matching Pulumi-owned app Helm releases.
 5. Manually sync the generated Argo CD applications once each diff is understood.
