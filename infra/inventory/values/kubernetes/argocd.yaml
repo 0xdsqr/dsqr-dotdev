@@ -1,0 +1,10 @@
+global:
+  domain: argocd.dsqr.dev
+
+crds:
+  install: true
+  keep: true
+
+server:
+  ingress:
+    enabled: false

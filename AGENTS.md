@@ -2,10 +2,10 @@
 
 ## Repository Direction
 
-- Treat this repository as the canonical home for dsqr.dev apps, deployment assets, and homelab infrastructure after the migration.
+- Treat this repository as the canonical home for dsqr.dev apps, deployment assets, Helm charts, and Pulumi-backed homelab infrastructure after the migration.
 - Keep the workspace Nix-first. New tools, package builds, checks, image builds, Helm validation, and CI tasks should be expressible through the flake before relying on ad hoc host tools.
 - Preserve existing user state. The source `homelab` repo currently has unstaged edits in Helm values and `infra/inventory/proxmox.ts`; do not overwrite or discard those during migration.
-- The old `homelab/nixos-config` directory is a nested git repository with NixOS, nix-darwin, home-manager, agenix, sops-nix, and age-encrypted secrets. Treat it as first-class state, not incidental files.
+- Host NixOS/nix-darwin/home-manager configuration lives outside this repository. Do not re-import `homelab/nixos-config` unless explicitly asked.
 
 ## Migration Shape
 
@@ -15,15 +15,13 @@
   - `packages/effect-pulumi/*`
   - `infra/*`
   - `helm/*`
-  - `systems/nixos`
 - Continue refining the migration in deliberate slices:
   1. Pulumi/Haven TypeScript packages and `infra/*`.
   2. Helm charts and chart publishing workflows.
-  3. `systems/nixos` host/system configuration.
-  4. CI and Nix checks that validate all migrated surfaces.
-- Prefer preserving history with `git subtree`, `git filter-repo`, or a temporary worktree import when the source history matters. Avoid plain copy for the nested `nixos-config` unless history is explicitly unimportant.
+  3. CI and Nix checks that validate all migrated surfaces.
+- Prefer preserving history with `git subtree`, `git filter-repo`, or a temporary worktree import when source history matters.
 - After files move, update internal paths, package names, workflow references, chart paths, README links, lockfile/package workspace references, and any `.envrc`/Pulumi project paths.
-- Keep deployable artifacts split by concern: app image builds in `nix/packages`, Helm chart checks/publishing in CI, and host/system configuration under a clearly named infra/systems directory.
+- Keep deployable artifacts split by concern: app image builds in `nix/packages`, Helm chart checks/publishing in CI, and Pulumi/Haven infrastructure under `infra/*` plus supporting packages.
 
 ## Effect Style
 

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    homelab.dev/owner: platform
+    homelab.dev/tier: gitops
+    pod-security.kubernetes.io/enforce: baseline

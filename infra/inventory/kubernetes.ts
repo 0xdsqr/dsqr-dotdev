@@ -47,6 +47,14 @@ const namespaces = {
       "homelab.dev/tier": "platform",
     },
   },
+  argocd: {
+    name: "argocd",
+    labels: {
+      "homelab.dev/owner": "platform",
+      "homelab.dev/tier": "gitops",
+      "pod-security.kubernetes.io/enforce": "baseline",
+    },
+  },
 } satisfies NamespaceInventory
 
 const helmReleases = {
@@ -93,6 +101,15 @@ const helmReleases = {
     version: "3.5.3",
     valueYamlFiles: ["../inventory/values/kubernetes/k8s-monitoring.yaml"],
     dependsOn: ["cilium", "kubeStateMetrics"],
+  },
+  argoCd: {
+    releaseName: "argocd",
+    namespace: "argocd",
+    chart: "argo-cd",
+    repository: "https://argoproj.github.io/argo-helm",
+    version: "9.5.2",
+    valueYamlFiles: ["../inventory/values/kubernetes/argocd.yaml"],
+    dependsOn: ["cilium"],
   },
   dotdevWeb: {
     releaseName: "dotdev-web",

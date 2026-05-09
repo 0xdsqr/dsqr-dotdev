@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-addons
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: dsqr-gitops
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - list:
+        elements:
+          - name: cilium
+            namespace: kube-system
+            chart: cilium
+            chartRepoURL: https://helm.cilium.io/
+            targetRevision: 1.19.1
+            releaseName: cilium
+            valuesFile: infra/inventory/values/kubernetes/cilium.yaml
+          - name: metallb
+            namespace: metallb-system
+            chart: metallb
+            chartRepoURL: https://metallb.github.io/metallb
+            targetRevision: 0.15.3
+            releaseName: metallb
+            valuesFile: infra/inventory/values/kubernetes/metallb.yaml
+          - name: traefik
+            namespace: traefik
+            chart: traefik
+            chartRepoURL: https://traefik.github.io/charts
+            targetRevision: 39.0.7
+            releaseName: traefik
+            valuesFile: infra/inventory/values/kubernetes/traefik.yaml
+          - name: kube-state-metrics
+            namespace: kube-system
+            chart: kube-state-metrics
+            chartRepoURL: https://prometheus-community.github.io/helm-charts
+            targetRevision: 7.2.2
+            releaseName: kube-state-metrics
+            valuesFile: infra/inventory/values/kubernetes/kube-state-metrics.yaml
+          - name: k8s-monitoring
+            namespace: observability
+            chart: k8s-monitoring
+            chartRepoURL: https://grafana.github.io/helm-charts
+            targetRevision: 3.5.3
+            releaseName: k8s-monitoring
+            valuesFile: infra/inventory/values/kubernetes/k8s-monitoring.yaml
+  template:
+    metadata:
+      name: '{{.name}}'
+      labels:
+        app.kubernetes.io/part-of: dsqr-gitops
+    spec:
+      project: platform
+      sources:
+        - repoURL: '{{.chartRepoURL}}'
+          chart: '{{.chart}}'
+          targetRevision: '{{.targetRevision}}'
+          helm:
+            releaseName: '{{.releaseName}}'
+            valueFiles:
+              - '$values/{{.valuesFile}}'
+        - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+          targetRevision: master
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
