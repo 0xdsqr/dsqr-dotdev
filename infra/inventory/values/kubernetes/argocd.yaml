@@ -1,10 +1,19 @@
 global:
   domain: argocd.dsqr.dev
 
+configs:
+  params:
+    server.insecure: "true"
+
 crds:
   install: true
   keep: true
 
 server:
   ingress:
-    enabled: false
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.dsqr.dev
+    path: /
+    pathType: Prefix
+    tls: false

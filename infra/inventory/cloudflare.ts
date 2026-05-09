@@ -71,6 +71,16 @@ export const cloudflare = {
       },
     },
     {
+      hostname: "argocd.dsqr.dev",
+      zone: "dsqrDev",
+      service: "https://10.10.30.200",
+      originRequest: {
+        http2Origin: false,
+        httpHostHeader: "argocd.dsqr.dev",
+        noTlsVerify: true,
+      },
+    },
+    {
       hostname: "api-hoo.dsqr.dev",
       zone: "dsqrDev",
       service: "http://10.10.30.108:9321",
