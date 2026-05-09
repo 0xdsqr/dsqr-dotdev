@@ -31,5 +31,9 @@ export const cloudflareEdge = createCloudflareEdge({
     ...haven.cloudflare.dnsRecords,
   ],
   r2Buckets: haven.cloudflare.r2Buckets,
+  accessApplications: haven.cloudflare.accessApplications.map((application) => ({
+    ...application,
+    allowedEmails: cloudflareConfig.accessAdminEmails,
+  })),
   ingressRules: haven.cloudflare.ingressRules,
 })

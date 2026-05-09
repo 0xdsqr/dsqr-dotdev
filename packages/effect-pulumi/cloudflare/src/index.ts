@@ -30,6 +30,13 @@ export type CloudflareR2Bucket = {
   readonly storageClass?: "Standard" | "InfrequentAccess"
 }
 
+export type CloudflareAccessApplication = {
+  readonly name: string
+  readonly hostname: string
+  readonly allowedEmails: ReadonlyArray<string>
+  readonly sessionDuration?: string
+}
+
 export type CloudflareEdgeArgs = {
   accountId: string
   tunnelSecret: pulumi.Input<string>
@@ -45,6 +52,7 @@ export type CloudflareEdgeArgs = {
     }
   >
   r2Buckets?: ReadonlyArray<CloudflareR2Bucket>
+  accessApplications?: ReadonlyArray<CloudflareAccessApplication>
   ingressRules: ReadonlyArray<CloudflareIngressRule>
 }
 
@@ -147,6 +155,54 @@ export function createCloudflareEdge(args: CloudflareEdgeArgs) {
     }),
   )
 
+  const accessApplications = Object.fromEntries(
+    (args.accessApplications ?? []).map((application) => {
+      if (application.allowedEmails.length === 0) {
+        throw new Error(
+          `Cloudflare Access application "${application.name}" needs at least one allowed email.`,
+        )
+      }
+
+      const sessionDuration = application.sessionDuration ?? "8h"
+
+      const accessApplication = new cloudflare.ZeroTrustAccessApplication(
+        resourceName(`access-${application.hostname}`),
+        {
+          accountId: args.accountId,
+          name: application.name,
+          domain: application.hostname,
+          type: "self_hosted",
+          appLauncherVisible: false,
+          enableBindingCookie: true,
+          httpOnlyCookieAttribute: true,
+          sameSiteCookieAttribute: "strict",
+          sessionDuration,
+          policies: [
+            {
+              name: `${application.name} admins`,
+              decision: "allow",
+              includes: application.allowedEmails.map((email) => ({
+                email: {
+                  email,
+                },
+              })),
+              precedence: 1,
+            },
+          ],
+        },
+      )
+
+      return [
+        application.hostname,
+        {
+          aud: accessApplication.aud,
+          domain: accessApplication.domain,
+          name: accessApplication.name,
+        },
+      ]
+    }),
+  )
+
   const tunnelToken = pulumi.secret(
     tunnel.id.apply((tunnelId) =>
       cloudflare
@@ -167,6 +223,7 @@ export function createCloudflareEdge(args: CloudflareEdgeArgs) {
     ],
     directDnsRecords,
     r2Buckets,
+    accessApplications,
     tunnelCname,
     tunnelId: tunnel.id,
     tunnelName: tunnel.name,

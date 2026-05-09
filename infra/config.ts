@@ -8,11 +8,25 @@ function requireEnv(name: string) {
   return value
 }
 
+function requireCsvEnv(name: string) {
+  const values = requireEnv(name)
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  if (values.length === 0) {
+    throw new Error(`Missing at least one value in required environment variable ${name}.`)
+  }
+
+  return values
+}
+
 export const cloudflareConfig = {
   accountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
   dsqrDevZoneId: requireEnv("CLOUDFLARE_DSQR_DEV_ZONE_ID"),
   tastingswithtayZoneId: requireEnv("CLOUDFLARE_TWT_ZONE_ID"),
   tunnelSecret: requireEnv("CLOUDFLARE_TUNNEL_SECRET"),
+  accessAdminEmails: requireCsvEnv("CLOUDFLARE_ACCESS_ADMIN_EMAILS"),
   hetznerMailStack: "0xdsqr/hetzner-mail/dev",
 } as const
 

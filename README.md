@@ -23,3 +23,9 @@ npm run haven -- outputs
 npm run gitops:render
 npm run typecheck:infra:native
 ```
+
+Cloudflare Access for Argo CD requires `CLOUDFLARE_ACCESS_ADMIN_EMAILS` in `.envrc.local` as a comma-separated allowlist, for example:
+
+```sh
+CLOUDFLARE_ACCESS_ADMIN_EMAILS=you@example.com,ops@example.com
+```
