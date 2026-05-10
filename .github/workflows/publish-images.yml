@@ -4,10 +4,30 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "helm/**/Chart.yaml"
-      - "helm/**/values-prod.yaml"
-      - "gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml"
+    paths:
+      - ".github/workflows/publish-images.yml"
+      - "apps/dotdev/**"
+      - "apps/labs/**"
+      - "apps/studio/**"
+      - "flake.lock"
+      - "flake.nix"
+      - "nix/hashes.nix"
+      - "nix/lib/**"
+      - "nix/overlay.nix"
+      - "nix/packages/app.nix"
+      - "nix/packages/default.nix"
+      - "nix/packages/dotdev.nix"
+      - "nix/packages/images.nix"
+      - "nix/packages/labs.nix"
+      - "nix/packages/node-modules.nix"
+      - "nix/packages/studio.nix"
+      - "package-lock.json"
+      - "package.json"
+      - "packages/api/**"
+      - "packages/database/**"
+      - "packages/observability/**"
+      - "packages/react/**"
+      - "packages/typescript-config/**"
   workflow_dispatch:
 
 permissions:

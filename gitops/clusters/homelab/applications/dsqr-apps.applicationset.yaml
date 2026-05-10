@@ -21,7 +21,7 @@ spec:
             path: helm/dotdev-web
             releaseName: dotdev-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: codex/homelab-migration
+            targetRevision: master
             owner: dsqr
             partOf: dsqr-dotdev
             hostname: dsqr.dev
@@ -33,7 +33,7 @@ spec:
             path: helm/dotdev-studio
             releaseName: dotdev-studio
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: codex/homelab-migration
+            targetRevision: master
             owner: dsqr
             partOf: dsqr-dotdev
             hostname: studio.dsqr.dev
@@ -45,7 +45,7 @@ spec:
             path: helm/dotdev-labs
             releaseName: dotdev-labs
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: codex/homelab-migration
+            targetRevision: master
             owner: dsqr
             partOf: dsqr-dotdev
             hostname: labs.dsqr.dev
@@ -57,7 +57,7 @@ spec:
             path: helm/tastingswithtay-web
             releaseName: twt-web
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: codex/homelab-migration
+            targetRevision: master
             owner: twt
             partOf: tastingswithtay
             hostname: tastingswithtay.com
@@ -69,7 +69,7 @@ spec:
             path: helm/tastingswithtay-admin
             releaseName: twt-admin
             repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-            targetRevision: codex/homelab-migration
+            targetRevision: master
             owner: twt
             partOf: tastingswithtay
             hostname: admin.tastingswithtay.com

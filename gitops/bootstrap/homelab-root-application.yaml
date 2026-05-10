@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-    targetRevision: codex/homelab-migration
+    targetRevision: master
     path: gitops/clusters/homelab
   destination:
     server: https://kubernetes.default.svc
