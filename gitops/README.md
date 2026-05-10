@@ -10,6 +10,8 @@ Current split:
 - Kustomize composes the cluster/environment manifests that define Argo CD projects and application generation.
 - Argo CD remains reachable on the LAN through the cluster ingress during this migration slice.
 
+The remaining platform handoff plan lives in [platform-migration.md](platform-migration.md).
+
 The first migration slice intentionally does not auto-sync generated platform applications. That lets the existing Pulumi-owned platform Helm releases remain live until we cut over deliberately.
 
 The root `homelab` application auto-syncs the GitOps control layer itself: namespace, projects, and ApplicationSets. Generated app workloads auto-sync after their Pulumi Helm release ownership has moved to Argo CD. Generated platform applications remain manual until platform ownership moves away from Pulumi.
