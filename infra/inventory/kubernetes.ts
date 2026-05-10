@@ -131,7 +131,7 @@ const helmReleases = {
     releaseName: "dotdev-labs",
     namespace: "dsqr",
     chart: "../../helm/dotdev-labs",
-    enabled: true,
+    enabled: false,
     valueYamlFiles: ["../../helm/dotdev-labs/values-prod.yaml"],
     dependsOn: ["traefik"],
   },
