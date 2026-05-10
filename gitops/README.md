@@ -27,6 +27,15 @@ kubectl kustomize gitops/bootstrap
 kubectl kustomize gitops/clusters/homelab
 ```
 
+Stamp app Helm values with immutable image tags after CI has published `sha-<commit>` images:
+
+```sh
+nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-labs
+nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
+```
+
+The Tastings with Tay charts can be pinned the same way only after matching image tags exist for those repositories.
+
 Bootstrap after Argo CD is installed:
 
 ```sh

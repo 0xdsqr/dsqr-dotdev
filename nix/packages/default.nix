@@ -23,10 +23,13 @@ let
   studio = pkgs.callPackage ./studio.nix {
     inherit nodeModules;
   };
+
+  gitopsTagImages = pkgs.callPackage ./gitops-tag-images.nix { };
 in
 {
   inherit
     dotdev
+    gitopsTagImages
     labs
     nodeModules
     studio
