@@ -26,7 +26,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-web
-            imageTag: latest
+            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
             syncStage: manual
           - name: dotdev-studio
             namespace: dsqr
@@ -38,7 +38,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: studio.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-studio
-            imageTag: latest
+            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
             syncStage: manual
           - name: dotdev-labs
             namespace: dsqr
@@ -50,7 +50,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: labs.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-labs
-            imageTag: latest
+            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
             syncStage: canary
           - name: twt-web
             namespace: twt
