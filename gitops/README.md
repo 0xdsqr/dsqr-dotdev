@@ -10,9 +10,9 @@ Current split:
 - Kustomize composes the cluster/environment manifests that define Argo CD projects and application generation.
 - Argo CD remains reachable on the LAN through the cluster ingress during this migration slice.
 
-The first migration slice intentionally does not auto-sync generated applications. That lets the existing Pulumi-owned Helm releases remain live until we cut over deliberately.
+The first migration slice intentionally does not auto-sync generated platform applications. That lets the existing Pulumi-owned platform Helm releases remain live until we cut over deliberately.
 
-The root `homelab` application does auto-sync the GitOps control layer itself: namespace, projects, and ApplicationSets. Generated workload and platform applications are created with automated sync explicitly disabled until ownership moves away from Pulumi.
+The root `homelab` application auto-syncs the GitOps control layer itself: namespace, projects, and ApplicationSets. Generated app workloads auto-sync after their Pulumi Helm release ownership has moved to Argo CD. Generated platform applications remain manual until platform ownership moves away from Pulumi.
 
 Ownership split:
 
@@ -30,11 +30,15 @@ kubectl kustomize gitops/clusters/homelab
 Stamp app Helm values with immutable image tags after CI has published `sha-<commit>` images:
 
 ```sh
+npm run gitops:tag-images -- --tag sha-<commit> dotdev-labs
+npm run gitops:tag-images -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
 nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-labs
 nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
 ```
 
 The Tastings with Tay charts can be pinned the same way only after matching image tags exist for those repositories.
+
+The `Publish Images` workflow publishes `latest` plus `sha-<commit>` images for the dsqr apps, then commits the matching Helm value and ApplicationSet metadata updates back to the same branch. Argo CD polls Git every `120s` plus up to `60s` jitter and auto-syncs app workload changes.
 
 Bootstrap after Argo CD is installed:
 
@@ -51,4 +55,4 @@ Cutover plan:
 5. Cut over `dotdev-labs` first by disabling or removing the matching Pulumi-owned Helm release.
 6. Manually sync `dotdev-labs` once its diff is understood.
 7. Repeat the same ownership move for the remaining app releases.
-8. Enable automated sync with prune/self-heal after Argo owns each app cleanly.
+8. Keep platform applications manual until their Pulumi ownership is removed.

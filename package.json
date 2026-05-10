@@ -37,6 +37,7 @@
     "format": "nix fmt",
     "format:check": "sh -c 'nix build .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).format --no-link'",
     "gitops:render": "kubectl kustomize gitops/bootstrap && kubectl kustomize gitops/clusters/homelab",
+    "gitops:tag-images": "nix run .#gitopsTagImages --",
     "haven": "node packages/haven/src/cli.ts",
     "lint": "oxlint . --deny-warnings",
     "lint:fix": "oxlint --fix .",

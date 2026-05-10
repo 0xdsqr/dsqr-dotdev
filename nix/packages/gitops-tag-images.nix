@@ -83,6 +83,7 @@ pkgs.writeShellApplication {
       local app="$1"
       local chart_file
       local values_file
+      local appset_file="gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml"
 
       case "$app" in
         dotdev-web)
@@ -114,6 +115,7 @@ pkgs.writeShellApplication {
 
       yq -i ".appVersion = \"$tag\"" "$chart_file"
       yq -i ".image.tag = \"$tag\"" "$values_file"
+      APP="$app" TAG="$tag" yq -i '(.spec.generators[].list.elements[] | select(.name == strenv(APP)).imageTag) = strenv(TAG)' "$appset_file"
       echo "$app -> $tag"
     }
 

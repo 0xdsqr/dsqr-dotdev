@@ -108,7 +108,9 @@ spec:
         namespace: '{{.namespace}}'
       syncPolicy:
         automated:
-          enabled: false
+          enabled: true
+          prune: true
+          selfHeal: true
         retry:
           limit: 3
           refresh: true
@@ -119,3 +121,4 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ApplyOutOfSyncOnly=true
+          - PruneLast=true

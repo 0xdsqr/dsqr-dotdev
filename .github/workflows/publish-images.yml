@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - "helm/**/Chart.yaml"
+      - "helm/**/values-prod.yaml"
+      - "gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -101,3 +105,42 @@ jobs:
           docker tag dotdev-labs:latest ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
           docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:latest
           docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
+
+  stamp-gitops-tags:
+    name: Stamp GitOps image tags
+    runs-on: ubuntu-latest
+    needs:
+      - publish-dotdev
+      - publish-studio
+      - publish-labs
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Stamp immutable image tags
+        run: nix run .#gitopsTagImages -- --tag sha-${{ github.sha }}
+
+      - name: Render GitOps manifests
+        run: nix develop -c npm run gitops:render
+
+      - name: Commit GitOps tag update
+        run: |
+          if git diff --quiet; then
+            echo "GitOps image tags already point at sha-${{ github.sha }}"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add helm/dotdev-web/Chart.yaml helm/dotdev-web/values-prod.yaml
+          git add helm/dotdev-studio/Chart.yaml helm/dotdev-studio/values-prod.yaml
+          git add helm/dotdev-labs/Chart.yaml helm/dotdev-labs/values-prod.yaml
+          git add gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml
+          git commit -m "chore(gitops): pin dsqr images to sha-${{ github.sha }}"
+          git push origin HEAD:${{ github.ref_name }}
