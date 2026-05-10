@@ -26,7 +26,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-web
-            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
+            imageTag: sha-c8e6efad9f6a6125f22d5cddba5f678cc5de6474
             syncStage: manual
           - name: dotdev-studio
             namespace: dsqr
@@ -38,7 +38,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: studio.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-studio
-            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
+            imageTag: sha-c8e6efad9f6a6125f22d5cddba5f678cc5de6474
             syncStage: manual
           - name: dotdev-labs
             namespace: dsqr
@@ -50,7 +50,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: labs.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-labs
-            imageTag: sha-a43cd9ea438a84ab38ed589be114f0643ebc20a1
+            imageTag: sha-c8e6efad9f6a6125f22d5cddba5f678cc5de6474
             syncStage: canary
           - name: twt-web
             namespace: twt
