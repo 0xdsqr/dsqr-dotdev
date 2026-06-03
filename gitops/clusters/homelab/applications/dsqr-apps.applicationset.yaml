@@ -52,6 +52,18 @@ spec:
             imageRepository: ghcr.io/0xdsqr/dotdev-labs
             imageTag: sha-c8e6efad9f6a6125f22d5cddba5f678cc5de6474
             syncStage: canary
+          - name: fidara
+            namespace: fidara
+            path: helm/fidara
+            releaseName: fidara
+            repoURL: https://github.com/0xdsqr/fidara.git
+            targetRevision: master
+            owner: fidara
+            partOf: fidara
+            hostname: fidara.dsqr.dev
+            imageRepository: ghcr.io/0xdsqr/fidara-web
+            imageTag: sha-5dc66f2629763e17f4b36f988052de9c8c1ac847
+            syncStage: manual
           - name: twt-web
             namespace: twt
             path: helm/tastingswithtay-web
@@ -111,6 +123,11 @@ spec:
           enabled: true
           prune: true
           selfHeal: true
+        managedNamespaceMetadata:
+          labels:
+            homelab.dev/owner: '{{.owner}}'
+            homelab.dev/tier: apps
+            pod-security.kubernetes.io/enforce: baseline
         retry:
           limit: 3
           refresh: true

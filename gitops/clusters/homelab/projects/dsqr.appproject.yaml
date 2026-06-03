@@ -13,9 +13,12 @@ spec:
   description: dsqr.dev application workloads
   sourceRepos:
     - https://github.com/0xdsqr/dsqr-dotdev.git
+    - https://github.com/0xdsqr/fidara.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: dsqr
+    - server: https://kubernetes.default.svc
+      namespace: fidara
     - server: https://kubernetes.default.svc
       namespace: twt
   clusterResourceWhitelist:

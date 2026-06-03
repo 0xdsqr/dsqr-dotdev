@@ -31,6 +31,21 @@ export const cloudflare = {
       content: "v=DMARC1; p=quarantine; rua=mailto:postmaster@dsqr.dev; adkim=s; aspf=s",
       ttl: 1,
     },
+    {
+      zone: "dsqrDev",
+      name: "rsa._domainkey.dsqr.dev",
+      type: "TXT",
+      content:
+        "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuDCKIcqtrCFKCQWZ0Lv66vu0b3Sj9Unkmvic2l6rL41Y7VEBhfifOJ00T16K5Dzhbv8rkDrSkqj21gW4BcOe/gIahy4XwKwSsLPolYt2ElS4UqOkjxswwRKIeLtP5QP+yN1oXtEWMoUtHDzjOeILqwl8Sq/9n6n1S+fgeyumWMIm+qKqku84CuzxPpYdxXMipNa5q6cijfx+11sqDwep4rx1nTvUTawM4x/eYMj5zgMfRvFhhIPacr5QMq1RQYs5rv9tYrj44Q6eslXeDIA7Q01TXOeUZtTuM17cObIkU0Pm9uneMhCTXGUVxhk9eiZvsgZpy2rLaEjWNThKogoDxwIDAQAB",
+      ttl: 1,
+    },
+    {
+      zone: "dsqrDev",
+      name: "ed25519._domainkey.dsqr.dev",
+      type: "TXT",
+      content: "v=DKIM1; k=ed25519; p=vLn6/q7xPftjFkPXw9m31vE6tEt+pyoJVmAmp0Q/JEs=",
+      ttl: 1,
+    },
   ],
   r2Buckets: [],
   ingressRules: [
@@ -61,6 +76,26 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "labs.dsqr.dev",
+        noTlsVerify: true,
+      },
+    },
+    {
+      hostname: "fidara.dsqr.dev",
+      zone: "dsqrDev",
+      service: "https://10.10.30.200",
+      originRequest: {
+        http2Origin: false,
+        httpHostHeader: "fidara.dsqr.dev",
+        noTlsVerify: true,
+      },
+    },
+    {
+      hostname: "api.fidara.dsqr.dev",
+      zone: "dsqrDev",
+      service: "https://10.10.30.200",
+      originRequest: {
+        http2Origin: false,
+        httpHostHeader: "api.fidara.dsqr.dev",
         noTlsVerify: true,
       },
     },
