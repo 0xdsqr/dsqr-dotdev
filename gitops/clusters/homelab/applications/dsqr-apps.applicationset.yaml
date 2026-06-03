@@ -60,7 +60,7 @@ spec:
             targetRevision: master
             owner: fidara
             partOf: fidara
-            hostname: fidara.dsqr.dev
+            hostname: fidara.io
             imageRepository: ghcr.io/0xdsqr/fidara-web
             imageTag: sha-5dc66f2629763e17f4b36f988052de9c8c1ac847
             syncStage: manual

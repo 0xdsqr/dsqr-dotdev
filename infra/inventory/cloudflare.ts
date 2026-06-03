@@ -5,6 +5,7 @@ export const cloudflare = {
   },
   zones: {
     dsqrDev: "dsqr.dev",
+    fidaraIo: "fidara.io",
     tastingswithtayCom: "tastingswithtay.com",
   },
   mailHostname: "mx.dsqr.dev",
@@ -80,22 +81,22 @@ export const cloudflare = {
       },
     },
     {
-      hostname: "fidara.dsqr.dev",
-      zone: "dsqrDev",
+      hostname: "fidara.io",
+      zone: "fidaraIo",
       service: "https://10.10.30.200",
       originRequest: {
         http2Origin: false,
-        httpHostHeader: "fidara.dsqr.dev",
+        httpHostHeader: "fidara.io",
         noTlsVerify: true,
       },
     },
     {
-      hostname: "api.fidara.dsqr.dev",
-      zone: "dsqrDev",
+      hostname: "api.fidara.io",
+      zone: "fidaraIo",
       service: "https://10.10.30.200",
       originRequest: {
         http2Origin: false,
-        httpHostHeader: "api.fidara.dsqr.dev",
+        httpHostHeader: "api.fidara.io",
         noTlsVerify: true,
       },
     },

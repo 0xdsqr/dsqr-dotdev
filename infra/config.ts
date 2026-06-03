@@ -11,6 +11,7 @@ function requireEnv(name: string) {
 export const cloudflareConfig = {
   accountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
   dsqrDevZoneId: requireEnv("CLOUDFLARE_DSQR_DEV_ZONE_ID"),
+  fidaraZoneId: requireEnv("CLOUDFLARE_FIDARA_ZONE_ID"),
   tastingswithtayZoneId: requireEnv("CLOUDFLARE_TWT_ZONE_ID"),
   tunnelSecret: requireEnv("CLOUDFLARE_TUNNEL_SECRET"),
   hetznerMailStack: "0xdsqr/hetzner-mail/dev",

@@ -6,6 +6,7 @@ import { cloudflareConfig } from "./config.ts"
 
 const zoneIds = {
   dsqrDev: cloudflareConfig.dsqrDevZoneId,
+  fidaraIo: cloudflareConfig.fidaraZoneId,
   tastingswithtayCom: cloudflareConfig.tastingswithtayZoneId,
 } as const satisfies Record<keyof typeof haven.cloudflare.zones, string>
 
