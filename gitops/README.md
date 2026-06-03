@@ -1,60 +1,198 @@
-# GitOps
+# GitOps Runbook
 
-This directory is the desired-state layer Argo CD will reconcile after Pulumi bootstraps the `argocd` namespace and Argo CD Helm release.
+This directory is the desired-state layer for the homelab cluster after Pulumi/Haven installs Argo CD.
 
-Current split:
+## Ownership
 
-- Pulumi/Haven bootstraps cluster platform dependencies and installs Argo CD.
-- Argo CD reads this directory and manages platform add-ons plus dsqr.dev application deployments.
-- Helm remains the package format for apps.
-- Kustomize composes the cluster/environment manifests that define Argo CD projects and application generation.
-- Argo CD remains reachable on the LAN through the cluster ingress during this migration slice.
+- Pulumi/Haven owns cluster bootstrapping, Cloudflare DNS, and Cloudflare tunnel routes.
+- Argo CD owns Kubernetes desired state from `gitops/`.
+- Helm owns application manifests.
+- Kustomize composes the GitOps control layer.
+- Runtime secret values are not committed. Create them with `kubectl`.
 
-The remaining platform handoff plan lives in [platform-migration.md](platform-migration.md).
+## Argo Flow
 
-The first migration slice intentionally does not auto-sync generated platform applications. That lets the existing Pulumi-owned platform Helm releases remain live until we cut over deliberately.
+1. `gitops/bootstrap/homelab-root-application.yaml` creates the root `homelab` Argo application.
+2. `homelab` points at `gitops/clusters/homelab`.
+3. `gitops/clusters/homelab/kustomization.yaml` loads namespaces, projects, and ApplicationSets.
+4. `dsqr-apps.applicationset.yaml` renders one Argo application per app.
+5. Each generated app points at a Helm chart and `values-prod.yaml`.
+6. Argo syncs the chart into the target namespace, creates the namespace, prunes removed resources, and self-heals drift.
 
-The root `homelab` application auto-syncs the GitOps control layer itself: namespace, projects, and ApplicationSets. Generated app workloads auto-sync after their Pulumi Helm release ownership has moved to Argo CD. Generated platform applications remain manual until platform ownership moves away from Pulumi.
+Private app repos need an Argo repository secret in `argocd`. Private GHCR images need an image pull secret in the app namespace.
 
-Ownership split:
+Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes, quotes, or `\` line continuations with `sh -lc '...'`.
 
-- `platform` project: cluster add-ons such as Cilium, MetalLB, Traefik, and observability exporters/monitors.
-- `dsqr` project: app workloads in `dsqr` and `twt`.
-- Argo CD itself is still bootstrapped by Pulumi; self-management can come after the first safe sync.
-
-Render locally:
+## Local Render Checks
 
 ```sh
 kubectl kustomize gitops/bootstrap
 kubectl kustomize gitops/clusters/homelab
 ```
 
-Stamp app Helm values with immutable image tags after CI has published `sha-<commit>` images:
+## Root Sync Commands
 
-```sh
-npm run gitops:tag-images -- --tag sha-<commit> dotdev-labs
-npm run gitops:tag-images -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
-nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-labs
-nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
-```
-
-The Tastings with Tay charts can be pinned the same way only after matching image tags exist for those repositories.
-
-The `Publish Images` workflow publishes `latest` plus `sha-<commit>` images for the dsqr apps, then commits the matching Helm value and ApplicationSet metadata updates back to the same branch. Argo CD polls Git every `120s` plus up to `60s` jitter and auto-syncs app workload changes.
-
-Bootstrap after Argo CD is installed:
+Create or repair the root app:
 
 ```sh
 kubectl apply -k gitops/bootstrap
 ```
 
-Cutover plan:
+Ask Argo to reread Git:
 
-1. Preview and install Argo CD with `npm run infra:k8s:preview` and `npm run infra:k8s:up`.
-2. Preview and apply the Cloudflare stack for the existing public app hostnames.
-3. Apply `gitops/bootstrap` so Argo CD sees the `homelab` root application.
-4. Sync `homelab` so the `dsqr-apps` and `platform-addons` ApplicationSets create one Argo CD app per service/add-on.
-5. Cut over `dotdev-labs` first by disabling or removing the matching Pulumi-owned Helm release.
-6. Manually sync `dotdev-labs` once its diff is understood.
-7. Repeat the same ownership move for the remaining app releases.
-8. Keep platform applications manual until their Pulumi ownership is removed.
+```sh
+kubectl -n argocd annotate application homelab argocd.argoproj.io/refresh=hard --overwrite
+```
+
+Force a root sync and prune:
+
+```sh
+kubectl -n argocd patch application homelab --type merge -p '{"operation":{"sync":{"prune":true}}}'
+```
+
+Watch root state:
+
+```sh
+kubectl -n argocd get application homelab -w
+```
+
+## App Check Commands
+
+List generated apps:
+
+```sh
+kubectl -n argocd get application
+kubectl -n argocd get applicationset dsqr-apps
+```
+
+Inspect one app:
+
+```sh
+kubectl -n argocd describe application <app-name>
+```
+
+Force a single app refresh and sync:
+
+```sh
+kubectl -n argocd annotate application <app-name> argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd patch application <app-name> --type merge -p '{"operation":{"sync":{"prune":true}}}'
+kubectl -n argocd get application <app-name> -w
+```
+
+Check deployed resources:
+
+```sh
+kubectl -n <namespace> get pods,svc,ingress,networkpolicy
+kubectl -n <namespace> rollout status deployment/<deployment-name>
+kubectl -n <namespace> describe pod <pod-name>
+kubectl -n <namespace> logs deployment/<deployment-name>
+```
+
+## Private Repo Access
+
+Create an Argo repository secret for a private GitHub repo:
+
+```sh
+kubectl -n argocd create secret generic <app>-repo \
+  --from-literal=type=git \
+  --from-literal=url=https://github.com/0xdsqr/<repo>.git \
+  --from-literal=username=0xdsqr \
+  --from-literal=password="$GITHUB_TOKEN" \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n argocd label secret <app>-repo argocd.argoproj.io/secret-type=repository --overwrite
+```
+
+Check it:
+
+```sh
+kubectl -n argocd get secret <app>-repo --show-labels
+kubectl -n argocd annotate application <app-name> argocd.argoproj.io/refresh=hard --overwrite
+```
+
+## GHCR Pull Secret
+
+Copy the shared GHCR pull secret into a new app namespace:
+
+```sh
+kubectl -n dsqr get secret ghcr-creds -o json \
+  | jq '.metadata.namespace="<namespace>" | del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.managedFields,.metadata.annotations)' \
+  | kubectl apply -f -
+```
+
+Or create one directly:
+
+```sh
+kubectl -n <namespace> create secret docker-registry ghcr-creds \
+  --docker-server=ghcr.io \
+  --docker-username=0xdsqr \
+  --docker-password="$GHCR_TOKEN" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+## Runtime Secrets
+
+Charts should reference secret names. Secret values are created outside Git:
+
+```sh
+kubectl -n <namespace> create secret generic <secret-name> \
+  --from-literal=DATABASE_URL="$DATABASE_URL" \
+  --from-literal=EXAMPLE_KEY="$EXAMPLE_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+After changing runtime secrets, restart workloads so pods receive the new env:
+
+```sh
+kubectl -n <namespace> rollout restart deployment/<deployment-name>
+kubectl -n <namespace> rollout status deployment/<deployment-name>
+```
+
+## Onboard A New Service
+
+1. Add or verify the service Helm chart.
+2. Add production values with immutable `sha-<commit>` image tags.
+3. Add ingress hostnames and network policies in the chart.
+4. Add the service repo to the right AppProject `sourceRepos` if it is outside `dsqr-dotdev`.
+5. Add the namespace to the AppProject destinations.
+6. Add an element to `gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml`.
+7. Add Cloudflare DNS and tunnel routes in `infra/inventory/cloudflare.ts`.
+8. Run Cloudflare preview and apply.
+9. Create Argo repo credentials if the source repo is private.
+10. Sync `homelab` so the generated app appears.
+11. Create the namespace runtime secrets and `ghcr-creds`.
+12. Sync the generated app and verify pods, ingress, and health endpoints.
+
+## Image Tags
+
+Use immutable image tags in production. For dsqr-dotdev apps:
+
+```sh
+npm run gitops:tag-images -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
+nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
+```
+
+For external app repos, update the app chart `values-prod.yaml` in that repo and keep the ApplicationSet `imageTag` metadata aligned.
+
+## Current Fidara Smoke Checks
+
+```sh
+kubectl -n argocd get application fidara
+kubectl -n fidara get pods,svc,ingress,networkpolicy
+curl -I https://fidara.io/healthz
+curl -I https://api.fidara.io/healthz
+curl -i 'https://api.fidara.io/api/v1/organizations?limit=1'
+```
+
+The last command should return `401` without an API key.
+
+## Argo UI
+
+```text
+http://argocd.dsqr.dev
+```
+
+Get the initial admin password if it has not been rotated:
+
+```sh
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
