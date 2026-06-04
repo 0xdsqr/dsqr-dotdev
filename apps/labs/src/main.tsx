@@ -18,6 +18,8 @@ const socialLinks = [
   ["X", "https://x.com/dsqr_labs", XLogo],
 ] as const
 
+const currentYear = new Date().getFullYear()
+
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="dsqr-labs-theme">
@@ -59,38 +61,34 @@ function App() {
 
               <div className="mx-auto mt-7 max-w-2xl space-y-5 text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
                 <p>
-                  DSQR Labs LLC is a one-person consulting and product studio run by{" "}
+                  DSQR Labs LLC is a one-person studio. Everyone seems to have one &mdash; so why not
+                  me?
+                </p>
+                <p>
+                  Behind it is{" "}
                   <a
                     href="https://dsqr.dev"
                     className="border-b-2 border-dotted border-foreground/60 text-foreground transition-colors hover:border-primary hover:text-primary"
                   >
                     0xdsqr
                   </a>
-                  , focused on{" "}
-                  <span className="border-b-2 border-dotted border-purple-600/60 text-purple-600 dark:border-purple-400/60 dark:text-purple-400">
-                    systems engineering
+                  , a{" "}
+                  <span className="border-b-2 border-dotted border-primary/55 text-foreground">
+                    systems, backend, and infrastructure
+                  </span>{" "}
+                  engineer who has spent time at Goldman Sachs and a few other places along the way.
+                  The work is simple: help people ship the systems, infrastructure, and software they
+                  need &mdash; the kind that stays{" "}
+                  <span className="border-b-2 border-dotted border-teal-500/55 text-foreground">
+                    understandable, operable, and boring in the best way.
                   </span>
-                  ,{" "}
-                  <span className="border-b-2 border-dotted border-teal-600/60 text-teal-600 dark:border-teal-400/60 dark:text-teal-400">
-                    infrastructure
-                  </span>
-                  ,{" "}
-                  <span className="border-b-2 border-dotted border-orange-500/60 text-orange-600 dark:border-orange-300/60 dark:text-orange-300">
-                    cloud platforms
-                  </span>
-                  ,{" "}
-                  <span className="border-b-2 border-dotted border-emerald-600/60 text-emerald-600 dark:border-emerald-400/60 dark:text-emerald-400">
-                    open source software
-                  </span>
-                  , and general software development for systems that need to stay understandable,
-                  operable, and boring in the best way.
                 </p>
               </div>
             </div>
           </section>
 
           <footer className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 border-t border-dotted border-border pt-4 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>DSQR Labs LLC 2026</p>
+            <p>DSQR Labs LLC {currentYear}</p>
             <nav className="flex items-center gap-4" aria-label="Social links">
               {socialLinks.map(([label, href, Icon]) => (
                 <a
