@@ -23,6 +23,19 @@ Private app repos need an Argo repository secret in `argocd`. Private GHCR image
 
 Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes, quotes, or `\` line continuations with `sh -lc '...'`.
 
+## Argo UI Shape
+
+The app list should show separate app cards. That is intentional.
+
+- `homelab` is the root bootstrap app. It owns the cluster GitOps composition.
+- `platform-addons` is an ApplicationSet for cluster add-ons such as Cilium, MetalLB, Traefik, and observability.
+- `dsqr-apps` is an ApplicationSet for product apps.
+- Generated product apps stay separate: `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `fidara`, `twt-web`, and `twt-admin`.
+
+Do not collapse those generated apps into one large Argo app just to make the card view shorter. Separate apps give cleaner health, sync, rollback, and failure boundaries. Use Argo labels such as `app.kubernetes.io/part-of`, `homelab.dev/owner`, and `homelab.dev/tier` to filter/group the view.
+
+Both ApplicationSets set `preserveResourcesOnDeletion: true` so a future AppSet rename or cleanup is less likely to remove live workloads unexpectedly. Still treat AppSet renames as a planned change and preview them before syncing.
+
 ## Chart Ownership
 
 - Charts for apps owned by `dsqr-dotdev` live in this repo under `helm/`.

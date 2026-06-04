@@ -13,6 +13,8 @@ spec:
   goTemplate: true
   goTemplateOptions:
     - missingkey=error
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - list:
         elements:
