@@ -61,8 +61,8 @@ function App() {
 
               <div className="mx-auto mt-7 max-w-2xl space-y-5 text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
                 <p>
-                  DSQR Labs LLC is a one-person studio. Everyone seems to have one &mdash; so why not
-                  me?
+                  DSQR Labs LLC is a one-person studio. Everyone seems to have one &mdash; so why
+                  not me?
                 </p>
                 <p>
                   Behind it is{" "}
@@ -77,8 +77,8 @@ function App() {
                     systems, backend, and infrastructure
                   </span>{" "}
                   engineer who has spent time at Goldman Sachs and a few other places along the way.
-                  The work is simple: help people ship the systems, infrastructure, and software they
-                  need &mdash; the kind that stays{" "}
+                  The work is simple: help people ship the systems, infrastructure, and software
+                  they need &mdash; the kind that stays{" "}
                   <span className="border-b-2 border-dotted border-teal-500/55 text-foreground">
                     understandable, operable, and boring in the best way.
                   </span>
