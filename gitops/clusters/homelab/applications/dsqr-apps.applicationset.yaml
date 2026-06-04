@@ -68,25 +68,25 @@ spec:
             namespace: twt
             path: helm/tastingswithtay-web
             releaseName: twt-web
-            repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+            repoURL: https://github.com/0xdsqr/tastingswithtay.git
             targetRevision: master
             owner: twt
             partOf: tastingswithtay
             hostname: tastingswithtay.com
             imageRepository: ghcr.io/0xdsqr/tastingswithtay-web
-            imageTag: latest
+            imageTag: sha-8048e9bf27952050ff7fd6f3c97782e5ef33f95d
             syncStage: manual
           - name: twt-admin
             namespace: twt
             path: helm/tastingswithtay-admin
             releaseName: twt-admin
-            repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+            repoURL: https://github.com/0xdsqr/tastingswithtay.git
             targetRevision: master
             owner: twt
             partOf: tastingswithtay
             hostname: admin.tastingswithtay.com
             imageRepository: ghcr.io/0xdsqr/tastingswithtay-admin
-            imageTag: latest
+            imageTag: sha-8048e9bf27952050ff7fd6f3c97782e5ef33f95d
             syncStage: manual
   template:
     metadata:

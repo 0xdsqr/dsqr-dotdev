@@ -32,10 +32,6 @@ jobs:
             namespace: dsqr
           - name: dotdev-labs
             namespace: dsqr
-          - name: tastingswithtay-web
-            namespace: twt
-          - name: tastingswithtay-admin
-            namespace: twt
     env:
       CHART_VERSION: 0.1.${{ github.run_number }}-r${{ github.run_attempt }}
 

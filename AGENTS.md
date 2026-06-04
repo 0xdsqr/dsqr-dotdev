@@ -40,7 +40,7 @@
 
 ## Source Repo Facts
 
-- `homelab` contains Helm charts for `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `tastingswithtay-web`, and `tastingswithtay-admin`.
+- `homelab` contains Helm charts for `dotdev-web`, `dotdev-studio`, and `dotdev-labs`. Tastings with Tay charts now live in the `tastingswithtay` repo and are referenced from GitOps as external app charts.
 - `homelab` contains `packages/haven`, `packages/infra-model`, and `packages/effect-pulumi/*` for Pulumi-backed Cloudflare, Hetzner, Kubernetes, Proxmox, and Tailscale infrastructure.
 - `homelab` currently uses npm workspaces, Node 24, Effect 3.21, Pulumi packages, Biome formatting, and a flake-parts dev shell.
 - `create-epoch-app` is a useful pattern reference for Effect + Convex + observability, but it is Bun/Turbo/Biome/Next-oriented and should not be copied wholesale into this npm/Nix workspace.

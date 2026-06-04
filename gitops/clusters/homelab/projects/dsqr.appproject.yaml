@@ -14,6 +14,7 @@ spec:
   sourceRepos:
     - https://github.com/0xdsqr/dsqr-dotdev.git
     - https://github.com/0xdsqr/fidara.git
+    - https://github.com/0xdsqr/tastingswithtay.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: dsqr

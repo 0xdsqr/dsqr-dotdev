@@ -23,6 +23,13 @@ Private app repos need an Argo repository secret in `argocd`. Private GHCR image
 
 Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes, quotes, or `\` line continuations with `sh -lc '...'`.
 
+## Chart Ownership
+
+- Charts for apps owned by `dsqr-dotdev` live in this repo under `helm/`.
+- Charts for apps owned by another app repo live beside that app code. For example, `fidara` charts live in `0xdsqr/fidara`, and Tastings with Tay charts live in `0xdsqr/tastingswithtay`.
+- `gitops/` should reference those repos through ApplicationSet entries. It should not copy external app charts unless this repo becomes the owner of that app.
+- Kustomize composes Argo bootstrap, projects, and ApplicationSets. Helm renders app workloads.
+
 ## Local Render Checks
 
 ```sh

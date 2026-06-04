@@ -20,10 +20,6 @@ pkgs.writeShellApplication {
       dotdev-studio
       dotdev-labs
 
-    External image charts, only when that image tag already exists:
-      twt-web
-      twt-admin
-
     Defaults:
       --tag defaults to sha-$(git rev-parse HEAD)
       apps and --all default to the dsqr.dev images built by this repo: dotdev-web dotdev-studio dotdev-labs
@@ -97,14 +93,6 @@ pkgs.writeShellApplication {
         dotdev-labs)
           chart_file="helm/dotdev-labs/Chart.yaml"
           values_file="helm/dotdev-labs/values-prod.yaml"
-          ;;
-        twt-web)
-          chart_file="helm/tastingswithtay-web/Chart.yaml"
-          values_file="helm/tastingswithtay-web/values-prod.yaml"
-          ;;
-        twt-admin)
-          chart_file="helm/tastingswithtay-admin/Chart.yaml"
-          values_file="helm/tastingswithtay-admin/values-prod.yaml"
           ;;
         *)
           echo "Unknown app '$app'." >&2

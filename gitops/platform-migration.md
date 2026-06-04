@@ -15,7 +15,7 @@ Desired end state:
 | Surface | Current owner | Desired owner | Notes |
 | --- | --- | --- | --- |
 | `dotdev-web`, `dotdev-studio`, `dotdev-labs` | Argo CD | Argo CD | Automated sync enabled. Images are pinned by CI to immutable `sha-*` tags. |
-| `twt-web`, `twt-admin` | Argo CD | Argo CD | Automated sync enabled. Image release strategy still depends on external image publishing. |
+| `twt-web`, `twt-admin` | Argo CD | Argo CD | Automated sync enabled. Charts and image publishing now live in the `tastingswithtay` repo. |
 | `argocd` Helm release | Pulumi | Pulumi for now | Keep as recovery bootstrap until platform handoff is stable. |
 | Namespaces | Pulumi and GitOps | Argo CD eventually | GitOps already declares `argocd`; Pulumi still creates runtime namespaces. |
 | `kube-state-metrics` | Pulumi | Argo CD | Lowest-risk platform handoff candidate. |

@@ -135,22 +135,6 @@ const helmReleases = {
     valueYamlFiles: ["../../helm/dotdev-labs/values-prod.yaml"],
     dependsOn: ["traefik"],
   },
-  twtWeb: {
-    releaseName: "twt-web",
-    namespace: "twt",
-    chart: "../../helm/tastingswithtay-web",
-    enabled: false,
-    valueYamlFiles: ["../../helm/tastingswithtay-web/values-prod.yaml"],
-    dependsOn: ["traefik"],
-  },
-  twtAdmin: {
-    releaseName: "twt-admin",
-    namespace: "twt",
-    chart: "../../helm/tastingswithtay-admin",
-    enabled: false,
-    valueYamlFiles: ["../../helm/tastingswithtay-admin/values-prod.yaml"],
-    dependsOn: ["traefik"],
-  },
 } satisfies HelmReleaseInventory
 
 const metallbAddressPools = {
