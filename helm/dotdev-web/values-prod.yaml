@@ -19,6 +19,18 @@ env:
   OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
   OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=dsqr
 existingSecret: dotdev-web-secrets
+networkPolicy:
+  enabled: true
+  ingress:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: traefik
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: dsqr
+  egress:
+    allowAll: true
 ingress:
   enabled: true
   className: traefik

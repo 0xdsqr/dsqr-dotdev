@@ -39,6 +39,25 @@ env:
 
 existingSecret: dotdev-web-secrets
 
+networkPolicy:
+  enabled: true
+  ingress:
+    # Empty `from` means "allow any source to the service port".
+    # Prod values should narrow this to Traefik plus trusted same-namespace apps.
+    from: []
+  egress:
+    allowAll: true
+    dns:
+      enabled: true
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+    extra: []
+
 resources:
   requests:
     cpu: 100m
