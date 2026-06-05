@@ -28,7 +28,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-web
-            imageTag: sha-f4be19b9616e523fe80d6a99a5564a80fcc60ee0
+            imageTag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
             syncStage: manual
           - name: dotdev-studio
             namespace: dsqr
@@ -40,7 +40,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: studio.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-studio
-            imageTag: sha-f4be19b9616e523fe80d6a99a5564a80fcc60ee0
+            imageTag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
             syncStage: manual
           - name: dotdev-labs
             namespace: dsqr
@@ -52,7 +52,7 @@ spec:
             partOf: dsqr-dotdev
             hostname: labs.dsqr.dev
             imageRepository: ghcr.io/0xdsqr/dotdev-labs
-            imageTag: sha-f4be19b9616e523fe80d6a99a5564a80fcc60ee0
+            imageTag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
             syncStage: canary
           - name: fidara
             namespace: fidara
