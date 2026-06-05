@@ -96,6 +96,15 @@ export function initAuth(options: {
     secret: options.secret,
 
     trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
+
+    // Throttle auth endpoints (OTP requests, sign-in attempts) to blunt
+    // brute-force and email-bombing. Disabled in dev to avoid local friction.
+    rateLimit: {
+      enabled: process.env.NODE_ENV !== "development",
+      window: 60,
+      max: 20,
+    },
+
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
@@ -124,15 +133,17 @@ export function initAuth(options: {
           logger.info("Sending auth OTP email", {
             email: maskEmail(email),
             from: "noreply@updates.dsqr.dev",
-            subject: "Your OTP: [redacted]",
+            subject: "Your DSQR sign-in code",
           })
 
           let result: Awaited<ReturnType<typeof client.emails.send>>
           try {
+            // Keep the one-time code out of the subject line so it never leaks via
+            // notification previews, mail-client logs, or shoulder-surfing.
             result = await client.emails.send({
               from: "DSQR <noreply@updates.dsqr.dev>",
               to: email,
-              subject: `Your OTP: ${otp}`,
+              subject: "Your DSQR sign-in code",
               html: `<p>Your code is: <strong>${otp}</strong></p>`,
               text: `Your code is: ${otp}`,
             })
@@ -155,7 +166,6 @@ export function initAuth(options: {
               error: errorMessage,
               statusCode: statusCode || undefined,
               name: errorName || undefined,
-              raw: JSON.stringify(result.error),
             })
 
             throw new Error([statusCode, errorName, errorMessage].filter(Boolean).join(" ").trim())

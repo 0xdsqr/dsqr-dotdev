@@ -176,6 +176,8 @@
   font-family: inherit;
 }
 
+/* ============ CODE BLOCK SHELL ============ */
+
 .codeBlockWrapper {
   display: flex;
   flex-direction: column;
@@ -185,35 +187,6 @@
   border-radius: 0.6rem;
   background-color: var(--card);
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-}
-
-.codeBlockContainer {
-  display: flex;
-  overflow-x: auto;
-  background-color: var(--card);
-  gap: 1rem;
-}
-
-.codeBlockLines {
-  margin: 0;
-  padding: 1rem 0.75rem;
-  overflow: hidden;
-  background-color: transparent;
-  color: var(--muted-foreground);
-  font-size: 0.95em;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  white-space: pre;
-  user-select: none;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-.codeLineNumber {
-  display: block;
-  text-align: right;
-  min-width: 2.5rem;
-  padding-right: 0.25rem;
 }
 
 .codeBlockToolbar {
@@ -237,101 +210,50 @@
   opacity: 0.85;
 }
 
-.codeBlockPre {
-  margin: 0;
-  padding: 1rem;
+/* ============ SHIKI HIGHLIGHTING ============ */
+
+.codeBlockShiki {
   overflow-x: auto;
-  overflow-y: visible;
-  background-color: transparent;
-  color: var(--foreground);
-  font-size: 0.95em;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  white-space: pre;
-  word-wrap: normal;
-  flex: 1;
 }
 
-.prose pre {
-  margin: 0 !important;
-  padding: 0 !important;
+.codeBlockShiki :global(.shiki) {
+  margin: 0;
+  padding: 1rem 1.1rem;
   background-color: transparent !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  line-height: 1.65;
 }
 
-.prose :global(.hljs) {
-  background-color: transparent;
-  color: #a9b1d6;
+/* Dual theme: default to the light palette, swap to dark under .dark. Shiki emits
+   both as CSS variables (defaultColor: false), so no re-highlight is needed. */
+.codeBlockShiki :global(.shiki),
+.codeBlockShiki :global(.shiki span) {
+  color: var(--shiki-light);
 }
 
-.prose :global(.hljs-keyword),
-.prose :global(.hljs-built_in) {
-  color: #bb9af7;
+:global(.dark) .codeBlockShiki :global(.shiki),
+:global(.dark) .codeBlockShiki :global(.shiki span) {
+  color: var(--shiki-dark);
 }
 
-.prose :global(.hljs-string) {
-  color: #9ece6a;
+/* Line numbers via CSS counters on Shiki's per-line spans. */
+.codeBlockShiki :global(.shiki code) {
+  display: grid;
+  counter-reset: line;
 }
 
-.prose :global(.hljs-number) {
-  color: #ff9e64;
+.codeBlockShiki :global(.shiki code .line) {
+  counter-increment: line;
 }
 
-.prose :global(.hljs-attr),
-.prose :global(.hljs-variable),
-.prose :global(.hljs-params),
-.prose :global(.hljs-literal) {
-  color: #7aa2f7;
-}
-
-.prose :global(.hljs-function) {
-  color: #7aa2f7;
-}
-
-.prose :global(.hljs-class),
-.prose :global(.hljs-class-name) {
-  color: #ff9e64;
-}
-
-.prose :global(.hljs-title) {
-  color: #7aa2f7;
-}
-
-.prose :global(.hljs-comment) {
-  color: #565f89;
-  font-style: italic;
-}
-
-.prose :global(.hljs-operator) {
-  color: #a9b1d6;
-}
-
-.prose :global(.hljs-property) {
-  color: #7aa2f7;
-}
-
-.prose :global(.hljs-type) {
-  color: #bb9af7;
-}
-
-.prose :global(.hljs-tag),
-.prose :global(.hljs-name) {
-  color: #f7768e;
-}
-
-.prose :global(.hljs-literal) {
-  color: #7aa2f7;
-}
-
-.prose :global(.hljs-meta) {
-  color: #565f89;
-}
-
-.prose :global(.hljs-subst) {
-  color: #a9b1d6;
-}
-
-.prose :global(.hljs-emphasis) {
-  font-style: italic;
+.codeBlockShiki :global(.shiki code .line)::before {
+  content: counter(line);
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 1.25rem;
+  text-align: right;
+  color: var(--muted-foreground);
+  opacity: 0.45;
+  user-select: none;
 }

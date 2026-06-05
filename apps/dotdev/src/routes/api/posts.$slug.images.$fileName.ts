@@ -21,6 +21,10 @@ export const Route = createFileRoute("/api/posts/$slug/images/$fileName")({
           headers: {
             "Content-Type": result.contentType,
             "Cache-Control": "public, max-age=31536000, immutable",
+            // Defense in depth: never let the browser sniff a different type, and
+            // sandbox the response so an uploaded SVG cannot execute script.
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
           },
         })
       },

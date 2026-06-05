@@ -78,7 +78,13 @@ export const postRouter = {
     .input(
       z.object({
         postId: z.string().optional(),
-        filePath: z.string().optional(),
+        // filePath is only ever a stored post key (posts/<slug>/index.mdx). Constrain
+        // it here so a public caller cannot point the read at an arbitrary object.
+        filePath: z
+          .string()
+          .regex(/^posts\/[A-Za-z0-9._/-]+$/)
+          .refine((value) => !value.includes(".."), "invalid path")
+          .optional(),
       }),
     )
     .query(async ({ ctx, input }) => {

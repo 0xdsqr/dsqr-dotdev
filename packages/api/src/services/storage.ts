@@ -9,6 +9,24 @@ export class StorageError extends Data.TaggedError("StorageError")<{
   cause: unknown
 }> {}
 
+// Reject path traversal and keep reads scoped to the posts/ prefix. Callers pass
+// values that originate from request input (slug, fileName, stored filePath), so
+// every read key is validated before it reaches S3 to prevent reading arbitrary
+// objects out of the bucket.
+function isSafePostKey(key: string): boolean {
+  if (!key.startsWith(`${POSTS_PREFIX}/`)) {
+    return false
+  }
+  if (key.includes("..") || key.includes("\0")) {
+    return false
+  }
+  return true
+}
+
+function sanitizeSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]/g, "-")
+}
+
 export type PostImage = {
   body: ReadableStream
   contentType: string
@@ -107,6 +125,11 @@ function makeService(): StorageServiceShape {
     getPostContent: (filePath) =>
       Effect.tryPromise({
         try: async () => {
+          if (!isSafePostKey(filePath)) {
+            logger.warn("Rejected post content fetch for unsafe key", { key: filePath })
+            return null
+          }
+
           const response = await s3Client.send(
             new GetObjectCommand({
               Bucket: bucketName,
@@ -137,8 +160,9 @@ function makeService(): StorageServiceShape {
       ),
     uploadPostImage: (slug, file, fileName, fileType) => {
       const timestamp = Date.now()
-      const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, "-")
-      const key = `${POSTS_PREFIX}/${slug}/images/${timestamp}-${sanitizedName}`
+      const sanitizedSlug = sanitizeSegment(slug)
+      const sanitizedName = sanitizeSegment(fileName)
+      const key = `${POSTS_PREFIX}/${sanitizedSlug}/images/${timestamp}-${sanitizedName}`
 
       return Effect.gen(function* () {
         yield* ensureBucketAccessible
@@ -155,15 +179,20 @@ function makeService(): StorageServiceShape {
           catch: (cause) => new StorageError({ operation: "s3.putPostImage", cause }),
         })
 
-        logger.debug("Post image uploaded", { slug, key })
-        return `/api/posts/${slug}/images/${timestamp}-${sanitizedName}`
+        logger.debug("Post image uploaded", { slug: sanitizedSlug, key })
+        return `/api/posts/${sanitizedSlug}/images/${timestamp}-${sanitizedName}`
       }).pipe(Effect.withSpan("storage.postImage.upload", { attributes: { slug, fileType } }))
     },
     getPostImage: (slug, fileName) => {
-      const key = `${POSTS_PREFIX}/${slug}/images/${fileName}`
+      const key = `${POSTS_PREFIX}/${sanitizeSegment(slug)}/images/${sanitizeSegment(fileName)}`
 
       return Effect.tryPromise({
         try: async () => {
+          if (!isSafePostKey(key)) {
+            logger.warn("Rejected post image fetch for unsafe key", { key })
+            return null
+          }
+
           const response = await s3Client.send(
             new GetObjectCommand({
               Bucket: bucketName,

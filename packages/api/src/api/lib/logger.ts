@@ -11,18 +11,45 @@ export interface LogEntry {
 const isDev = process.env.NODE_ENV === "development"
 const logFormat = process.env.LOG_FORMAT ?? (isDev ? "pretty" : "json")
 
+const SECRET_KEY = /token|secret|password|authorization|cookie|apikey|api_key/i
+const EMAIL_KEY = /email/i
+
+function maskEmailValue(value: string): string {
+  const [local, domain] = value.split("@")
+  if (!local || !domain) {
+    return value
+  }
+  const visible = local.length <= 2 ? `${local[0] ?? "*"}*` : `${local.slice(0, 2)}***`
+  return `${visible}@${domain}`
+}
+
+// Recursively walk log payloads so secrets and PII are scrubbed even when nested
+// inside objects or arrays — key-name matching alone misses deep structures.
+function sanitizeValue(key: string, value: unknown): unknown {
+  if (SECRET_KEY.test(key)) {
+    return "[redacted]"
+  }
+  if (EMAIL_KEY.test(key) && typeof value === "string") {
+    return maskEmailValue(value)
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(key, item))
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, sanitizeValue(k, v)]),
+    )
+  }
+  return value
+}
+
 function sanitizeData(data: Record<string, unknown> | undefined) {
   if (!data) {
     return undefined
   }
 
   return Object.fromEntries(
-    Object.entries(data).map(([key, value]) => {
-      if (/token|secret|password|authorization|cookie/i.test(key)) {
-        return [key, "[redacted]"]
-      }
-      return [key, value]
-    }),
+    Object.entries(data).map(([key, value]) => [key, sanitizeValue(key, value)]),
   )
 }
 

@@ -59,29 +59,27 @@ function App() {
                 <div className="h-px w-36 bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
               </div>
 
-              <div className="mx-auto mt-7 max-w-2xl space-y-5 text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
+              <div className="mx-auto mt-7 max-w-2xl text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
                 <p>
                   DSQR Labs LLC is a one-person studio. Everyone seems to have one &mdash; so why
-                  not me?
-                </p>
-                <p>
-                  Behind it is{" "}
-                  <a
-                    href="https://dsqr.dev"
-                    className="border-b-2 border-dotted border-foreground/60 text-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    0xdsqr
-                  </a>
-                  , a{" "}
+                  not me? David is a{" "}
                   <span className="border-b-2 border-dotted border-primary/55 text-foreground">
-                    systems, backend, and infrastructure
+                    systems, infrastructure, and backend
                   </span>{" "}
-                  engineer who has spent time at Goldman Sachs and a few other places along the way.
-                  The work is simple: help people ship the systems, infrastructure, and software
-                  they need &mdash; the kind that stays{" "}
-                  <span className="border-b-2 border-dotted border-teal-500/55 text-foreground">
+                  engineer, and the work is simple: help people ship the systems, infrastructure,
+                  and software they need &mdash; the kind that stays{" "}
+                  <span className="border-b-2 border-dotted border-chart-1/55 text-foreground">
                     understandable, operable, and boring in the best way.
                   </span>
+                </p>
+
+                <p className="mt-8">
+                  <a
+                    href="https://dsqr.dev/about"
+                    className="text-xs uppercase tracking-[0.18em] text-muted-foreground/80 underline decoration-dotted decoration-from-font underline-offset-4 transition-colors hover:text-primary"
+                  >
+                    More about David &rarr;
+                  </a>
                 </p>
               </div>
             </div>

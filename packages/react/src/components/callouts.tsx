@@ -13,36 +13,38 @@ interface CalloutConfig {
   accentColor: string
 }
 
+// Variants map onto the design-system tokens (destructive + chart-*) so callouts
+// stay theme-aware in both light and dark instead of hardcoding raw palette values.
 const calloutConfigs: Record<string, CalloutConfig> = {
   important: {
     icon: <AlertCircle className="w-4 h-4" />,
-    borderColor: "border-l-4 border-red-600 dark:border-red-400",
-    accentColor: "text-red-600 dark:text-red-400",
+    borderColor: "border-l-4 border-destructive",
+    accentColor: "text-destructive",
   },
   note: {
     icon: <Info className="w-4 h-4" />,
-    borderColor: "border-l-4 border-blue-600 dark:border-blue-400",
-    accentColor: "text-blue-600 dark:text-blue-400",
+    borderColor: "border-l-4 border-chart-4",
+    accentColor: "text-chart-4",
   },
   tip: {
     icon: <Lightbulb className="w-4 h-4" />,
-    borderColor: "border-l-4 border-emerald-600 dark:border-emerald-400",
-    accentColor: "text-emerald-600 dark:text-emerald-400",
+    borderColor: "border-l-4 border-chart-1",
+    accentColor: "text-chart-1",
   },
   warning: {
     icon: <AlertTriangle className="w-4 h-4" />,
-    borderColor: "border-l-4 border-amber-600 dark:border-amber-400",
-    accentColor: "text-amber-600 dark:text-amber-400",
+    borderColor: "border-l-4 border-chart-3",
+    accentColor: "text-chart-3",
   },
   caution: {
     icon: <AlertOctagon className="w-4 h-4" />,
-    borderColor: "border-l-4 border-red-700 dark:border-red-300",
-    accentColor: "text-red-700 dark:text-red-300",
+    borderColor: "border-l-4 border-destructive",
+    accentColor: "text-destructive",
   },
   moreinfo: {
     icon: <Info className="w-4 h-4" />,
-    borderColor: "border-l-4 border-purple-600 dark:border-purple-400",
-    accentColor: "text-purple-600 dark:text-purple-400",
+    borderColor: "border-l-4 border-primary",
+    accentColor: "text-primary",
   },
 }
 
@@ -70,7 +72,7 @@ function Callout({
         ) : (
           <div className={cn("mt-0.5 shrink-0", config.accentColor)}>{config.icon}</div>
         )}
-        <div className="min-w-0 flex-1 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-foreground [&_em]:italic [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold">
+        <div className="min-w-0 flex-1 [&_em]:italic [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold">
           {children}
         </div>
       </div>

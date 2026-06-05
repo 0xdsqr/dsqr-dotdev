@@ -1,7 +1,7 @@
 "use client"
 
 import { Check, Copy } from "lucide-react"
-import React, { useState } from "react"
+import { useRef, useState } from "react"
 import { cn } from "@dsqr-dotdev/react/lib/utils"
 
 interface CopyButtonProps {
@@ -35,15 +35,13 @@ function legacyCopyToClipboard(value: string) {
 
 export function CopyButton({ value, className }: CopyButtonProps) {
   const [hasCopied, setHasCopied] = useState(false)
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  React.useEffect(() => {
-    if (!hasCopied) {
-      return
-    }
-
-    const timer = setTimeout(() => setHasCopied(false), 2000)
-    return () => clearTimeout(timer)
-  }, [hasCopied])
+  const flagCopied = () => {
+    setHasCopied(true)
+    clearTimeout(resetTimer.current)
+    resetTimer.current = setTimeout(() => setHasCopied(false), 2000)
+  }
 
   const copyToClipboard = async () => {
     if (!value) {
@@ -64,7 +62,7 @@ export function CopyButton({ value, className }: CopyButtonProps) {
     }
 
     if (copied) {
-      setHasCopied(true)
+      flagCopied()
     }
   }
 

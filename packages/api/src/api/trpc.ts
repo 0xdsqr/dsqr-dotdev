@@ -1,7 +1,5 @@
 import { database } from "@dsqr-dotdev/database/client"
-import { user } from "@dsqr-dotdev/database/auth-schema"
 import { initTRPC, TRPCError } from "@trpc/server"
-import { eq } from "drizzle-orm"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
 import type { Auth } from "../auth"
@@ -113,27 +111,18 @@ async function resolveAdminSessionUser(currentUser: SessionUser | null | undefin
     return null
   }
 
-  if (normalizeRole((currentUser as { role?: string | string[] | null }).role) === "admin") {
+  // The admin plugin already attaches role to the session, so this is the common
+  // path and avoids hitting the database on every admin request.
+  if (normalizeRole(currentUser.role) === "admin") {
     return currentUser
   }
 
+  // Single id-based fallback for sessions issued before role was populated.
   if (currentUser.id) {
     const dbUser =
       (await database.query.user.findFirst({
         where: (fields, operators) => operators.eq(fields.id, currentUser.id!),
       })) ?? null
-
-    if (normalizeRole(dbUser?.role) === "admin") {
-      return dbUser
-    }
-  }
-
-  if (currentUser.email) {
-    const [dbUser] = await database
-      .select()
-      .from(user)
-      .where(eq(user.email, currentUser.email))
-      .limit(1)
 
     if (normalizeRole(dbUser?.role) === "admin") {
       return dbUser

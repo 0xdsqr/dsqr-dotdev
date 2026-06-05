@@ -17,6 +17,7 @@ on:
       - "nix/packages/app.nix"
       - "nix/packages/default.nix"
       - "nix/packages/dotdev.nix"
+      - "nix/packages/gitops-tag-images.nix"
       - "nix/packages/images.nix"
       - "nix/packages/labs.nix"
       - "nix/packages/node-modules.nix"
@@ -42,9 +43,88 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-changes:
+    name: Detect app changes
+    runs-on: ubuntu-latest
+    outputs:
+      dotdev: ${{ steps.apps.outputs.dotdev }}
+      studio: ${{ steps.apps.outputs.studio }}
+      labs: ${{ steps.apps.outputs.labs }}
+      any: ${{ steps.apps.outputs.any }}
+      apps: ${{ steps.apps.outputs.apps }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected apps
+        id: apps
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dotdev=false
+          studio=false
+          labs=false
+
+          mark_all() {
+            dotdev=true
+            studio=true
+            labs=true
+          }
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            mark_all
+          else
+            base="${{ github.event.before }}"
+            if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+              base="$(git rev-parse HEAD^)"
+            fi
+
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+
+              case "$path" in
+                apps/dotdev/**|nix/packages/dotdev.nix)
+                  dotdev=true
+                  ;;
+                apps/studio/**|nix/packages/studio.nix)
+                  studio=true
+                  ;;
+                apps/labs/**|nix/packages/labs.nix)
+                  labs=true
+                  ;;
+                .github/workflows/publish-images.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/gitops-tag-images.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
+                  mark_all
+                  ;;
+              esac
+            done < <(git diff --name-only "$base" "${{ github.sha }}")
+          fi
+
+          apps=()
+          [[ "$dotdev" == true ]] && apps+=(dotdev-web)
+          [[ "$studio" == true ]] && apps+=(dotdev-studio)
+          [[ "$labs" == true ]] && apps+=(dotdev-labs)
+
+          any=false
+          [[ ${#apps[@]} -gt 0 ]] && any=true
+
+          {
+            echo "dotdev=$dotdev"
+            echo "studio=$studio"
+            echo "labs=$labs"
+            echo "any=$any"
+            echo "apps=${apps[*]}"
+          } | tee -a "$GITHUB_OUTPUT"
+
   publish-dotdev:
     name: Publish dotdev-web
     runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+    if: ${{ needs.detect-changes.outputs.dotdev == 'true' }}
 
     steps:
       - name: Check out repository
@@ -73,6 +153,9 @@ jobs:
   publish-studio:
     name: Publish dotdev-studio
     runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+    if: ${{ needs.detect-changes.outputs.studio == 'true' }}
 
     steps:
       - name: Check out repository
@@ -101,6 +184,9 @@ jobs:
   publish-labs:
     name: Publish dotdev-labs
     runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+    if: ${{ needs.detect-changes.outputs.labs == 'true' }}
 
     steps:
       - name: Check out repository
@@ -130,9 +216,18 @@ jobs:
     name: Stamp GitOps image tags
     runs-on: ubuntu-latest
     needs:
+      - detect-changes
       - publish-dotdev
       - publish-studio
       - publish-labs
+    if: >-
+      ${{
+        always() &&
+        needs.detect-changes.outputs.any == 'true' &&
+        (needs.detect-changes.outputs.dotdev != 'true' || needs.publish-dotdev.result == 'success') &&
+        (needs.detect-changes.outputs.studio != 'true' || needs.publish-studio.result == 'success') &&
+        (needs.detect-changes.outputs.labs != 'true' || needs.publish-labs.result == 'success')
+      }}
 
     steps:
       - name: Check out repository
@@ -144,7 +239,7 @@ jobs:
         uses: DeterminateSystems/determinate-nix-action@v3
 
       - name: Stamp immutable image tags
-        run: nix run .#gitopsTagImages -- --tag sha-${{ github.sha }}
+        run: nix run .#gitopsTagImages -- --tag sha-${{ github.sha }} ${{ needs.detect-changes.outputs.apps }}
 
       - name: Render GitOps manifests
         run: nix develop -c npm run gitops:render

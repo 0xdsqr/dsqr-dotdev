@@ -1,10 +1,10 @@
 import type { ReactNode } from "react"
 import { useMemo } from "react"
 import ReactMarkdown from "react-markdown"
-import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import remarkGfm from "remark-gfm"
+import { highlightToHtml } from "../lib/highlighter"
 import styles from "./blog-post-viewer.module.css"
 import { Caution, Important, MoreInfo, Note, Tip, Warning } from "./callouts"
 import { CopyButton } from "./copy-button"
@@ -109,7 +109,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
             const Component = calloutComponents[part.calloutType as CalloutType]
             return (
               <Component key={`${part.calloutType}-${part.content.substring(0, 10)}`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ pre: CodeBlock }}>
                   {part.content}
                 </ReactMarkdown>
               </Component>
@@ -120,7 +120,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
             <ReactMarkdown
               key={`markdown-${part.content.substring(0, 10)}`}
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema], rehypeHighlight]}
+              rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema]]}
               components={{
                 h1: ({ children, ...props }: MdProps) => {
                   const text = extractHeadingText(children as MdProps)
@@ -176,37 +176,7 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
                     </h6>
                   )
                 },
-                pre: ({ children, ...props }: MdProps) => {
-                  const className = props.className || ""
-                  const languageMatch = className.match(/language-(\w+)/)
-                  const language = languageMatch ? languageMatch[1] : undefined
-
-                  const codeText = extractCodeText({
-                    props: { children },
-                  } as MdProps)
-                  const lineCount = codeText.trim().split("\n").length
-
-                  return (
-                    <div className={styles.codeBlockWrapper}>
-                      <div className={styles.codeBlockToolbar}>
-                        {language && <span className={styles.codeBlockLanguage}>{language}</span>}
-                        {codeText && <CopyButton value={codeText} />}
-                      </div>
-                      <div className={styles.codeBlockContainer}>
-                        <pre className={styles.codeBlockLines}>
-                          {Array.from({ length: lineCount }, (_, i) => (
-                            <div key={i + 1} className={styles.codeLineNumber}>
-                              {i + 1}
-                            </div>
-                          ))}
-                        </pre>
-                        <pre {...props} className={styles.codeBlockPre}>
-                          {children}
-                        </pre>
-                      </div>
-                    </div>
-                  )
-                },
+                pre: CodeBlock,
                 img: ({ alt, src, ...props }: MdProps) => (
                   <img
                     alt={typeof alt === "string" ? alt : ""}
@@ -225,6 +195,41 @@ export function BlogPostViewer({ content }: BlogPostViewerProps) {
         })}
       </div>
     </article>
+  )
+}
+
+function getCodeBlockMeta(children: ReactNode): { code: string; language?: string } {
+  const child = Array.isArray(children) ? children[0] : children
+  const className =
+    child && typeof child === "object" && "props" in child
+      ? ((child as { props?: { className?: string } }).props?.className ?? "")
+      : ""
+  const languageMatch = className.match(/language-([\w-]+)/)
+  const code = extractCodeText({ props: { children } } as MdProps).replace(/\n$/, "")
+  return { code, language: languageMatch?.[1] }
+}
+
+// Renders a fenced code block with Shiki (dual github themes, server-safe sync
+// highlighter) inside the existing toolbar/card shell. Shiki escapes the code, so
+// the injected HTML is safe.
+function CodeBlock({ children }: MdProps) {
+  const { code, language } = getCodeBlockMeta(children)
+  if (!code) {
+    return null
+  }
+
+  return (
+    <div className={styles.codeBlockWrapper}>
+      <div className={styles.codeBlockToolbar}>
+        {language && <span className={styles.codeBlockLanguage}>{language}</span>}
+        <CopyButton value={code} />
+      </div>
+      <div
+        className={styles.codeBlockShiki}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki output, code is escaped
+        dangerouslySetInnerHTML={{ __html: highlightToHtml(code, language) }}
+      />
+    </div>
   )
 }
 

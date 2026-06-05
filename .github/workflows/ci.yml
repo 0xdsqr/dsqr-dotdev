@@ -13,8 +13,76 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  check:
-    name: Check
+  detect-changes:
+    name: Detect app changes
+    runs-on: ubuntu-latest
+    outputs:
+      dotdev: ${{ steps.apps.outputs.dotdev }}
+      studio: ${{ steps.apps.outputs.studio }}
+      labs: ${{ steps.apps.outputs.labs }}
+      shared: ${{ steps.apps.outputs.shared }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected apps
+        id: apps
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dotdev=false
+          studio=false
+          labs=false
+          shared=false
+
+          mark_all() {
+            dotdev=true
+            studio=true
+            labs=true
+          }
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+            if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+              base="$(git rev-parse HEAD^)"
+            fi
+          fi
+
+          while IFS= read -r path; do
+            [[ -z "$path" ]] && continue
+
+            case "$path" in
+              apps/dotdev/**|nix/packages/dotdev.nix)
+                dotdev=true
+                ;;
+              apps/studio/**|nix/packages/studio.nix)
+                studio=true
+                ;;
+              apps/labs/**|nix/packages/labs.nix)
+                labs=true
+                ;;
+              .github/workflows/ci.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
+                shared=true
+                mark_all
+                ;;
+            esac
+          done < <(git diff --name-only "$base" HEAD)
+
+          {
+            echo "dotdev=$dotdev"
+            echo "studio=$studio"
+            echo "labs=$labs"
+            echo "shared=$shared"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  base-checks:
+    name: Base checks
     runs-on: ubuntu-latest
 
     steps:
@@ -23,13 +91,95 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@v3
-      - name: Run checks
-        run: nix flake check
+      - name: Run base checks
+        run: |
+          nix build \
+            .#checks.x86_64-linux.format \
+            .#checks.x86_64-linux.lint \
+            .#checks.x86_64-linux.helm \
+            .#checks.x86_64-linux.gitops \
+            .#checks.x86_64-linux.infra-smoke \
+            .#checks.x86_64-linux.typecheck-infra-native
 
-  build-images:
-    name: build
+  typecheck-shared:
+    name: Typecheck workspace
     runs-on: ubuntu-latest
-    needs: check
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.shared == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Run workspace typecheck
+        run: nix build .#checks.x86_64-linux.typecheck
+
+  typecheck-dotdev:
+    name: Typecheck dotdev-web
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.dotdev == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Run dotdev typecheck
+        run: nix develop -c npm run typecheck -w dotdev
+
+  typecheck-studio:
+    name: Typecheck dotdev-studio
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.studio == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Run studio typecheck
+        run: nix develop -c npm run typecheck -w studio
+
+  typecheck-labs:
+    name: Typecheck dotdev-labs
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.labs == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Run labs typecheck
+        run: nix develop -c npm run typecheck -w labs
+
+  build-dotdev:
+    name: Build dotdev-web image
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.dotdev == 'true' }}
 
     steps:
       - name: Check out repository
@@ -40,8 +190,36 @@ jobs:
       - name: Build dotdev image
         run: nix build .#dotdevImage --out-link result-dotdev
 
+  build-studio:
+    name: Build dotdev-studio image
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.studio == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Build studio image
         run: nix build .#studioImage --out-link result-studio
 
+  build-labs:
+    name: Build dotdev-labs image
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - base-checks
+    if: ${{ needs.detect-changes.outputs.labs == 'true' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Build labs image
         run: nix build .#labsImage --out-link result-labs

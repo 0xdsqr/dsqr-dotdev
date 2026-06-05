@@ -17,7 +17,9 @@ export function runApiEffect<A, E>(effect: Effect.Effect<A, E, StorageService>) 
 
 export function traceApiRequest<A>(name: string, request: Request, handler: () => Promise<A>) {
   return runApiEffect(
-    Effect.promise(handler).pipe(
+    // tryPromise (not promise) so a rejected handler becomes a typed failure and
+    // the span is recorded with error status instead of being swallowed as a defect.
+    Effect.tryPromise({ try: handler, catch: (cause) => cause }).pipe(
       Effect.withSpan(name, {
         attributes: {
           "http.method": request.method,

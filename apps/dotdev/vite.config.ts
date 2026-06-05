@@ -25,6 +25,17 @@ export default defineConfig({
     rollupConfig: {
       external: ["pg", "pg-native"],
     },
+    // App-wide baseline security headers (CSP tuned per-route, HSTS at ingress).
+    routeRules: {
+      "/**": {
+        headers: {
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "SAMEORIGIN",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          "X-DNS-Prefetch-Control": "off",
+        },
+      },
+    },
   },
   ssr: {
     external: ["pg", "pg-native"],

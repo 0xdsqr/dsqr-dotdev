@@ -12,8 +12,31 @@ export type OtelLayerConfig = {
   environment?: string | null
   resourceAttributes?: string | null
   serviceVersion?: string | null
+  headers?: string | null
   exportInterval?: Duration.DurationInput
   shutdownTimeout?: Duration.DurationInput
+}
+
+// Parse the W3C OTLP header format ("key1=value1,key2=value2") used by
+// OTEL_EXPORTER_OTLP_HEADERS so authenticated collectors (Grafana Cloud, etc.) work.
+const parseOtlpHeaders = (headers: string | null | undefined) => {
+  if (!headers) {
+    return undefined
+  }
+
+  const parsed = Object.fromEntries(
+    headers
+      .split(",")
+      .map((pair) => {
+        const [rawKey, ...rawValue] = pair.split("=")
+        const key = rawKey?.trim()
+        const value = rawValue.join("=").trim()
+        return key && value ? [key, value] : null
+      })
+      .filter((pair): pair is [string, string] => pair !== null),
+  )
+
+  return Object.keys(parsed).length > 0 ? parsed : undefined
 }
 
 const parseResourceAttributes = (attributes: string | null | undefined) => {
@@ -63,6 +86,7 @@ export const createOtelLayer = (config: OtelLayerConfig): Layer.Layer<never> => 
 
   return OtlpTracer.layer({
     url,
+    headers: parseOtlpHeaders(config.headers),
     resource: {
       serviceName: config.serviceName,
       serviceVersion: config.serviceVersion ?? undefined,
@@ -82,4 +106,5 @@ export const createOtelLayerFromEnv = (defaultServiceName: ServiceName) =>
     environment: process.env.ENVIRONMENT ?? process.env.NODE_ENV,
     resourceAttributes: process.env.OTEL_RESOURCE_ATTRIBUTES,
     serviceVersion: process.env.SERVICE_VERSION ?? process.env.SENTRY_RELEASE,
+    headers: process.env.OTEL_EXPORTER_OTLP_HEADERS,
   })
