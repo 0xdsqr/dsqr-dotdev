@@ -1,4 +1,17 @@
 # Homelab-only Helm value overrides for fidara.
 # Use this for cluster-specific external chart values that should layer on top of fidara's own values-prod.yaml.
-# Leave empty when homelab uses the external chart values unchanged.
-{}
+networkPolicy:
+  ingress:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: traefik
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/instance: fidara
+            app.kubernetes.io/name: fidara
+            app.kubernetes.io/component: web
+
+web:
+  env:
+    FIDARA_API_BASE_URL: http://fidara-api

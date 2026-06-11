@@ -32,12 +32,17 @@ const secretPaths = {
   fidaraApi: {
     path: "homelab/apps/fidara/api",
     description: "Runtime secrets for the Fidara API.",
-    fields: ["DATABASE_URL", "FIDARA_API_KEY_PEPPER"],
+    fields: ["DATABASE_URL", "FIDARA_API_KEY_PEPPER", "FIDARA_API_KEYS"],
   },
   fidaraWeb: {
     path: "homelab/apps/fidara/web",
     description: "Runtime secrets for the Fidara web app.",
-    fields: ["BETTER_AUTH_SECRET", "DATABASE_URL", "FIDARA_API_KEY_PEPPER"],
+    fields: [
+      "BETTER_AUTH_SECRET",
+      "DATABASE_URL",
+      "FIDARA_API_KEY_PEPPER",
+      "FIDARA_INTERNAL_API_KEY",
+    ],
   },
   tastingsWithTayShared: {
     path: "homelab/apps/tastingswithtay/shared",
