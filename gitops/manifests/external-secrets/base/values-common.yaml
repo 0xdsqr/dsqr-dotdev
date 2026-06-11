@@ -2,6 +2,8 @@
 installCRDs: true
 
 crds:
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
   createClusterExternalSecret: true
   createClusterSecretStore: true
   createSecretStore: true
@@ -20,6 +22,18 @@ rbac:
   serviceAccountTokenCreate: true
 
 systemAuthDelegator: true
+
+extraObjects:
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: external-secrets
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        homelab.dev/owner: platform
+        homelab.dev/tier: platform-addon
+        pod-security.kubernetes.io/enforce: baseline
 
 resources:
   requests:
