@@ -6,7 +6,7 @@ metadata:
   name: fidara
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: fidara.io
     homelab.dev/image-repository: ghcr.io/0xdsqr/fidara-web
     homelab.dev/image-tag: sha-5dc66f2629763e17f4b36f988052de9c8c1ac847
@@ -37,6 +37,9 @@ spec:
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
       targetRevision: master
       ref: values
+    - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+      targetRevision: master
+      path: gitops/manifests/fidara/overlays/homelab
   destination:
     server: https://kubernetes.default.svc
     namespace: fidara

@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - vault.clustersecretstore.yaml
   - ghcr-pull.clusterexternalsecret.yaml
+  - argocd-fidara-repo.externalsecret.yaml
