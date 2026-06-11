@@ -49,6 +49,7 @@ spec:
       labels:
         homelab.dev/owner: twt
         homelab.dev/tier: apps
+        homelab.dev/ghcr-pull: "true"
         pod-security.kubernetes.io/enforce: baseline
     retry:
       limit: 3

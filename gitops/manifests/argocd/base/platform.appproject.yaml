@@ -20,6 +20,7 @@ spec:
     - https://kubernetes-sigs.github.io/metrics-server/
     - https://prometheus-community.github.io/helm-charts
     - https://grafana.github.io/helm-charts
+    - https://charts.external-secrets.io
   destinations:
     - server: https://kubernetes.default.svc
       namespace: argocd
@@ -33,6 +34,8 @@ spec:
       namespace: traefik
     - server: https://kubernetes.default.svc
       namespace: observability
+    - server: https://kubernetes.default.svc
+      namespace: external-secrets
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

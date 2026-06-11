@@ -6,6 +6,7 @@ import { cloudflare } from "./infra/inventory/cloudflare.ts"
 import { kubernetes } from "./infra/inventory/kubernetes.ts"
 import { proxmox } from "./infra/inventory/proxmox.ts"
 import { tailscale } from "./infra/inventory/tailscale.ts"
+import { vault } from "./infra/inventory/vault.ts"
 import { $stacks } from "./packages/haven/src/index.ts"
 
 const inventory = {
@@ -13,6 +14,7 @@ const inventory = {
   kubernetes,
   cloudflare,
   tailscale,
+  vault,
   infra: $stacks({
     rootDirectory: path.dirname(fileURLToPath(import.meta.url)),
     directory: "infra",
@@ -36,11 +38,16 @@ const inventory = {
       kubernetes: {
         description: "Homelab Kubernetes platform stack",
       },
+      vault: {
+        projectName: "vault-homelab",
+        description: "Homelab Vault mounts, policies, and Kubernetes auth",
+      },
     },
     groups: {
       default: ["proxmox", "tailscale", "hetzner", "cloudflare"],
       k8: ["kubernetes"],
-      all: ["proxmox", "tailscale", "hetzner", "cloudflare", "kubernetes"],
+      security: ["vault"],
+      all: ["proxmox", "tailscale", "hetzner", "cloudflare", "kubernetes", "vault"],
     },
   }),
 } as const

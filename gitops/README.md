@@ -25,6 +25,71 @@ Private app repos need an Argo repository secret in `argocd`. Private GHCR image
 
 Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes, quotes, or `\` line continuations with `sh -lc '...'`.
 
+## External Secrets Bootstrap
+
+External Secrets Operator is split into two Argo apps:
+
+- `external-secrets` installs the Helm chart, CRDs, webhook, cert controller, and service account.
+- `external-secrets-config` applies the Vault `ClusterSecretStore` and shared `ClusterExternalSecret` resources.
+
+The first managed secret is `ghcr-creds`, fanned out to namespaces labeled `homelab.dev/ghcr-pull=true` from Vault path `kv/homelab/platform/github/ghcr-pull`.
+
+Seed the Vault KV path from a shell with `VAULT_ADDR` and `VAULT_TOKEN` already loaded:
+
+```sh
+read -rsp "GHCR read token: " GHCR_TOKEN
+echo
+vault kv put kv/homelab/platform/github/ghcr-pull \
+  server=ghcr.io \
+  username=0xdsqr \
+  password="$GHCR_TOKEN" \
+  email=not-used@dsqr.dev
+unset GHCR_TOKEN
+```
+
+After Argo has synced `external-secrets`, wire Vault Kubernetes auth to the chart-managed service account:
+
+```sh
+kubectl -n external-secrets apply -f - <<'EOF'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vault-tokenreviewer
+  annotations:
+    kubernetes.io/service-account.name: external-secrets
+type: kubernetes.io/service-account-token
+EOF
+
+K8S_HOST="$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.server}')"
+K8S_CA_CERT="$(mktemp)"
+kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d >"$K8S_CA_CERT"
+TOKEN_REVIEWER_JWT="$(kubectl -n external-secrets get secret vault-tokenreviewer -o jsonpath='{.data.token}' | base64 -d)"
+
+vault auth enable kubernetes || true
+vault write auth/kubernetes/config \
+  token_reviewer_jwt="$TOKEN_REVIEWER_JWT" \
+  kubernetes_host="$K8S_HOST" \
+  kubernetes_ca_cert=@"$K8S_CA_CERT"
+vault write auth/kubernetes/role/homelab-external-secrets \
+  bound_service_account_names=external-secrets \
+  bound_service_account_namespaces=external-secrets \
+  policies=homelab-external-secrets \
+  ttl=1h
+
+rm -f "$K8S_CA_CERT"
+unset TOKEN_REVIEWER_JWT
+```
+
+Then label target namespaces and sync `external-secrets-config`:
+
+```sh
+kubectl label namespace dsqr fidara twt homelab.dev/ghcr-pull=true --overwrite
+kubectl -n argocd patch application external-secrets-config --type merge -p '{"operation":{"sync":{"prune":false}}}'
+kubectl get clustersecretstore vault-homelab
+kubectl get externalsecret -A | grep ghcr-creds
+kubectl -n dsqr get secret ghcr-creds -o jsonpath='{.type}{"\n"}'
+```
+
 ## Argo UI Shape
 
 The app list should show separate app cards. That is intentional.
