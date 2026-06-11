@@ -6,7 +6,7 @@ metadata:
   name: dotdev-web
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: dsqr.dev
     homelab.dev/image-repository: ghcr.io/0xdsqr/dotdev-web
     homelab.dev/image-tag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
@@ -36,6 +36,9 @@ spec:
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
       targetRevision: master
       ref: values
+    - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+      targetRevision: master
+      path: gitops/manifests/dotdev-web/overlays/homelab
   destination:
     server: https://kubernetes.default.svc
     namespace: dsqr

@@ -1,4 +1,4 @@
 # Homelab-only Helm value overrides for twt-admin.
 # Use this for cluster-specific external chart values that should layer on top of Tastings with Tay's own values-prod.yaml.
 # Leave empty when homelab uses the external chart values unchanged.
-{}
+existingSecret: twt-admin-secrets

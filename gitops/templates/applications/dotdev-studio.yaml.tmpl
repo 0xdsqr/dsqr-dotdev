@@ -6,7 +6,7 @@ metadata:
   name: dotdev-studio
   namespace: ${ARGOCD_NAMESPACE}
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: studio.dsqr.dev
     homelab.dev/image-repository: ghcr.io/0xdsqr/dotdev-studio
     homelab.dev/image-tag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
@@ -36,6 +36,9 @@ spec:
     - repoURL: ${VALUES_REPO_URL}
       targetRevision: ${VALUES_TARGET_REVISION}
       ref: values
+    - repoURL: ${VALUES_REPO_URL}
+      targetRevision: ${VALUES_TARGET_REVISION}
+      path: ${VALUES_OVERLAY_DIR}
   destination:
     server: ${DESTINATION_SERVER}
     namespace: dsqr

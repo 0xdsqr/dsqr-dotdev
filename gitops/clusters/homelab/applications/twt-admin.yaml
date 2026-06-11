@@ -6,7 +6,7 @@ metadata:
   name: twt-admin
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: admin.tastingswithtay.com
     homelab.dev/image-repository: ghcr.io/0xdsqr/tastingswithtay-admin
     homelab.dev/image-tag: sha-8048e9bf27952050ff7fd6f3c97782e5ef33f95d
@@ -37,6 +37,9 @@ spec:
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
       targetRevision: master
       ref: values
+    - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
+      targetRevision: master
+      path: gitops/manifests/twt-admin/overlays/homelab
   destination:
     server: https://kubernetes.default.svc
     namespace: twt

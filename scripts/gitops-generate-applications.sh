@@ -101,8 +101,10 @@ generate() {
 
       local values_common_file
       local values_overlay_file
+      local values_overlay_dir
       values_common_file="gitops/manifests/$app_name/base/values-common.yaml"
       values_overlay_file="gitops/manifests/$app_name/overlays/$cluster/values-overrides.yaml"
+      values_overlay_dir="gitops/manifests/$app_name/overlays/$cluster"
 
       export APPLICATION_NAME="$app_name"
       export ARGOCD_NAMESPACE="$argocd_namespace"
@@ -113,6 +115,7 @@ generate() {
       export VALUES_REF='$values'
       export VALUES_COMMON_FILE="$values_common_file"
       export VALUES_OVERLAY_FILE="$values_overlay_file"
+      export VALUES_OVERLAY_DIR="$values_overlay_dir"
 
       envsubst <"$template_path" >"$applications_dir/$app_file"
     done

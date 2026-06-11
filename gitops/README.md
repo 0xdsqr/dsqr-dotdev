@@ -252,6 +252,67 @@ kubectl -n <namespace> rollout restart deployment/<deployment-name>
 kubectl -n <namespace> rollout status deployment/<deployment-name>
 ```
 
+### Runtime Secret Migration To Vault
+
+Use this after `external-secrets` and `external-secrets-config` are healthy, before syncing app changes that point workloads at new per-app secret names. It copies the current Kubernetes secret values into per-app Vault KV paths without printing the secret values.
+
+Start a Nu shell with Bao available:
+
+```nu
+nix shell nixpkgs#openbao nixpkgs#kubectl nixpkgs#jq -c nu
+```
+
+Copy the current shared dsqr secret into the three app-scoped Vault paths:
+
+```nu
+let dsqr_auth_secret = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.AUTH_SECRET | @base64d')
+let dsqr_database_url = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.DATABASE_URL | @base64d')
+let dsqr_resend_api_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.RESEND_API_KEY | @base64d')
+let dsqr_s3_access_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.S3_ACCESS_KEY | @base64d')
+let dsqr_s3_secret_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.S3_SECRET_KEY | @base64d')
+
+for path in ["kv/homelab/apps/dsqr/dotdev-web" "kv/homelab/apps/dsqr/dotdev-studio" "kv/homelab/apps/dsqr/dotdev-labs"] {
+  bao kv put $path $"AUTH_SECRET=($dsqr_auth_secret)" $"DATABASE_URL=($dsqr_database_url)" $"RESEND_API_KEY=($dsqr_resend_api_key)" $"S3_ACCESS_KEY=($dsqr_s3_access_key)" $"S3_SECRET_KEY=($dsqr_s3_secret_key)"
+}
+
+hide dsqr_auth_secret
+hide dsqr_database_url
+hide dsqr_resend_api_key
+hide dsqr_s3_access_key
+hide dsqr_s3_secret_key
+```
+
+Copy the current shared Tastings with Tay secret into the web/admin Vault paths:
+
+```nu
+let twt_auth_secret = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.AUTH_SECRET | @base64d')
+let twt_database_url = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.DATABASE_URL | @base64d')
+let twt_discord_client_secret = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.DISCORD_CLIENT_SECRET | @base64d')
+let twt_s3_access_key = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.S3_ACCESS_KEY | @base64d')
+let twt_s3_secret_key = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.S3_SECRET_KEY | @base64d')
+
+for path in ["kv/homelab/apps/tastingswithtay/web" "kv/homelab/apps/tastingswithtay/admin"] {
+  bao kv put $path $"AUTH_SECRET=($twt_auth_secret)" $"DATABASE_URL=($twt_database_url)" $"DISCORD_CLIENT_SECRET=($twt_discord_client_secret)" $"S3_ACCESS_KEY=($twt_s3_access_key)" $"S3_SECRET_KEY=($twt_s3_secret_key)"
+}
+
+hide twt_auth_secret
+hide twt_database_url
+hide twt_discord_client_secret
+hide twt_s3_access_key
+hide twt_s3_secret_key
+```
+
+Verify the Vault paths by checking keys only:
+
+```nu
+for path in ["kv/homelab/apps/dsqr/dotdev-web" "kv/homelab/apps/dsqr/dotdev-studio" "kv/homelab/apps/dsqr/dotdev-labs" "kv/homelab/apps/tastingswithtay/web" "kv/homelab/apps/tastingswithtay/admin"] {
+  print $"--- ($path) ---"
+  bao kv get -format=json $path | jq -r '.data.data | keys[]'
+}
+```
+
+After the matching Argo apps are synced and healthy, the old shared `twt/twt-secrets` secret can be deleted. Do not delete `dsqr/dotdev-web-secrets`; it remains the scoped web secret and is adopted by External Secrets.
+
 ## Onboard A New Service
 
 1. Add or verify the service Helm chart.

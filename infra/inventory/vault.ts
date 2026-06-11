@@ -22,12 +22,12 @@ const secretPaths = {
   dotdevStudio: {
     path: "homelab/apps/dsqr/dotdev-studio",
     description: "Reserved runtime secret path for studio.dsqr.dev.",
-    fields: ["AUTH_SECRET", "DATABASE_URL", "S3_ACCESS_KEY", "S3_SECRET_KEY"],
+    fields: ["AUTH_SECRET", "DATABASE_URL", "RESEND_API_KEY", "S3_ACCESS_KEY", "S3_SECRET_KEY"],
   },
   dotdevLabs: {
     path: "homelab/apps/dsqr/dotdev-labs",
     description: "Reserved runtime secret path for labs.dsqr.dev.",
-    fields: ["AUTH_SECRET"],
+    fields: ["AUTH_SECRET", "DATABASE_URL", "RESEND_API_KEY", "S3_ACCESS_KEY", "S3_SECRET_KEY"],
   },
   fidaraApi: {
     path: "homelab/apps/fidara/api",
@@ -42,6 +42,28 @@ const secretPaths = {
   tastingsWithTayShared: {
     path: "homelab/apps/tastingswithtay/shared",
     description: "Shared runtime secrets for Tastings with Tay workloads.",
+    fields: [
+      "AUTH_SECRET",
+      "DATABASE_URL",
+      "DISCORD_CLIENT_SECRET",
+      "S3_ACCESS_KEY",
+      "S3_SECRET_KEY",
+    ],
+  },
+  tastingsWithTayWeb: {
+    path: "homelab/apps/tastingswithtay/web",
+    description: "Runtime secrets for the Tastings with Tay public web app.",
+    fields: [
+      "AUTH_SECRET",
+      "DATABASE_URL",
+      "DISCORD_CLIENT_SECRET",
+      "S3_ACCESS_KEY",
+      "S3_SECRET_KEY",
+    ],
+  },
+  tastingsWithTayAdmin: {
+    path: "homelab/apps/tastingswithtay/admin",
+    description: "Runtime secrets for the Tastings with Tay admin app.",
     fields: [
       "AUTH_SECRET",
       "DATABASE_URL",
