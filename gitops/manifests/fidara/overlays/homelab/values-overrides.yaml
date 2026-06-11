@@ -15,3 +15,16 @@ networkPolicy:
 web:
   env:
     FIDARA_API_BASE_URL: http://fidara-api
+  networkPolicy:
+    extraEgress:
+      - to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/instance: fidara
+                app.kubernetes.io/name: fidara
+                app.kubernetes.io/component: api
+        ports:
+          - protocol: TCP
+            port: 80
+          - protocol: TCP
+            port: 8080
