@@ -1,25 +1,27 @@
 # GitOps Runbook
 
-This directory is the desired-state layer for the homelab cluster after Pulumi/Haven installs Argo CD.
+This directory is the desired-state layer for the homelab cluster after Cilium and Argo CD bootstrap.
 
 ## Ownership
 
-- Pulumi/Haven owns cluster bootstrapping, Cloudflare DNS, and Cloudflare tunnel routes.
-- Argo CD owns Kubernetes desired state from `gitops/`.
+- Pulumi/Haven owns out-of-cluster infrastructure and the Argo CD bootstrap release.
+- A new cluster needs Cilium seeded before normal Argo CD pods can run.
+- Argo CD owns Kubernetes desired state from `gitops/` after bootstrap, including Cilium day-2 reconciliation.
 - Helm owns application manifests.
 - Kustomize composes the GitOps control layer.
 - Runtime secret values are not committed. Create them with `kubectl`.
 
 ## Argo Flow
 
-1. `gitops/bootstrap/homelab-root-application.yaml` creates the root `homelab` Argo application.
-2. `homelab` points at `gitops/clusters/homelab`.
-3. `gitops/clusters/homelab/kustomization.yaml` loads namespaces, projects, and ApplicationSets.
-4. `dsqr-apps.applicationset.yaml` renders one Argo application per app.
-5. Each generated app points at a Helm chart and `values-prod.yaml`.
-6. Argo syncs the chart into the target namespace, creates the namespace, prunes removed resources, and self-heals drift.
+1. `gitops/clusters/homelab/bootstrap/argocd-app-of-apps.yaml` creates the root `homelab` Argo application.
+2. `homelab` points at `gitops/clusters/homelab/applications`.
+3. `gitops/clusters/homelab/applications/kustomization.yaml` loads Argo CD control manifests, lists one generated Argo `Application` file per app, and owns cluster-local Application patches.
+4. `gitops/templates/applications/<app>.yaml.tmpl` is the source template for each generated Application.
+5. Helm-backed generated apps point at a chart plus values from `gitops/manifests/<app>/base` and `gitops/manifests/<app>/overlays/homelab`.
+6. Kustomize-backed generated apps point at raw manifests under `gitops/manifests/<app>/overlays/homelab`.
+7. Apps that target app/service namespaces use Argo CD `CreateNamespace=true` and `managedNamespaceMetadata` to declare namespace labels. Apps targeting existing core namespaces such as `kube-system` do not request namespace creation.
 
-Private app repos need an Argo repository secret in `argocd`. Private GHCR images need an image pull secret in the app namespace.
+Private app repos need an Argo repository secret in `argocd`. Private GHCR images need an image pull secret in the app namespace. See `gitops/platform-migration.md` for the final platform ownership model and bootstrap notes.
 
 Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes, quotes, or `\` line continuations with `sh -lc '...'`.
 
@@ -28,26 +30,34 @@ Most examples are POSIX shell commands. In Nushell, wrap commands that use pipes
 The app list should show separate app cards. That is intentional.
 
 - `homelab` is the root bootstrap app. It owns the cluster GitOps composition.
-- `platform-addons` is an ApplicationSet for cluster add-ons such as Cilium, MetalLB, Traefik, and observability.
-- `dsqr-apps` is an ApplicationSet for product apps.
-- Generated product apps stay separate: `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `fidara`, `twt-web`, and `twt-admin`.
+- Platform and control apps stay separate: `argocd`, `cilium`, `metallb`, `metallb-config`, `traefik`, `metrics-server`, `kube-state-metrics`, and `k8s-monitoring`.
+- Product apps stay separate: `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `fidara`, `twt-web`, and `twt-admin`.
 
 Do not collapse those generated apps into one large Argo app just to make the card view shorter. Separate apps give cleaner health, sync, rollback, and failure boundaries. Use Argo labels such as `app.kubernetes.io/part-of`, `homelab.dev/owner`, and `homelab.dev/tier` to filter/group the view.
 
-Both ApplicationSets set `preserveResourcesOnDeletion: true` so a future AppSet rename or cleanup is less likely to remove live workloads unexpectedly. Still treat AppSet renames as a planned change and preview them before syncing.
+Generated Application files are disposable. Change the app's template under `gitops/templates/applications/` or add/remove app resources in `gitops/clusters/homelab/applications/kustomization.yaml`, then run:
+
+```sh
+npm run gitops:generate
+```
+
+For cluster-local Application overrides, patch the generated Application from `gitops/clusters/homelab/applications/kustomization.yaml`; the file contains a commented JSON6902 example. For Helm values, prefer `gitops/manifests/<app>/overlays/homelab/values-overrides.yaml`.
 
 ## Chart Ownership
 
 - Charts for apps owned by `dsqr-dotdev` live in this repo under `helm/`.
 - Charts for apps owned by another app repo live beside that app code. For example, `fidara` charts live in `0xdsqr/fidara`, and Tastings with Tay charts live in `0xdsqr/tastingswithtay`.
-- `gitops/` should reference those repos through ApplicationSet entries. It should not copy external app charts unless this repo becomes the owner of that app.
-- Kustomize composes Argo bootstrap, projects, and ApplicationSets. Helm renders app workloads.
+- `gitops/` should reference those repos through generated Application entries. It should not copy external app charts unless this repo becomes the owner of that app.
+- Kustomize composes Argo bootstrap, projects, and Applications. Helm renders app workloads.
 
 ## Local Render Checks
 
 ```sh
-kubectl kustomize gitops/bootstrap
-kubectl kustomize gitops/clusters/homelab
+npm run gitops:generate
+kubectl kustomize gitops/clusters/homelab/bootstrap
+kubectl kustomize gitops/clusters/homelab/applications
+kubectl kustomize gitops/manifests/metrics-server/overlays/homelab
+kubectl kustomize gitops/manifests/metallb/overlays/homelab
 ```
 
 ## Root Sync Commands
@@ -55,7 +65,7 @@ kubectl kustomize gitops/clusters/homelab
 Create or repair the root app:
 
 ```sh
-kubectl apply -k gitops/bootstrap
+kubectl apply -k gitops/clusters/homelab/bootstrap
 ```
 
 Ask Argo to reread Git:
@@ -78,11 +88,10 @@ kubectl -n argocd get application homelab -w
 
 ## App Check Commands
 
-List generated apps:
+List apps:
 
 ```sh
 kubectl -n argocd get application
-kubectl -n argocd get applicationset dsqr-apps
 ```
 
 Inspect one app:
@@ -106,6 +115,17 @@ kubectl -n <namespace> get pods,svc,ingress,networkpolicy
 kubectl -n <namespace> rollout status deployment/<deployment-name>
 kubectl -n <namespace> describe pod <pod-name>
 kubectl -n <namespace> logs deployment/<deployment-name>
+```
+
+## Resource Metrics
+
+`metrics-server` provides the Kubernetes `metrics.k8s.io` API used by `kubectl top` and HPA resource metrics. `kube-state-metrics` and `k8s-monitoring` are observability/exporter pieces, not a replacement for Metrics Server.
+
+After syncing the `metrics-server` Application:
+
+```sh
+kubectl top nodes
+kubectl top pods -A
 ```
 
 ## Private Repo Access
@@ -170,17 +190,20 @@ kubectl -n <namespace> rollout status deployment/<deployment-name>
 ## Onboard A New Service
 
 1. Add or verify the service Helm chart.
-2. Add production values with immutable `sha-<commit>` image tags.
-3. Add ingress hostnames and network policies in the chart.
+2. Keep reusable chart defaults in the chart.
+3. Add production values with immutable `sha-<commit>` image tags under `gitops/manifests/<app>/base` or the owning external app repo.
 4. Add the service repo to the right AppProject `sourceRepos` if it is outside `dsqr-dotdev`.
 5. Add the namespace to the AppProject destinations.
-6. Add an element to `gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml`.
-7. Add Cloudflare DNS and tunnel routes in `infra/inventory/cloudflare.ts`.
-8. Run Cloudflare preview and apply.
-9. Create Argo repo credentials if the source repo is private.
-10. Sync `homelab` so the generated app appears.
-11. Create the namespace runtime secrets and `ghcr-creds`.
-12. Sync the generated app and verify pods, ingress, and health endpoints.
+6. Add common values under `gitops/manifests/<app>/base` and homelab overrides under `gitops/manifests/<app>/overlays/homelab`.
+7. Add `gitops/templates/applications/<app>.yaml.tmpl`.
+8. Add `<app>.yaml` to `gitops/clusters/homelab/applications/kustomization.yaml`.
+9. Run `npm run gitops:generate`.
+10. Add Cloudflare DNS and tunnel routes in `infra/inventory/cloudflare.ts`.
+11. Run Cloudflare preview and apply.
+12. Create Argo repo credentials if the source repo is private.
+13. Sync `homelab` so the generated app appears.
+14. Create the namespace runtime secrets and `ghcr-creds`.
+15. Sync the generated app and verify pods, ingress, and health endpoints.
 
 ## Image Tags
 
@@ -191,7 +214,7 @@ npm run gitops:tag-images -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-
 nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
 ```
 
-For external app repos, update the app chart `values-prod.yaml` in that repo and keep the ApplicationSet `imageTag` metadata aligned.
+For external app repos, update the app chart `values-prod.yaml` in that repo and keep the matching `gitops/templates/applications/<app>.yaml.tmpl` image metadata aligned, then regenerate.
 
 ## Current Fidara Smoke Checks
 

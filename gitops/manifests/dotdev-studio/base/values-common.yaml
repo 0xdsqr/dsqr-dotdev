@@ -1,0 +1,51 @@
+# Shared default Helm values for dotdev-studio.
+# Keep values here when every cluster should use the same image, env, ingress, network policy, and resource defaults.
+# Put cluster-specific hosts, resources, pod labels/annotations, node placement, or integration endpoints in overlays/<cluster>/values-overrides.yaml.
+fullnameOverride: dotdev-studio
+image:
+  repository: ghcr.io/0xdsqr/dotdev-studio
+  tag: sha-59e27ce6563a072ea5c8eff01bcd7ccf2f54203a
+  pullPolicy: Always
+imagePullSecrets:
+  - name: ghcr-creds
+env:
+  BASE_URL: https://studio.dsqr.dev
+  TRUSTED_ORIGINS: https://studio.dsqr.dev,https://dsqr.dev
+  S3_BUCKET: dsqr-dotdev
+  S3_ENDPOINT: s3.dsqr.dev
+  S3_USE_SSL: "true"
+  S3_FORCE_PATH_STYLE: "true"
+  S3_REGION: us-east-1
+  OTEL_SERVICE_NAME: dotdev-studio
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=dsqr
+existingSecret: dotdev-web-secrets
+networkPolicy:
+  enabled: true
+  ingress:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: traefik
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: dsqr
+  egress:
+    allowAll: true
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: studio.dsqr.dev
+      paths:
+        - path: /
+          pathType: Prefix
+resources:
+  requests:
+    cpu: 100m
+    memory: 1Gi
+  limits:
+    cpu: 500m
+    memory: 2Gi

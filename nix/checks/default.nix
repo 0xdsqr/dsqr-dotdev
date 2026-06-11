@@ -9,7 +9,9 @@
     nodeModules = packages.nodeModules;
   };
   helm = pkgs.callPackage ./helm.nix { };
-  gitops = pkgs.callPackage ./gitops.nix { };
+  gitops = pkgs.callPackage ./gitops.nix {
+    gitopsGenerateApplications = packages.gitopsGenerateApplications;
+  };
   infra-smoke = pkgs.callPackage ./infra-smoke.nix {
     nodeModules = packages.nodeModules;
   };

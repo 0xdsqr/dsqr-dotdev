@@ -172,9 +172,12 @@ export function createKubernetesPlatform(args: KubernetesPlatformArgs) {
   }
 
   const metallbRelease = releases.metallb
+  const hasMetalLbCustomResources =
+    Object.keys(args.metallbAddressPools).length > 0 ||
+    Object.keys(args.metallbL2Advertisements).length > 0
 
-  if (!metallbRelease) {
-    throw new Error("MetalLB release inventory entry is required")
+  if (hasMetalLbCustomResources && !metallbRelease) {
+    throw new Error("MetalLB release inventory entry is required when Pulumi owns MetalLB config")
   }
 
   const metallbPools = Object.fromEntries(
@@ -194,9 +197,7 @@ export function createKubernetesPlatform(args: KubernetesPlatformArgs) {
             avoidBuggyIPs: spec.avoidBuggyIPs,
           },
         },
-        {
-          dependsOn: [metallbRelease],
-        },
+        metallbRelease ? { dependsOn: [metallbRelease] } : undefined,
       )
 
       return [key, pool]
@@ -225,7 +226,7 @@ export function createKubernetesPlatform(args: KubernetesPlatformArgs) {
           },
         },
         {
-          dependsOn: [metallbRelease, metallbPool],
+          dependsOn: metallbRelease ? [metallbRelease, metallbPool] : [metallbPool],
         },
       )
 

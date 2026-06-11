@@ -1,0 +1,18 @@
+# Shared default Helm values for the Cilium chart.
+# Keep values here when every cluster should use the same networking defaults.
+# Put cluster-specific API server addresses or rollout settings in overlays/<cluster>/values-overrides.yaml.
+cluster:
+  name: main
+  id: 1
+
+ipam:
+  mode: kubernetes
+
+kubeProxyReplacement: true
+
+k8sServiceHost: 10.10.30.104
+k8sServicePort: 6443
+rollOutCiliumPods: true
+
+operator:
+  replicas: 1

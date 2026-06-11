@@ -9,6 +9,9 @@ stdenvNoCC.mkDerivation {
     root = ../..;
     fileset = lib.fileset.unions [
       ../../helm
+      ../../gitops/manifests/dotdev-web
+      ../../gitops/manifests/dotdev-studio
+      ../../gitops/manifests/dotdev-labs
     ];
   };
 
@@ -24,11 +27,18 @@ stdenvNoCC.mkDerivation {
       [ -d "$chart" ] || continue
       helm lint "$chart"
 
-      if [ -f "$chart/values-prod.yaml" ]; then
-        helm template "$(basename "$chart")" "$chart" --namespace default -f "$chart/values-prod.yaml" >/dev/null
-      else
-        helm template "$(basename "$chart")" "$chart" --namespace default >/dev/null
-      fi
+      case "$(basename "$chart")" in
+        dotdev-web|dotdev-studio|dotdev-labs)
+          helm template "$(basename "$chart")" "$chart" \
+            --namespace default \
+            -f "gitops/manifests/$(basename "$chart")/base/values-common.yaml" \
+            -f "gitops/manifests/$(basename "$chart")/overlays/homelab/values-overrides.yaml" \
+            >/dev/null
+          ;;
+        *)
+          helm template "$(basename "$chart")" "$chart" --namespace default >/dev/null
+          ;;
+      esac
     done
 
     mkdir -p "$out"

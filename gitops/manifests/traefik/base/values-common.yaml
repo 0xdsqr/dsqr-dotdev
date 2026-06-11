@@ -1,0 +1,21 @@
+# Shared default Helm values for the Traefik chart.
+# Keep values here when every cluster should use the same ingress controller defaults.
+# Put cluster-specific service, entrypoint, or dashboard settings in overlays/<cluster>/values-overrides.yaml.
+deployment:
+  replicas: 1
+
+service:
+  type: LoadBalancer
+
+ports:
+  web:
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+ingressRoute:
+  dashboard:
+    enabled: true

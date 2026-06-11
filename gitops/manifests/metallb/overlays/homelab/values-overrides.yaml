@@ -1,0 +1,4 @@
+# Homelab-only Helm value overrides for MetalLB.
+# Use this for cluster-specific controller/speaker settings, resource sizing, node placement, or pod metadata.
+# Leave empty when homelab uses the base values unchanged.
+{}

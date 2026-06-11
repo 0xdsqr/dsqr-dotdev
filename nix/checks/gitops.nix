@@ -1,6 +1,7 @@
 {
   lib,
   stdenvNoCC,
+  gitopsGenerateApplications,
   kubectl,
 }:
 let
@@ -15,7 +16,10 @@ stdenvNoCC.mkDerivation {
   name = "dsqr-dotdev-gitops-check";
   inherit src;
 
-  nativeBuildInputs = [ kubectl ];
+  nativeBuildInputs = [
+    gitopsGenerateApplications
+    kubectl
+  ];
 
   dontConfigure = true;
   dontBuild = true;
@@ -23,8 +27,9 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    kubectl kustomize gitops/bootstrap >/dev/null
-    kubectl kustomize gitops/clusters/homelab >/dev/null
+    gitops-generate-applications --check
+    kubectl kustomize gitops/clusters/homelab/bootstrap >/dev/null
+    kubectl kustomize gitops/clusters/homelab/applications >/dev/null
 
     mkdir -p "$out"
     touch "$out/gitops-check"

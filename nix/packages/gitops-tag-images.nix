@@ -1,10 +1,12 @@
-{ pkgs }:
+{ pkgs, gitopsGenerateApplications }:
 pkgs.writeShellApplication {
   name = "gitops-tag-images";
 
   runtimeInputs = [
     pkgs.git
+    pkgs.perl
     pkgs.yq-go
+    gitopsGenerateApplications
   ];
 
   text = ''
@@ -78,21 +80,24 @@ pkgs.writeShellApplication {
     update_app() {
       local app="$1"
       local chart_file
+      local template_file
       local values_file
-      local appset_file="gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml"
 
       case "$app" in
         dotdev-web)
           chart_file="helm/dotdev-web/Chart.yaml"
-          values_file="helm/dotdev-web/values-prod.yaml"
+          template_file="gitops/templates/applications/dotdev-web.yaml.tmpl"
+          values_file="gitops/manifests/dotdev-web/base/values-common.yaml"
           ;;
         dotdev-studio)
           chart_file="helm/dotdev-studio/Chart.yaml"
-          values_file="helm/dotdev-studio/values-prod.yaml"
+          template_file="gitops/templates/applications/dotdev-studio.yaml.tmpl"
+          values_file="gitops/manifests/dotdev-studio/base/values-common.yaml"
           ;;
         dotdev-labs)
           chart_file="helm/dotdev-labs/Chart.yaml"
-          values_file="helm/dotdev-labs/values-prod.yaml"
+          template_file="gitops/templates/applications/dotdev-labs.yaml.tmpl"
+          values_file="gitops/manifests/dotdev-labs/base/values-common.yaml"
           ;;
         *)
           echo "Unknown app '$app'." >&2
@@ -103,12 +108,14 @@ pkgs.writeShellApplication {
 
       yq -i ".appVersion = \"$tag\"" "$chart_file"
       yq -i ".image.tag = \"$tag\"" "$values_file"
-      APP="$app" TAG="$tag" yq -i '(.spec.generators[].list.elements[] | select(.name == strenv(APP)).imageTag) = strenv(TAG)' "$appset_file"
+      TAG="$tag" perl -0pi -e 's/(homelab\.dev\/image-tag: )sha-[^\n]+/$1$ENV{TAG}/g; s/(app\.kubernetes\.io\/version: )sha-[^\n]+/$1$ENV{TAG}/g' "$template_file"
       echo "$app -> $tag"
     }
 
     for app in "''${apps[@]}"; do
       update_app "$app"
     done
+
+    gitops-generate-applications
   '';
 }

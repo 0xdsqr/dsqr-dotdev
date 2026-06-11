@@ -1,0 +1,4 @@
+# Homelab-only Helm value overrides for Argo CD.
+# Use this for settings that should differ from the shared base on this cluster.
+# Leave empty when homelab uses the base values unchanged.
+{}

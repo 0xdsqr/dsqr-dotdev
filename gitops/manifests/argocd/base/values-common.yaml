@@ -1,0 +1,25 @@
+# Shared default Helm values for the Argo CD chart.
+# Keep values here when every cluster should use the same Argo CD defaults.
+# Put cluster-specific changes in overlays/<cluster>/values-overrides.yaml.
+global:
+  domain: argocd.dsqr.dev
+
+configs:
+  cm:
+    timeout.reconciliation: 120s
+    timeout.reconciliation.jitter: 60s
+  params:
+    server.insecure: "true"
+
+crds:
+  install: true
+  keep: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.dsqr.dev
+    path: /
+    pathType: Prefix
+    tls: false

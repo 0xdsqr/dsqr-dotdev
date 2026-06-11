@@ -1,0 +1,4 @@
+# Homelab-only Helm value overrides for fidara.
+# Use this for cluster-specific external chart values that should layer on top of fidara's own values-prod.yaml.
+# Leave empty when homelab uses the external chart values unchanged.
+{}

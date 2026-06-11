@@ -24,11 +24,16 @@ let
     inherit nodeModules;
   };
 
-  gitopsTagImages = pkgs.callPackage ./gitops-tag-images.nix { };
+  gitopsGenerateApplications = pkgs.callPackage ./gitops-generate-applications.nix { };
+
+  gitopsTagImages = pkgs.callPackage ./gitops-tag-images.nix {
+    inherit gitopsGenerateApplications;
+  };
 in
 {
   inherit
     dotdev
+    gitopsGenerateApplications
     gitopsTagImages
     labs
     nodeModules

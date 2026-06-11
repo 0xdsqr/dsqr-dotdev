@@ -1,0 +1,4 @@
+# Homelab-only Helm value overrides for dotdev-studio.
+# Use this for cluster-specific hosts, resources, pod labels/annotations, node placement, or integration endpoints.
+# Leave empty when homelab uses the base values unchanged.
+{}
