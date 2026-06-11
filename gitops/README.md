@@ -34,61 +34,15 @@ External Secrets Operator is split into two Argo apps:
 
 The first managed secret is `ghcr-creds`, fanned out to namespaces labeled `homelab.dev/ghcr-pull=true` from Vault path `kv/homelab/platform/github/ghcr-pull`.
 
-Seed the Vault KV path from a shell with `VAULT_ADDR` and `VAULT_TOKEN` already loaded:
+Bootstrap order:
 
-```sh
-read -rsp "GHCR read token: " GHCR_TOKEN
-echo
-vault kv put kv/homelab/platform/github/ghcr-pull \
-  server=ghcr.io \
-  username=0xdsqr \
-  password="$GHCR_TOKEN" \
-  email=not-used@dsqr.dev
-unset GHCR_TOKEN
-```
+1. Sync `external-secrets` so the controller, webhook, service account, and CRDs exist.
+2. Configure Vault Kubernetes auth from a trusted operator shell.
+3. Seed required platform secret values into Vault out of band.
+4. Sync `external-secrets-config` so `ClusterSecretStore` and shared fanout secrets reconcile.
+5. Verify the store is ready, then verify namespace-local `ExternalSecret` resources are ready.
 
-After Argo has synced `external-secrets`, wire Vault Kubernetes auth to the chart-managed service account:
-
-```sh
-kubectl -n external-secrets apply -f - <<'EOF'
-apiVersion: v1
-kind: Secret
-metadata:
-  name: vault-tokenreviewer
-  annotations:
-    kubernetes.io/service-account.name: external-secrets
-type: kubernetes.io/service-account-token
-EOF
-
-K8S_HOST="$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.server}')"
-K8S_CA_CERT="$(mktemp)"
-kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d >"$K8S_CA_CERT"
-TOKEN_REVIEWER_JWT="$(kubectl -n external-secrets get secret vault-tokenreviewer -o jsonpath='{.data.token}' | base64 -d)"
-
-vault auth enable kubernetes || true
-vault write auth/kubernetes/config \
-  token_reviewer_jwt="$TOKEN_REVIEWER_JWT" \
-  kubernetes_host="$K8S_HOST" \
-  kubernetes_ca_cert=@"$K8S_CA_CERT"
-vault write auth/kubernetes/role/homelab-external-secrets \
-  bound_service_account_names=external-secrets \
-  bound_service_account_namespaces=external-secrets \
-  policies=homelab-external-secrets \
-  ttl=1h
-
-rm -f "$K8S_CA_CERT"
-unset TOKEN_REVIEWER_JWT
-```
-
-Then label target namespaces and sync `external-secrets-config`:
-
-```sh
-kubectl label namespace dsqr fidara twt homelab.dev/ghcr-pull=true --overwrite
-kubectl -n argocd patch application external-secrets-config --type merge -p '{"operation":{"sync":{"prune":false}}}'
-kubectl get clustersecretstore vault-homelab
-kubectl get externalsecret -A | grep ghcr-creds
-kubectl -n dsqr get secret ghcr-creds -o jsonpath='{.type}{"\n"}'
-```
+The live Vault auth and secret-seeding commands are intentionally kept out of the public runbook.
 
 ## Argo UI Shape
 
@@ -195,123 +149,27 @@ kubectl top pods -A
 
 ## Private Repo Access
 
-Create an Argo repository secret for a private GitHub repo:
-
-```sh
-kubectl -n argocd create secret generic <app>-repo \
-  --from-literal=type=git \
-  --from-literal=url=https://github.com/0xdsqr/<repo>.git \
-  --from-literal=username=0xdsqr \
-  --from-literal=password="$GITHUB_TOKEN" \
-  --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n argocd label secret <app>-repo argocd.argoproj.io/secret-type=repository --overwrite
-```
-
-Check it:
-
-```sh
-kubectl -n argocd get secret <app>-repo --show-labels
-kubectl -n argocd annotate application <app-name> argocd.argoproj.io/refresh=hard --overwrite
-```
+Argo CD private repository credentials are runtime secrets. Keep token material out of this repo and manage the rendered Kubernetes repository secrets through the platform secret flow.
 
 ## GHCR Pull Secret
 
-Copy the shared GHCR pull secret into a new app namespace:
-
-```sh
-kubectl -n dsqr get secret ghcr-creds -o json \
-  | jq '.metadata.namespace="<namespace>" | del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.managedFields,.metadata.annotations)' \
-  | kubectl apply -f -
-```
-
-Or create one directly:
-
-```sh
-kubectl -n <namespace> create secret docker-registry ghcr-creds \
-  --docker-server=ghcr.io \
-  --docker-username=0xdsqr \
-  --docker-password="$GHCR_TOKEN" \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
+`ghcr-creds` is owned by External Secrets. Namespaces that need private GHCR pulls carry `homelab.dev/ghcr-pull=true`; the cluster-level ExternalSecret fanout renders the namespace-local docker config secret.
 
 ## Runtime Secrets
 
-Charts should reference secret names. Secret values are created outside Git:
+Application charts reference Kubernetes secret names only. Secret values live outside Git and are rendered by External Secrets from Vault.
 
-```sh
-kubectl -n <namespace> create secret generic <secret-name> \
-  --from-literal=DATABASE_URL="$DATABASE_URL" \
-  --from-literal=EXAMPLE_KEY="$EXAMPLE_KEY" \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
+Runtime app secrets are scoped per workload where possible. Shared infrastructure credentials stay in platform-level paths only when the credential is genuinely shared, such as GHCR pull access.
 
-After changing runtime secrets, restart workloads so pods receive the new env:
+Safe migration shape:
 
-```sh
-kubectl -n <namespace> rollout restart deployment/<deployment-name>
-kubectl -n <namespace> rollout status deployment/<deployment-name>
-```
+1. Seed the target Vault path from a trusted shell or one-off local helper.
+2. Sync the owning Argo application only after the Vault path exists.
+3. Check the `ExternalSecret` readiness condition, then verify the rendered Kubernetes `Secret`.
+4. Restart or roll workloads only when the chart consumes the secret through environment variables and the pod template did not otherwise change.
+5. Remove legacy manually-created secrets only after the replacement is healthy and owned by External Secrets.
 
-### Runtime Secret Migration To Vault
-
-Use this after `external-secrets` and `external-secrets-config` are healthy, before syncing app changes that point workloads at new per-app secret names. It copies the current Kubernetes secret values into per-app Vault KV paths without printing the secret values.
-
-Start a Nu shell with Bao available:
-
-```nu
-nix shell nixpkgs#openbao nixpkgs#kubectl nixpkgs#jq -c nu
-```
-
-Copy the current shared dsqr secret into the three app-scoped Vault paths:
-
-```nu
-let dsqr_auth_secret = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.AUTH_SECRET | @base64d')
-let dsqr_database_url = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.DATABASE_URL | @base64d')
-let dsqr_resend_api_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.RESEND_API_KEY | @base64d')
-let dsqr_s3_access_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.S3_ACCESS_KEY | @base64d')
-let dsqr_s3_secret_key = (kubectl -n dsqr get secret dotdev-web-secrets -o json | jq -r '.data.S3_SECRET_KEY | @base64d')
-
-for path in ["kv/homelab/apps/dsqr/dotdev-web" "kv/homelab/apps/dsqr/dotdev-studio" "kv/homelab/apps/dsqr/dotdev-labs"] {
-  bao kv put $path $"AUTH_SECRET=($dsqr_auth_secret)" $"DATABASE_URL=($dsqr_database_url)" $"RESEND_API_KEY=($dsqr_resend_api_key)" $"S3_ACCESS_KEY=($dsqr_s3_access_key)" $"S3_SECRET_KEY=($dsqr_s3_secret_key)"
-}
-
-hide dsqr_auth_secret
-hide dsqr_database_url
-hide dsqr_resend_api_key
-hide dsqr_s3_access_key
-hide dsqr_s3_secret_key
-```
-
-Copy the current shared Tastings with Tay secret into the web/admin Vault paths:
-
-```nu
-let twt_auth_secret = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.AUTH_SECRET | @base64d')
-let twt_database_url = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.DATABASE_URL | @base64d')
-let twt_discord_client_secret = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.DISCORD_CLIENT_SECRET | @base64d')
-let twt_s3_access_key = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.S3_ACCESS_KEY | @base64d')
-let twt_s3_secret_key = (kubectl -n twt get secret twt-secrets -o json | jq -r '.data.S3_SECRET_KEY | @base64d')
-
-for path in ["kv/homelab/apps/tastingswithtay/web" "kv/homelab/apps/tastingswithtay/admin"] {
-  bao kv put $path $"AUTH_SECRET=($twt_auth_secret)" $"DATABASE_URL=($twt_database_url)" $"DISCORD_CLIENT_SECRET=($twt_discord_client_secret)" $"S3_ACCESS_KEY=($twt_s3_access_key)" $"S3_SECRET_KEY=($twt_s3_secret_key)"
-}
-
-hide twt_auth_secret
-hide twt_database_url
-hide twt_discord_client_secret
-hide twt_s3_access_key
-hide twt_s3_secret_key
-```
-
-Verify the Vault paths by checking keys only:
-
-```nu
-for path in ["kv/homelab/apps/dsqr/dotdev-web" "kv/homelab/apps/dsqr/dotdev-studio" "kv/homelab/apps/dsqr/dotdev-labs" "kv/homelab/apps/tastingswithtay/web" "kv/homelab/apps/tastingswithtay/admin"] {
-  print $"--- ($path) ---"
-  bao kv get -format=json $path | jq -r '.data.data | keys[]'
-}
-```
-
-After the matching Argo apps are synced and healthy, the old shared `twt/twt-secrets` secret can be deleted. Do not delete `dsqr/dotdev-web-secrets`; it remains the scoped web secret and is adopted by External Secrets.
+Live migration commands are intentionally kept out of the public runbook.
 
 ## Onboard A New Service
 
