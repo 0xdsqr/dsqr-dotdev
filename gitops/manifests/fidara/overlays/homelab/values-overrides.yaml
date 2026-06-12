@@ -15,6 +15,11 @@ networkPolicy:
 web:
   env:
     FIDARA_API_BASE_URL: http://fidara-api
+    OTEL_SERVICE_NAME: fidara-web
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=fidara
   networkPolicy:
     extraEgress:
       - to:
@@ -28,3 +33,28 @@ web:
             port: 80
           - protocol: TCP
             port: 8080
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+        ports:
+          - protocol: TCP
+            port: 4318
+
+api:
+  env:
+    FIDARA_SEARCH_BACKEND: auto
+    OTEL_SERVICE_NAME: fidara-api
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=fidara
+  networkPolicy:
+    extraEgress:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+        ports:
+          - protocol: TCP
+            port: 4318
