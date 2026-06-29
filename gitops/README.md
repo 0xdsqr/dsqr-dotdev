@@ -215,7 +215,7 @@ The last command should return `401` without an API key.
 ## Argo UI
 
 ```text
-http://argocd.dsqr.dev
+https://argocd.home.arpa
 ```
 
 Get the initial admin password if it has not been rotated:

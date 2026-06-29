@@ -2,7 +2,7 @@
 # Keep values here when every cluster should use the same Argo CD defaults.
 # Put cluster-specific changes in overlays/<cluster>/values-overrides.yaml.
 global:
-  domain: argocd.dsqr.dev
+  domain: argocd.home.arpa
 
 configs:
   cm:
@@ -19,7 +19,7 @@ server:
   ingress:
     enabled: true
     ingressClassName: traefik
-    hostname: argocd.dsqr.dev
+    hostname: argocd.home.arpa
     path: /
     pathType: Prefix
     tls: false
