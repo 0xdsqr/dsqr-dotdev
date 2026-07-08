@@ -20,7 +20,49 @@ resources:
   - twt-web.yaml
   - twt-admin.yaml
 
-patches: []
+patches:
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: fidara
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1image-list
+        value: fidara-web=ghcr.io/0xdsqr/fidara-web,fidara-api=ghcr.io/0xdsqr/fidara-api
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1write-back-method
+        value: git
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1git-branch
+        value: master
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1write-back-target
+        value: helmvalues:values-prod.yaml
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-web.update-strategy
+        value: newest-build
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-web.allow-tags
+        value: regexp:^sha-[0-9a-f]{40}$
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-web.helm.image-name
+        value: web.image.repository
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-web.helm.image-tag
+        value: web.image.tag
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-api.update-strategy
+        value: newest-build
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-api.allow-tags
+        value: regexp:^sha-[0-9a-f]{40}$
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-api.helm.image-name
+        value: api.image.repository
+      - op: add
+        path: /metadata/annotations/argocd-image-updater.argoproj.io~1fidara-api.helm.image-tag
+        value: api.image.tag
 # Example cluster-local override for a generated Application:
 # patches:
 #   - target:
