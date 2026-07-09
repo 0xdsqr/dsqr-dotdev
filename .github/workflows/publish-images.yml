@@ -253,9 +253,15 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add helm/dotdev-web/Chart.yaml helm/dotdev-web/values-prod.yaml
-          git add helm/dotdev-studio/Chart.yaml helm/dotdev-studio/values-prod.yaml
-          git add helm/dotdev-labs/Chart.yaml helm/dotdev-labs/values-prod.yaml
-          git add gitops/clusters/homelab/applications/dsqr-apps.applicationset.yaml
+          git add helm/dotdev-web/Chart.yaml helm/dotdev-studio/Chart.yaml helm/dotdev-labs/Chart.yaml
+          git add gitops/manifests/dotdev-web/base/values-common.yaml
+          git add gitops/manifests/dotdev-studio/base/values-common.yaml
+          git add gitops/manifests/dotdev-labs/base/values-common.yaml
+          git add gitops/templates/applications/dotdev-web.yaml.tmpl
+          git add gitops/templates/applications/dotdev-studio.yaml.tmpl
+          git add gitops/templates/applications/dotdev-labs.yaml.tmpl
+          git add gitops/clusters/homelab/applications/dotdev-web.yaml
+          git add gitops/clusters/homelab/applications/dotdev-studio.yaml
+          git add gitops/clusters/homelab/applications/dotdev-labs.yaml
           git commit -m "chore(gitops): pin dsqr images to sha-${{ github.sha }}"
           git push origin HEAD:${{ github.ref_name }}
