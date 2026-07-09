@@ -3,4 +3,4 @@ name: dotdev-studio
 description: Helm chart for the dsqr.dev studio app
 type: application
 version: 0.1.0
-appVersion: sha-b065d709f6808bc8b5ec60ed9a7d714976009c46
+appVersion: sha-31bdec8e461790ac3dad08194c2610ae5f9d6ec1
