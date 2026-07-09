@@ -175,10 +175,10 @@ Live migration commands are intentionally kept out of the public runbook.
 
 1. Add or verify the service Helm chart.
 2. Keep reusable chart defaults in the chart.
-3. Add production values with immutable `sha-<commit>` image tags under `gitops/manifests/<app>/base` or the owning external app repo.
+3. Add production Helm values with immutable `sha-<commit>` image tags under the owning app chart's `values-prod.yaml`.
 4. Add the service repo to the right AppProject `sourceRepos` if it is outside `dsqr-dotdev`.
 5. Add the namespace to the AppProject destinations.
-6. Add common values under `gitops/manifests/<app>/base` and homelab overrides under `gitops/manifests/<app>/overlays/homelab`.
+6. Add GitOps-owned resources under `gitops/manifests/<app>/base` and homelab overrides under `gitops/manifests/<app>/overlays/homelab`.
 7. Add `gitops/templates/applications/<app>.yaml.tmpl`.
 8. Add `<app>.yaml` to `gitops/clusters/homelab/applications/kustomization.yaml`.
 9. Run `npm run gitops:generate`.
@@ -198,7 +198,7 @@ npm run gitops:tag-images -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-
 nix run .#gitopsTagImages -- --tag sha-<commit> dotdev-web dotdev-studio dotdev-labs
 ```
 
-For external app repos, update the app chart `values-prod.yaml` in that repo and keep the matching `gitops/templates/applications/<app>.yaml.tmpl` image metadata aligned, then regenerate.
+For app repos that own their chart, update that chart's `values-prod.yaml` and keep the matching `gitops/templates/applications/<app>.yaml.tmpl` image metadata aligned, then regenerate.
 
 ## Current Fidara Smoke Checks
 

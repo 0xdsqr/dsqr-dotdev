@@ -12,7 +12,7 @@ metadata:
     homelab.dev/image-tag: sha-b065d709f6808bc8b5ec60ed9a7d714976009c46
     homelab.dev/source-path: helm/dotdev-web
     homelab.dev/sync-stage: manual
-    homelab.dev/values-common-file: ${VALUES_COMMON_FILE}
+    homelab.dev/values-prod-file: helm/dotdev-web/values-prod.yaml
     homelab.dev/values-overlay-file: ${VALUES_OVERLAY_FILE}
   labels:
     app.kubernetes.io/instance: dotdev-web
@@ -31,7 +31,7 @@ spec:
       helm:
         releaseName: dotdev-web
         valueFiles:
-          - ${VALUES_REF}/${VALUES_COMMON_FILE}
+          - values-prod.yaml
           - ${VALUES_REF}/${VALUES_OVERLAY_FILE}
     - repoURL: ${VALUES_REPO_URL}
       targetRevision: ${VALUES_TARGET_REVISION}

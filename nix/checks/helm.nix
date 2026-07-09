@@ -31,7 +31,7 @@ stdenvNoCC.mkDerivation {
         dotdev-web|dotdev-studio|dotdev-labs)
           helm template "$(basename "$chart")" "$chart" \
             --namespace default \
-            -f "gitops/manifests/$(basename "$chart")/base/values-common.yaml" \
+            -f "$chart/values-prod.yaml" \
             -f "gitops/manifests/$(basename "$chart")/overlays/homelab/values-overrides.yaml" \
             >/dev/null
           ;;

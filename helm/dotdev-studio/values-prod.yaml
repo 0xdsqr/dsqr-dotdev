@@ -1,22 +1,26 @@
-# Shared default Helm values for dotdev-labs.
-# Keep values here when every cluster should use the same image, env, ingress, network policy, and resource defaults.
-# Put cluster-specific hosts, resources, pod labels/annotations, node placement, or integration endpoints in overlays/<cluster>/values-overrides.yaml.
-fullnameOverride: dotdev-labs
+# Production Helm values for dotdev-studio.
+# Keep cluster-only overrides in gitops/manifests/dotdev-studio/overlays/<cluster>/values-overrides.yaml.
+fullnameOverride: dotdev-studio
 image:
-  repository: ghcr.io/0xdsqr/dotdev-labs
+  repository: ghcr.io/0xdsqr/dotdev-studio
   tag: sha-b065d709f6808bc8b5ec60ed9a7d714976009c46
   pullPolicy: Always
 imagePullSecrets:
   - name: ghcr-creds
 env:
-  BASE_URL: https://labs.dsqr.dev
-  TRUSTED_ORIGINS: https://labs.dsqr.dev,https://dsqr.dev
-  OTEL_SERVICE_NAME: dotdev-labs
+  BASE_URL: https://studio.dsqr.dev
+  TRUSTED_ORIGINS: https://studio.dsqr.dev,https://dsqr.dev
+  S3_BUCKET: dsqr-dotdev
+  S3_ENDPOINT: s3.dsqr.dev
+  S3_USE_SSL: "true"
+  S3_FORCE_PATH_STYLE: "true"
+  S3_REGION: us-east-1
+  OTEL_SERVICE_NAME: dotdev-studio
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
   OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
   OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=dsqr
-existingSecret: dotdev-labs-secrets
+existingSecret: dotdev-studio-secrets
 networkPolicy:
   enabled: true
   ingress:
@@ -33,7 +37,7 @@ ingress:
   enabled: true
   className: traefik
   hosts:
-    - host: labs.dsqr.dev
+    - host: studio.dsqr.dev
       paths:
         - path: /
           pathType: Prefix

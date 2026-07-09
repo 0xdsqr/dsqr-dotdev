@@ -254,9 +254,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add helm/dotdev-web/Chart.yaml helm/dotdev-studio/Chart.yaml helm/dotdev-labs/Chart.yaml
-          git add gitops/manifests/dotdev-web/base/values-common.yaml
-          git add gitops/manifests/dotdev-studio/base/values-common.yaml
-          git add gitops/manifests/dotdev-labs/base/values-common.yaml
+          git add helm/dotdev-web/values-prod.yaml helm/dotdev-studio/values-prod.yaml helm/dotdev-labs/values-prod.yaml
           git add gitops/templates/applications/dotdev-web.yaml.tmpl
           git add gitops/templates/applications/dotdev-studio.yaml.tmpl
           git add gitops/templates/applications/dotdev-labs.yaml.tmpl

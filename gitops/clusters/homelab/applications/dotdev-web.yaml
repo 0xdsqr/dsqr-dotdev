@@ -12,7 +12,7 @@ metadata:
     homelab.dev/image-tag: sha-b065d709f6808bc8b5ec60ed9a7d714976009c46
     homelab.dev/source-path: helm/dotdev-web
     homelab.dev/sync-stage: manual
-    homelab.dev/values-common-file: gitops/manifests/dotdev-web/base/values-common.yaml
+    homelab.dev/values-prod-file: helm/dotdev-web/values-prod.yaml
     homelab.dev/values-overlay-file: gitops/manifests/dotdev-web/overlays/homelab/values-overrides.yaml
   labels:
     app.kubernetes.io/instance: dotdev-web
@@ -31,7 +31,7 @@ spec:
       helm:
         releaseName: dotdev-web
         valueFiles:
-          - $values/gitops/manifests/dotdev-web/base/values-common.yaml
+          - values-prod.yaml
           - $values/gitops/manifests/dotdev-web/overlays/homelab/values-overrides.yaml
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
       targetRevision: master

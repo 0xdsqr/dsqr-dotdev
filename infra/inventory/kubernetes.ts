@@ -102,7 +102,7 @@ const helmReleases = {
     chart: "../../helm/dotdev-web",
     enabled: false,
     valueYamlFiles: [
-      "../../gitops/manifests/dotdev-web/base/values-common.yaml",
+      "../../helm/dotdev-web/values-prod.yaml",
       "../../gitops/manifests/dotdev-web/overlays/homelab/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],
@@ -113,7 +113,7 @@ const helmReleases = {
     chart: "../../helm/dotdev-studio",
     enabled: false,
     valueYamlFiles: [
-      "../../gitops/manifests/dotdev-studio/base/values-common.yaml",
+      "../../helm/dotdev-studio/values-prod.yaml",
       "../../gitops/manifests/dotdev-studio/overlays/homelab/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],
@@ -124,7 +124,7 @@ const helmReleases = {
     chart: "../../helm/dotdev-labs",
     enabled: false,
     valueYamlFiles: [
-      "../../gitops/manifests/dotdev-labs/base/values-common.yaml",
+      "../../helm/dotdev-labs/values-prod.yaml",
       "../../gitops/manifests/dotdev-labs/overlays/homelab/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],

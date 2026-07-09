@@ -1,6 +1,5 @@
-# Shared default Helm values for dotdev-web.
-# Keep values here when every cluster should use the same image, env, ingress, network policy, and resource defaults.
-# Put cluster-specific hosts, resources, pod labels/annotations, node placement, or integration endpoints in overlays/<cluster>/values-overrides.yaml.
+# Production Helm values for dotdev-web.
+# Keep cluster-only overrides in gitops/manifests/dotdev-web/overlays/<cluster>/values-overrides.yaml.
 fullnameOverride: dotdev-web
 image:
   repository: ghcr.io/0xdsqr/dotdev-web

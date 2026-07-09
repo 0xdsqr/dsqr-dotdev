@@ -87,17 +87,17 @@ pkgs.writeShellApplication {
         dotdev-web)
           chart_file="helm/dotdev-web/Chart.yaml"
           template_file="gitops/templates/applications/dotdev-web.yaml.tmpl"
-          values_file="gitops/manifests/dotdev-web/base/values-common.yaml"
+          values_file="helm/dotdev-web/values-prod.yaml"
           ;;
         dotdev-studio)
           chart_file="helm/dotdev-studio/Chart.yaml"
           template_file="gitops/templates/applications/dotdev-studio.yaml.tmpl"
-          values_file="gitops/manifests/dotdev-studio/base/values-common.yaml"
+          values_file="helm/dotdev-studio/values-prod.yaml"
           ;;
         dotdev-labs)
           chart_file="helm/dotdev-labs/Chart.yaml"
           template_file="gitops/templates/applications/dotdev-labs.yaml.tmpl"
-          values_file="gitops/manifests/dotdev-labs/base/values-common.yaml"
+          values_file="helm/dotdev-labs/values-prod.yaml"
           ;;
         *)
           echo "Unknown app '$app'." >&2
