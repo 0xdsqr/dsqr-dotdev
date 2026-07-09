@@ -6,12 +6,13 @@
     rm -rf node_modules/studio
     rm -rf node_modules/@dsqr-dotdev/api
     rm -rf node_modules/@dsqr-dotdev/database
-    rm -rf node_modules/@dsqr-dotdev/effect-pulumi
     rm -rf node_modules/@dsqr-dotdev/effect-pulumi-cloudflare
+    rm -rf node_modules/@dsqr-dotdev/effect-pulumi-core
     rm -rf node_modules/@dsqr-dotdev/effect-pulumi-hetzner
     rm -rf node_modules/@dsqr-dotdev/effect-pulumi-kubernetes
     rm -rf node_modules/@dsqr-dotdev/effect-pulumi-proxmox
     rm -rf node_modules/@dsqr-dotdev/effect-pulumi-tailscale
+    rm -rf node_modules/@dsqr-dotdev/effect-pulumi-vault
     rm -rf node_modules/@dsqr-dotdev/haven
     rm -rf node_modules/@dsqr-dotdev/infra-model
     rm -rf node_modules/@dsqr-dotdev/observability
@@ -22,12 +23,13 @@
     ln -sfn "$PWD/apps/studio" node_modules/studio
     ln -sfn "$PWD/packages/api" node_modules/@dsqr-dotdev/api
     ln -sfn "$PWD/packages/database" node_modules/@dsqr-dotdev/database
-    ln -sfn "$PWD/packages/effect-pulumi" node_modules/@dsqr-dotdev/effect-pulumi
     ln -sfn "$PWD/packages/effect-pulumi/cloudflare" node_modules/@dsqr-dotdev/effect-pulumi-cloudflare
+    ln -sfn "$PWD/packages/effect-pulumi/core" node_modules/@dsqr-dotdev/effect-pulumi-core
     ln -sfn "$PWD/packages/effect-pulumi/hetzner" node_modules/@dsqr-dotdev/effect-pulumi-hetzner
     ln -sfn "$PWD/packages/effect-pulumi/kubernetes" node_modules/@dsqr-dotdev/effect-pulumi-kubernetes
     ln -sfn "$PWD/packages/effect-pulumi/proxmox" node_modules/@dsqr-dotdev/effect-pulumi-proxmox
     ln -sfn "$PWD/packages/effect-pulumi/tailscale" node_modules/@dsqr-dotdev/effect-pulumi-tailscale
+    ln -sfn "$PWD/packages/effect-pulumi/vault" node_modules/@dsqr-dotdev/effect-pulumi-vault
     ln -sfn "$PWD/packages/haven" node_modules/@dsqr-dotdev/haven
     ln -sfn "$PWD/packages/infra-model" node_modules/@dsqr-dotdev/infra-model
     ln -sfn "$PWD/packages/observability" node_modules/@dsqr-dotdev/observability
@@ -41,12 +43,13 @@
     rm -f "$out/app/node_modules/studio"
     rm -f "$out/app/node_modules/@dsqr-dotdev/api"
     rm -f "$out/app/node_modules/@dsqr-dotdev/database"
-    rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi"
     rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-cloudflare"
+    rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-core"
     rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-hetzner"
     rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-kubernetes"
     rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-proxmox"
     rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-tailscale"
+    rm -f "$out/app/node_modules/@dsqr-dotdev/effect-pulumi-vault"
     rm -f "$out/app/node_modules/@dsqr-dotdev/haven"
     rm -f "$out/app/node_modules/@dsqr-dotdev/infra-model"
     rm -f "$out/app/node_modules/@dsqr-dotdev/observability"

@@ -2,7 +2,7 @@ import type { Config } from "drizzle-kit"
 import "dotenv/config"
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("database url is rerquied pelease set DATABASE_URL as your connection string")
+  throw new Error("DATABASE_URL is required; set it to your database connection string")
 }
 export default {
   schema: "./src/schema.ts",

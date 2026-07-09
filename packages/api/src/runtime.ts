@@ -1,5 +1,5 @@
 import { createOtelLayerFromEnv } from "@dsqr-dotdev/observability/effect-otel"
-import { Effect, Layer } from "effect"
+import { Cause, Effect, Exit, Layer } from "effect"
 import { ManagedRuntime } from "effect"
 import { StorageService } from "./services/storage"
 
@@ -8,7 +8,17 @@ export const ApiLayer = Layer.mergeAll(
   StorageService.Live,
 )
 
-const sharedMemoMap = Effect.runSync(Layer.makeMemoMap)
+function runSyncOrThrow<A, E>(effect: Effect.Effect<A, E, never>): A {
+  const exit = Effect.runSyncExit(effect)
+
+  if (Exit.isSuccess(exit)) {
+    return exit.value
+  }
+
+  throw Cause.squash(exit.cause)
+}
+
+const sharedMemoMap = runSyncOrThrow(Layer.makeMemoMap)
 const apiRuntime = ManagedRuntime.make(ApiLayer, sharedMemoMap)
 
 export function runApiEffect<A, E>(effect: Effect.Effect<A, E, StorageService>) {

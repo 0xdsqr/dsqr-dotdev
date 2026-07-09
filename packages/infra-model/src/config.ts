@@ -1,4 +1,4 @@
-import { Effect } from "effect"
+import { Cause, Effect, Exit } from "effect"
 
 export type HomelabDefinitionInput = {
   readonly stage?: string | undefined
@@ -46,21 +46,31 @@ export function $definition<const App, const Infra, const Outputs = Infra>(
       : Effect.succeed(value)
   }
 
+  function runSyncOrThrow<A, E>(effect: Effect.Effect<A, E, never>): A {
+    const exit = Effect.runSyncExit(effect)
+
+    if (Exit.isSuccess(exit)) {
+      return exit.value
+    }
+
+    throw Cause.squash(exit.cause)
+  }
+
   const definition: HomelabDefinition<App, Infra, Outputs> = {
     app(input) {
-      return Effect.runSync(definition.appEffect(input))
+      return runSyncOrThrow(definition.appEffect(input))
     },
     appEffect(input = {}) {
       return intoEffect(source.app(input))
     },
     run(input) {
-      return Effect.runSync(definition.runEffect(input))
+      return runSyncOrThrow(definition.runEffect(input))
     },
     runEffect(input = {}) {
       return intoEffect(source.run(input))
     },
     outputs(input) {
-      return Effect.runSync(definition.outputsEffect(input))
+      return runSyncOrThrow(definition.outputsEffect(input))
     },
     outputsEffect(input = {}) {
       return Effect.gen(function* () {

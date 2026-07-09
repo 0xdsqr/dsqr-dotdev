@@ -1,5 +1,11 @@
 import * as cloudflare from "@pulumi/cloudflare"
 import * as pulumi from "@pulumi/pulumi"
+import {
+  Effect,
+  PulumiResourceConfigError,
+  requireResourceConfigEffect,
+  runSyncOrThrow,
+} from "@dsqr-dotdev/effect-pulumi-core"
 
 export type CloudflareIngressRule = {
   readonly hostname: string
@@ -60,174 +66,203 @@ function resourceName(hostname: string) {
   return hostname.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "")
 }
 
-function requireZoneId(zoneIds: Readonly<Record<string, string>>, zone: string) {
+function requireZoneIdEffect(
+  zoneIds: Readonly<Record<string, string>>,
+  zone: string,
+  resource: string,
+): Effect.Effect<string, PulumiResourceConfigError> {
   const zoneId = zoneIds[zone]
 
-  if (!zoneId) {
-    throw new Error(`Missing Cloudflare zone id for zone "${zone}".`)
+  if (zoneId) {
+    return Effect.succeed(zoneId)
   }
 
-  return zoneId
+  return Effect.fail(
+    new PulumiResourceConfigError({
+      resource,
+      message: `Missing Cloudflare zone id for zone "${zone}".`,
+    }),
+  )
+}
+
+export function createCloudflareEdgeEffect(args: CloudflareEdgeArgs) {
+  return Effect.gen(function* () {
+    const ingressRules = yield* Effect.forEach(args.ingressRules, (rule) =>
+      requireZoneIdEffect(args.zoneIds, rule.zone, `ingress:${rule.hostname}`).pipe(
+        Effect.map((zoneId) => ({ rule, zoneId })),
+      ),
+    )
+    const directRecords = yield* Effect.forEach(args.dnsRecords ?? [], (record) =>
+      requireZoneIdEffect(args.zoneIds, record.zone, `dns:${record.type}:${record.name}`).pipe(
+        Effect.map((zoneId) => ({ record, zoneId })),
+      ),
+    )
+    const accessApplicationSpecs = yield* Effect.forEach(
+      args.accessApplications ?? [],
+      (application) =>
+        requireResourceConfigEffect(
+          application.allowedEmails.length > 0,
+          `access:${application.hostname}`,
+          `Cloudflare Access application "${application.name}" needs at least one allowed email.`,
+        ).pipe(Effect.map(() => application)),
+    )
+
+    const tunnel = new cloudflare.ZeroTrustTunnelCloudflared("gateway", {
+      accountId: args.accountId,
+      name: args.tunnel.name,
+      configSrc: "cloudflare",
+      tunnelSecret: args.tunnelSecret,
+    })
+
+    const tunnelCname = pulumi.interpolate`${tunnel.id}.cfargotunnel.com`
+
+    const tunnelConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig("gateway-config", {
+      accountId: args.accountId,
+      tunnelId: tunnel.id,
+      source: "cloudflare",
+      config: {
+        ingresses: [
+          ...args.ingressRules.map((rule) => ({
+            hostname: rule.hostname,
+            service: rule.service,
+            ...(rule.originRequest
+              ? {
+                  originRequest: rule.originRequest,
+                }
+              : undefined),
+          })),
+          {
+            service: args.tunnel.defaultService,
+          },
+        ],
+      },
+    })
+
+    const dnsRecords = Object.fromEntries(
+      ingressRules.map(({ rule, zoneId }) => {
+        const record = new cloudflare.DnsRecord(resourceName(rule.hostname), {
+          zoneId,
+          name: rule.hostname,
+          type: "CNAME",
+          content: tunnelCname,
+          proxied: true,
+          ttl: 1,
+        })
+
+        return [rule.hostname, record]
+      }),
+    )
+
+    const directDnsRecords = Object.fromEntries(
+      directRecords.map(({ record, zoneId }) => {
+        const dnsRecord = new cloudflare.DnsRecord(resourceName(`${record.type}-${record.name}`), {
+          zoneId,
+          name: record.name,
+          type: record.type,
+          content: record.content,
+          ttl: record.ttl ?? 1,
+          ...(record.priority != null ? { priority: record.priority } : {}),
+          ...(record.proxied != null ? { proxied: record.proxied } : {}),
+        })
+
+        return [`${record.type}:${record.name}`, dnsRecord]
+      }),
+    )
+
+    const r2Buckets = Object.fromEntries(
+      (args.r2Buckets ?? []).map((bucket) => {
+        const r2Bucket = new cloudflare.R2Bucket(resourceName(bucket.name), {
+          accountId: args.accountId,
+          name: bucket.name,
+          ...(bucket.location ? { location: bucket.location } : {}),
+          ...(bucket.jurisdiction ? { jurisdiction: bucket.jurisdiction } : {}),
+          ...(bucket.storageClass ? { storageClass: bucket.storageClass } : {}),
+        })
+
+        return [
+          bucket.name,
+          {
+            name: r2Bucket.name,
+            location: r2Bucket.location,
+            jurisdiction: r2Bucket.jurisdiction,
+            storageClass: r2Bucket.storageClass,
+          },
+        ]
+      }),
+    )
+
+    const accessApplications = Object.fromEntries(
+      accessApplicationSpecs.map((application) => {
+        const sessionDuration = application.sessionDuration ?? "8h"
+
+        const accessApplication = new cloudflare.ZeroTrustAccessApplication(
+          resourceName(`access-${application.hostname}`),
+          {
+            accountId: args.accountId,
+            name: application.name,
+            domain: application.hostname,
+            type: "self_hosted",
+            appLauncherVisible: false,
+            enableBindingCookie: true,
+            httpOnlyCookieAttribute: true,
+            sameSiteCookieAttribute: "strict",
+            sessionDuration,
+            policies: [
+              {
+                name: `${application.name} admins`,
+                decision: "allow",
+                includes: application.allowedEmails.map((email) => ({
+                  email: {
+                    email,
+                  },
+                })),
+                precedence: 1,
+              },
+            ],
+          },
+        )
+
+        return [
+          application.hostname,
+          {
+            aud: accessApplication.aud,
+            domain: accessApplication.domain,
+            name: accessApplication.name,
+          },
+        ]
+      }),
+    )
+
+    const tunnelToken = pulumi.secret(
+      tunnel.id.apply((tunnelId) =>
+        cloudflare
+          .getZeroTrustTunnelCloudflaredToken({
+            accountId: args.accountId,
+            tunnelId,
+          })
+          .then((result) => result.token),
+      ),
+    )
+
+    return {
+      accountId: args.accountId,
+      dnsZones: args.zones,
+      hostnames: [
+        ...Object.keys(dnsRecords),
+        ...(args.dnsRecords ?? []).map((record) => record.name),
+      ],
+      directDnsRecords,
+      r2Buckets,
+      accessApplications,
+      tunnelCname,
+      tunnelId: tunnel.id,
+      tunnelName: tunnel.name,
+      tunnelToken,
+      configVersion: tunnelConfig.version,
+    }
+  })
 }
 
 export function createCloudflareEdge(args: CloudflareEdgeArgs) {
-  const tunnel = new cloudflare.ZeroTrustTunnelCloudflared("gateway", {
-    accountId: args.accountId,
-    name: args.tunnel.name,
-    configSrc: "cloudflare",
-    tunnelSecret: args.tunnelSecret,
-  })
-
-  const tunnelCname = pulumi.interpolate`${tunnel.id}.cfargotunnel.com`
-
-  const tunnelConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig("gateway-config", {
-    accountId: args.accountId,
-    tunnelId: tunnel.id,
-    source: "cloudflare",
-    config: {
-      ingresses: [
-        ...args.ingressRules.map((rule) => ({
-          hostname: rule.hostname,
-          service: rule.service,
-          ...(rule.originRequest
-            ? {
-                originRequest: rule.originRequest,
-              }
-            : undefined),
-        })),
-        {
-          service: args.tunnel.defaultService,
-        },
-      ],
-    },
-  })
-
-  const dnsRecords = Object.fromEntries(
-    args.ingressRules.map((rule) => {
-      const record = new cloudflare.DnsRecord(resourceName(rule.hostname), {
-        zoneId: requireZoneId(args.zoneIds, rule.zone),
-        name: rule.hostname,
-        type: "CNAME",
-        content: tunnelCname,
-        proxied: true,
-        ttl: 1,
-      })
-
-      return [rule.hostname, record]
-    }),
-  )
-
-  const directDnsRecords = Object.fromEntries(
-    (args.dnsRecords ?? []).map((record) => {
-      const dnsRecord = new cloudflare.DnsRecord(resourceName(`${record.type}-${record.name}`), {
-        zoneId: requireZoneId(args.zoneIds, record.zone),
-        name: record.name,
-        type: record.type,
-        content: record.content,
-        ttl: record.ttl ?? 1,
-        ...(record.priority != null ? { priority: record.priority } : {}),
-        ...(record.proxied != null ? { proxied: record.proxied } : {}),
-      })
-
-      return [`${record.type}:${record.name}`, dnsRecord]
-    }),
-  )
-
-  const r2Buckets = Object.fromEntries(
-    (args.r2Buckets ?? []).map((bucket) => {
-      const r2Bucket = new cloudflare.R2Bucket(resourceName(bucket.name), {
-        accountId: args.accountId,
-        name: bucket.name,
-        ...(bucket.location ? { location: bucket.location } : {}),
-        ...(bucket.jurisdiction ? { jurisdiction: bucket.jurisdiction } : {}),
-        ...(bucket.storageClass ? { storageClass: bucket.storageClass } : {}),
-      })
-
-      return [
-        bucket.name,
-        {
-          name: r2Bucket.name,
-          location: r2Bucket.location,
-          jurisdiction: r2Bucket.jurisdiction,
-          storageClass: r2Bucket.storageClass,
-        },
-      ]
-    }),
-  )
-
-  const accessApplications = Object.fromEntries(
-    (args.accessApplications ?? []).map((application) => {
-      if (application.allowedEmails.length === 0) {
-        throw new Error(
-          `Cloudflare Access application "${application.name}" needs at least one allowed email.`,
-        )
-      }
-
-      const sessionDuration = application.sessionDuration ?? "8h"
-
-      const accessApplication = new cloudflare.ZeroTrustAccessApplication(
-        resourceName(`access-${application.hostname}`),
-        {
-          accountId: args.accountId,
-          name: application.name,
-          domain: application.hostname,
-          type: "self_hosted",
-          appLauncherVisible: false,
-          enableBindingCookie: true,
-          httpOnlyCookieAttribute: true,
-          sameSiteCookieAttribute: "strict",
-          sessionDuration,
-          policies: [
-            {
-              name: `${application.name} admins`,
-              decision: "allow",
-              includes: application.allowedEmails.map((email) => ({
-                email: {
-                  email,
-                },
-              })),
-              precedence: 1,
-            },
-          ],
-        },
-      )
-
-      return [
-        application.hostname,
-        {
-          aud: accessApplication.aud,
-          domain: accessApplication.domain,
-          name: accessApplication.name,
-        },
-      ]
-    }),
-  )
-
-  const tunnelToken = pulumi.secret(
-    tunnel.id.apply((tunnelId) =>
-      cloudflare
-        .getZeroTrustTunnelCloudflaredToken({
-          accountId: args.accountId,
-          tunnelId,
-        })
-        .then((result) => result.token),
-    ),
-  )
-
-  return {
-    accountId: args.accountId,
-    dnsZones: args.zones,
-    hostnames: [
-      ...Object.keys(dnsRecords),
-      ...(args.dnsRecords ?? []).map((record) => record.name),
-    ],
-    directDnsRecords,
-    r2Buckets,
-    accessApplications,
-    tunnelCname,
-    tunnelId: tunnel.id,
-    tunnelName: tunnel.name,
-    tunnelToken,
-    configVersion: tunnelConfig.version,
-  }
+  return runSyncOrThrow(createCloudflareEdgeEffect(args))
 }

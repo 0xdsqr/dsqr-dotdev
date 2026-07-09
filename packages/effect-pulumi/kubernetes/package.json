@@ -12,12 +12,13 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@pulumi/kubernetes": "^4.28.0",
-    "@pulumi/pulumi": "^3.194.0"
+    "@dsqr-dotdev/effect-pulumi-core": "0.0.0",
+    "@pulumi/kubernetes": "4.30.0",
+    "@pulumi/pulumi": "3.234.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "22.19.17",
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=24"

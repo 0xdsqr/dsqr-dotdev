@@ -2,7 +2,7 @@ import * as proxmox from "@muhlba91/pulumi-proxmoxve"
 import * as pulumi from "@pulumi/pulumi"
 
 import { resolveVmSpec, type VmDefaults, type VmSpec } from "@dsqr-dotdev/infra-model"
-import { transformResourceArgs, type Transform } from "@dsqr-dotdev/effect-pulumi"
+import { transformResourceArgs, type Transform } from "@dsqr-dotdev/effect-pulumi-core"
 
 export type ProxmoxVmTransforms = {
   vm?: Transform<proxmox.vm.VirtualMachineArgs, pulumi.CustomResourceOptions>

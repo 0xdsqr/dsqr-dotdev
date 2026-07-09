@@ -1,11 +1,11 @@
 import * as pulumi from "@pulumi/pulumi"
 import {
+  Effect,
   firstDefined,
-  MissingPulumiConfigError,
-  requireConfigValue,
+  requireConfigValueEffect,
+  runSyncOrThrow,
   type PulumiConfigReader,
-} from "@dsqr-dotdev/effect-pulumi"
-import { Effect } from "effect"
+} from "@dsqr-dotdev/effect-pulumi-core"
 
 export type ProxmoxConnectionConfig = {
   endpoint: string
@@ -16,16 +16,6 @@ export type ProxmoxConnectionConfig = {
 export type ProxmoxConnectionConfigSource = {
   config?: PulumiConfigReader<pulumi.Input<string>>
   env?: NodeJS.ProcessEnv
-}
-
-function requireConfigValueEffect<T>(
-  value: T | undefined,
-  field: string,
-  expected: ReadonlyArray<string>,
-) {
-  return value !== undefined && value !== ""
-    ? Effect.succeed(value)
-    : Effect.fail(new MissingPulumiConfigError({ field, expected }))
 }
 
 function resolveSource(source: ProxmoxConnectionConfigSource = {}): {
@@ -95,20 +85,5 @@ export function loadProxmoxConnectionConfigEffect(source: ProxmoxConnectionConfi
 export function loadProxmoxConnectionConfig(
   source: ProxmoxConnectionConfigSource = {},
 ): ProxmoxConnectionConfig {
-  const { config, env } = resolveSource(source)
-
-  return {
-    endpoint: requireConfigValue(readEndpoint(config, env), "endpoint", [
-      "proxmox:endpoint",
-      "PROXMOX_BASE_URL",
-      "PROXMOX_VE_ENDPOINT",
-    ]),
-    apiToken: requireConfigValue(readApiToken(config, env), "api token", [
-      "proxmox:apiToken",
-      "PROXMOX_API_TOKEN",
-      "PROXMOX_VE_API_TOKEN",
-      "PROXMOX_USER + PROXMOX_TOKEN_ID + PROXMOX_TOKEN_SECRET",
-    ]),
-    insecure: readInsecure(config, env),
-  }
+  return runSyncOrThrow(loadProxmoxConnectionConfigEffect(source))
 }

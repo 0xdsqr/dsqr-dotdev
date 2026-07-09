@@ -1,5 +1,5 @@
 import { GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
-import { Context, Data, Effect, Layer } from "effect"
+import { Data, Effect, Layer } from "effect"
 import { logger } from "../api/lib/logger"
 
 const POSTS_PREFIX = "posts"
@@ -218,11 +218,13 @@ function makeService(): StorageServiceShape {
   }
 }
 
-export class StorageService extends Context.Tag("@dsqr-dotdev/api/StorageService")<
-  StorageService,
-  StorageServiceShape
->() {
-  static Live = Layer.sync(this, makeService).pipe(
+export class StorageService extends Effect.Service<StorageService>()(
+  "@dsqr-dotdev/api/StorageService",
+  {
+    sync: makeService,
+  },
+) {
+  static readonly Live: Layer.Layer<StorageService> = StorageService.Default.pipe(
     Layer.annotateSpans({ module: "StorageService" }),
   )
 }

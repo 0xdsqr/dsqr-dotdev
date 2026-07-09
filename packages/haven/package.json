@@ -13,11 +13,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "effect": "^3.21.0"
+    "effect": "3.21.2"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "22.19.17",
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=24"

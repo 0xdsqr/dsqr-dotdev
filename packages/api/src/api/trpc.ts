@@ -1,5 +1,6 @@
 import { database } from "@dsqr-dotdev/database/client"
 import { initTRPC, TRPCError } from "@trpc/server"
+import { Duration } from "effect"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
 import type { Auth } from "../auth"
@@ -45,13 +46,18 @@ export const createTRPCRouter = t.router
 const timingMiddleware = t.middleware(async ({ next, path, ctx }) => {
   const start = Date.now()
 
-  if (t._config.isDev) {
-    const waitMs = Math.floor(Math.random() * 400) + 100
-    await new Promise((resolve) => setTimeout(resolve, waitMs))
-  }
-
   const result = await runApiEffect(
-    Effect.promise(() => next()).pipe(
+    Effect.gen(function* () {
+      if (t._config.isDev) {
+        const waitMs = Math.floor(Math.random() * 400) + 100
+        yield* Effect.sleep(Duration.millis(waitMs))
+      }
+
+      return yield* Effect.tryPromise({
+        try: () => next(),
+        catch: (cause) => cause,
+      })
+    }).pipe(
       Effect.withSpan("trpc.procedure", {
         attributes: {
           "trpc.path": path,

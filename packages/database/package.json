@@ -29,13 +29,13 @@
   },
   "dependencies": {
     "@dsqr-dotdev/tsconfig": "0.0.0",
-    "drizzle-orm": "^0.45.2",
-    "drizzle-zod": "^0.8.3",
-    "pg": "^8.16.3",
-    "zod": "^4.1.12"
+    "drizzle-orm": "0.45.2",
+    "drizzle-zod": "0.8.3",
+    "pg": "8.20.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
-    "@types/pg": "^8.15.6",
-    "drizzle-kit": "^0.31.6"
+    "@types/pg": "8.20.0",
+    "drizzle-kit": "0.31.10"
   }
 }

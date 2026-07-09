@@ -12,12 +12,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@dsqr-dotdev/effect-pulumi": "0.0.0",
-    "@pulumi/pulumi": "^3.194.0",
-    "@pulumi/vault": "^7.10.0"
+    "@dsqr-dotdev/effect-pulumi-core": "0.0.0",
+    "@pulumi/pulumi": "3.234.0",
+    "@pulumi/vault": "7.10.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=24"

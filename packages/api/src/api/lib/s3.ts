@@ -1,12 +1,17 @@
-import { Effect } from "effect"
+import { Data, Effect } from "effect"
 import { runApiEffect } from "../../runtime"
 import { StorageError, StorageService } from "../../services/storage"
 
 export const BUCKET_NAME = process.env.S3_BUCKET || "dsqr-dotdev"
 
+class StorageBoundaryError extends Data.TaggedError("StorageBoundaryError")<{
+  readonly message: string
+  readonly cause: unknown
+}> {}
+
 function unwrapStorageError(error: unknown, message: string): never {
   if (error instanceof StorageError) {
-    throw new Error(message, { cause: error.cause })
+    throw new StorageBoundaryError({ message, cause: error.cause })
   }
 
   throw error
