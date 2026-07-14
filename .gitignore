@@ -51,6 +51,7 @@ logs
 
 # Temp/Reference files
 .temp
+learning/
 result*
 count.txt
 

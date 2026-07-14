@@ -4,4 +4,5 @@ import { initAuth } from "./index"
 export const auth = initAuth({
   baseUrl: process.env.BASE_URL || "http://localhost:3020",
   secret: process.env.AUTH_SECRET || "cli-secret",
+  surface: "admin",
 })

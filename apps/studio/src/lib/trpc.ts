@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/api"
+import type { AdminAppRouter } from "@dsqr-dotdev/api/admin"
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import SuperJSON from "superjson"
@@ -12,7 +12,7 @@ function getBaseUrl() {
   return getInternalApiBaseUrl()
 }
 
-export const trpcClient = createTRPCClient<AppRouter>({
+export const trpcClient = createTRPCClient<AdminAppRouter>({
   links: [
     loggerLink({
       enabled: (op) =>
@@ -31,4 +31,4 @@ export const trpcClient = createTRPCClient<AppRouter>({
   ],
 })
 
-export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>()
+export const { useTRPC, TRPCProvider } = createTRPCContext<AdminAppRouter>()

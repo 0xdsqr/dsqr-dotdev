@@ -31,5 +31,4 @@ export const hetznerMailConfig = {
 
 export const tailscaleConfig = {
   adminUser: "0xdsqr@github",
-  openTaggedServerAccess: true,
 } as const

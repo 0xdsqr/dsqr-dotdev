@@ -9,7 +9,7 @@ export const foundation = createVaultFoundation({
   kv: vault.kv,
   secretPaths: vault.secretPaths,
   humanAdminPolicy: vault.policies.humanAdmin,
-  externalSecretsPolicy: vault.policies.externalSecrets,
+  externalSecretsPolicies: vault.policies.externalSecrets,
   audit: vault.audit,
 })
 

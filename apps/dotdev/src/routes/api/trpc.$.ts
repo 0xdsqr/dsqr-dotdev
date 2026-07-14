@@ -1,4 +1,4 @@
-import { appRouter, createTRPCContext } from "@dsqr-dotdev/api"
+import { createTRPCContext, publicAppRouter } from "@dsqr-dotdev/api"
 import { traceApiRequest } from "@dsqr-dotdev/api/runtime"
 import { createFileRoute } from "@tanstack/react-router"
 import { TRPCError } from "@trpc/server"
@@ -9,7 +9,7 @@ import { auth } from "../../auth/server"
 const handler = (req: Request) =>
   fetchRequestHandler({
     endpoint: "/api/trpc",
-    router: appRouter,
+    router: publicAppRouter,
     req,
     createContext: () =>
       createTRPCContext({

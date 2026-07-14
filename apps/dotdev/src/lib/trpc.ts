@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/api"
+import type { PublicAppRouter } from "@dsqr-dotdev/api"
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import SuperJSON from "superjson"
@@ -12,7 +12,7 @@ function getBaseUrl() {
   return process.env.BASE_URL || "http://localhost:3020"
 }
 
-export const trpcClient = createTRPCClient<AppRouter>({
+export const trpcClient = createTRPCClient<PublicAppRouter>({
   links: [
     loggerLink({
       enabled: (op) =>
@@ -31,4 +31,4 @@ export const trpcClient = createTRPCClient<AppRouter>({
   ],
 })
 
-export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>()
+export const { useTRPC, TRPCProvider } = createTRPCContext<PublicAppRouter>()

@@ -6,7 +6,8 @@
 }:
 let
   imageEtc = pkgs.runCommand "homelab-image-etc" { } ''
-        mkdir -p "$out/etc"
+        mkdir -p "$out/etc" "$out/tmp" "$out/var/empty"
+        chmod 1777 "$out/tmp"
         cat > "$out/etc/passwd" <<EOF
     root:x:0:0:root:/root:/bin/sh
     nobody:x:65534:65534:nobody:/var/empty:/sbin/nologin
@@ -29,13 +30,14 @@ let
         name = "${name}-rootfs";
         paths = [
           package
-          pkgs.bash
           pkgs.cacert
           imageEtc
         ];
         pathsToLink = [
           "/bin"
           "/etc"
+          "/tmp"
+          "/var"
         ];
       };
     in
@@ -43,14 +45,21 @@ let
       inherit name;
       tag = "latest";
       contents = rootfs;
+      extraCommands = ''
+        chmod 1777 tmp
+      '';
       config = {
         Cmd = [ command ];
+        User = "65534:65534";
+        WorkingDir = "/var/empty";
         Env = [
           "NODE_ENV=production"
+          "HOME=/var/empty"
           "HOST=0.0.0.0"
           "NITRO_HOST=0.0.0.0"
           "PORT=${toString port}"
           "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+          "TMPDIR=/tmp"
         ];
         ExposedPorts = {
           "${toString port}/tcp" = { };

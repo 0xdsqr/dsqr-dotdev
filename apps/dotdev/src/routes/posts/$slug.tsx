@@ -22,7 +22,6 @@ export const Route = createFileRoute("/posts/$slug")({
       context.queryClient.fetchQuery(
         context.trpc.post.content.queryOptions({
           postId: post.id,
-          filePath: post.filePath ?? undefined,
         }),
       ),
       context.queryClient.prefetchQuery(

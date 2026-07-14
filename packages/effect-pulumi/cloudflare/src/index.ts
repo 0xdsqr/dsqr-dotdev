@@ -1,5 +1,6 @@
 import * as cloudflare from "@pulumi/cloudflare"
 import * as pulumi from "@pulumi/pulumi"
+import { isIP } from "node:net"
 import {
   Effect,
   PulumiResourceConfigError,
@@ -11,10 +12,10 @@ export type CloudflareIngressRule = {
   readonly hostname: string
   readonly zone: string
   readonly service: string
+  readonly insecureOriginReason?: string
   readonly originRequest?: {
     readonly http2Origin?: boolean
     readonly httpHostHeader?: string
-    readonly noTlsVerify?: boolean
     readonly originServerName?: string
   }
 }
@@ -85,12 +86,126 @@ function requireZoneIdEffect(
   )
 }
 
+function isPrivateHttpOrigin(hostname: string) {
+  const normalized = hostname.replace(/^\[|\]$/g, "").toLowerCase()
+
+  if (normalized === "localhost" || normalized.endsWith(".localhost")) {
+    return true
+  }
+
+  const addressFamily = isIP(normalized)
+  if (addressFamily === 4) {
+    const octets = normalized.split(".").map(Number)
+    const first = octets[0]
+    const second = octets[1]
+
+    return (
+      first === 10 ||
+      first === 127 ||
+      (first === 169 && second === 254) ||
+      (first === 172 && second !== undefined && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168)
+    )
+  }
+
+  if (addressFamily === 6) {
+    return normalized === "::1" || normalized.startsWith("fc") || normalized.startsWith("fd")
+  }
+
+  return normalized.endsWith(".home.arpa")
+}
+
+export function validateCloudflareIngressRuleEffect(
+  rule: CloudflareIngressRule,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.try({
+    try: () => new URL(rule.service),
+    catch: () =>
+      new PulumiResourceConfigError({
+        resource: `ingress:${rule.hostname}`,
+        message: `Cloudflare ingress origin for "${rule.hostname}" must be an absolute HTTP(S) URL.`,
+      }),
+  }).pipe(
+    Effect.flatMap((origin) => {
+      if (origin.username || origin.password) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `ingress:${rule.hostname}`,
+            message: `Cloudflare ingress origin for "${rule.hostname}" must not contain embedded credentials.`,
+          }),
+        )
+      }
+
+      const disablesTlsVerification =
+        (rule.originRequest as { readonly noTlsVerify?: unknown } | undefined)?.noTlsVerify === true
+
+      if (disablesTlsVerification) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `ingress:${rule.hostname}`,
+            message: `Cloudflare ingress origin for "${rule.hostname}" cannot disable TLS verification.`,
+          }),
+        )
+      }
+
+      if (origin.protocol === "http:") {
+        if (!isPrivateHttpOrigin(origin.hostname)) {
+          return Effect.fail(
+            new PulumiResourceConfigError({
+              resource: `ingress:${rule.hostname}`,
+              message: `Plain HTTP origin for "${rule.hostname}" must be loopback, RFC1918, ULA, or a private home.arpa host.`,
+            }),
+          )
+        }
+
+        return rule.insecureOriginReason && rule.insecureOriginReason.trim().length >= 20
+          ? Effect.void
+          : Effect.fail(
+              new PulumiResourceConfigError({
+                resource: `ingress:${rule.hostname}`,
+                message: `Plain HTTP origin for "${rule.hostname}" requires a specific migration justification.`,
+              }),
+            )
+      }
+
+      if (origin.protocol !== "https:") {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `ingress:${rule.hostname}`,
+            message: `Cloudflare ingress origin for "${rule.hostname}" must use HTTP or HTTPS.`,
+          }),
+        )
+      }
+
+      if (
+        isIP(origin.hostname.replace(/^\[|\]$/g, "")) !== 0 &&
+        !rule.originRequest?.originServerName
+      ) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `ingress:${rule.hostname}`,
+            message: `HTTPS origin for "${rule.hostname}" uses an IP address and requires originServerName for certificate verification.`,
+          }),
+        )
+      }
+
+      return Effect.void
+    }),
+  )
+}
+
 export function createCloudflareEdgeEffect(args: CloudflareEdgeArgs) {
   return Effect.gen(function* () {
     const ingressRules = yield* Effect.forEach(args.ingressRules, (rule) =>
-      requireZoneIdEffect(args.zoneIds, rule.zone, `ingress:${rule.hostname}`).pipe(
-        Effect.map((zoneId) => ({ rule, zoneId })),
-      ),
+      Effect.gen(function* () {
+        yield* validateCloudflareIngressRuleEffect(rule)
+        const zoneId = yield* requireZoneIdEffect(
+          args.zoneIds,
+          rule.zone,
+          `ingress:${rule.hostname}`,
+        )
+        return { rule, zoneId }
+      }),
     )
     const directRecords = yield* Effect.forEach(args.dnsRecords ?? [], (record) =>
       requireZoneIdEffect(args.zoneIds, record.zone, `dns:${record.type}:${record.name}`).pipe(

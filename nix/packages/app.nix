@@ -2,9 +2,11 @@
   lib,
   stdenvNoCC,
   nodejs_24,
+  nodejs-slim_24,
   appName,
   nodeModules,
   port,
+  runtimeDependencies ? [ ],
 }:
 let
   src = import ../lib/source.nix { inherit lib; };
@@ -53,8 +55,26 @@ stdenvNoCC.mkDerivation {
 
         mkdir -p "$out/app" "$out/bin"
         cp -R "apps/${appName}/.output" "$out/app/.output"
-        cp -R node_modules "$out/app/node_modules"
-        ${workspaceLinks.removeWorkspacePackageLinks}
+        ${nodejs_24}/bin/node ${../lib/copy-runtime-dependencies.mjs} \
+          "$PWD" \
+          "$out/app" \
+          ${lib.escapeShellArgs runtimeDependencies}
+
+        for dependency in ${lib.escapeShellArgs runtimeDependencies}; do
+          (
+            cd "$out/app"
+            ${nodejs_24}/bin/node -e \
+              'require("node:module").createRequire(process.cwd() + "/runtime-check.cjs")(process.argv[1])' \
+              "$dependency"
+          )
+        done
+
+        # Guard against accidentally returning to the previous full-workspace
+        # runtime closure. These packages are build/test tools, never app runtime
+        # dependencies.
+        test ! -e "$out/app/node_modules/typescript"
+        test ! -e "$out/app/node_modules/vite"
+        test ! -e "$out/app/node_modules/vitest"
 
         appDir="$out/app"
 
@@ -65,7 +85,7 @@ stdenvNoCC.mkDerivation {
     export HOST="\''${HOST:-0.0.0.0}"
     export NITRO_HOST="\''${NITRO_HOST:-0.0.0.0}"
     export PORT="\''${PORT:-${defaultPort}}"
-    exec ${nodejs_24}/bin/node .output/server/index.mjs "\$@"
+    exec ${nodejs-slim_24}/bin/node .output/server/index.mjs "\$@"
     EOF
 
         chmod +x "$out/bin/${appName}"

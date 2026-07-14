@@ -1,51 +1,36 @@
 name: Publish Images
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Check
+    types:
+      - completed
     branches:
       - master
-    paths:
-      - ".github/workflows/publish-images.yml"
-      - "apps/dotdev/**"
-      - "apps/labs/**"
-      - "apps/studio/**"
-      - "flake.lock"
-      - "flake.nix"
-      - "nix/hashes.nix"
-      - "nix/lib/**"
-      - "nix/overlay.nix"
-      - "nix/packages/app.nix"
-      - "nix/packages/default.nix"
-      - "nix/packages/dotdev.nix"
-      - "nix/packages/gitops-tag-images.nix"
-      - "nix/packages/images.nix"
-      - "nix/packages/labs.nix"
-      - "nix/packages/node-modules.nix"
-      - "nix/packages/studio.nix"
-      - "package-lock.json"
-      - "package.json"
-      - "packages/api/**"
-      - "packages/database/**"
-      - "packages/observability/**"
-      - "packages/react/**"
-      - "packages/typescript-config/**"
   workflow_dispatch:
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
 concurrency:
-  group: publish-images-${{ github.ref }}
-  cancel-in-progress: true
+  group: publish-images-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
 
 jobs:
   detect-changes:
     name: Detect app changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master') ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+      }}
     outputs:
       dotdev: ${{ steps.apps.outputs.dotdev }}
       studio: ${{ steps.apps.outputs.studio }}
@@ -55,9 +40,11 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          fetch-depth: 0
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 2
+          persist-credentials: false
 
       - name: Detect affected apps
         id: apps
@@ -78,29 +65,41 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             mark_all
           else
-            base="${{ github.event.before }}"
-            if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
-              base="$(git rev-parse HEAD^)"
-            fi
+            # workflow_run does not expose the complete push range. Publish all
+            # three images for normal master updates so a multi-commit or rebase
+            # merge cannot silently omit an affected app. The one exception is
+            # the tag-only PR created by this workflow: publishing that commit
+            # would create another tag PR and perpetuate the workflow forever.
+            automation_only=true
+            changed=false
 
             while IFS= read -r path; do
               [[ -z "$path" ]] && continue
+              changed=true
 
               case "$path" in
-                apps/dotdev/**|nix/packages/dotdev.nix)
-                  dotdev=true
+                helm/dotdev-web/Chart.yaml|helm/dotdev-web/values-prod.yaml|\
+                helm/dotdev-studio/Chart.yaml|helm/dotdev-studio/values-prod.yaml|\
+                helm/dotdev-labs/Chart.yaml|helm/dotdev-labs/values-prod.yaml|\
+                gitops/templates/applications/dotdev-web.yaml.tmpl|\
+                gitops/templates/applications/dotdev-studio.yaml.tmpl|\
+                gitops/templates/applications/dotdev-labs.yaml.tmpl|\
+                gitops/clusters/homelab/applications/dotdev-web.yaml|\
+                gitops/clusters/homelab/applications/dotdev-studio.yaml|\
+                gitops/clusters/homelab/applications/dotdev-labs.yaml)
                   ;;
-                apps/studio/**|nix/packages/studio.nix)
-                  studio=true
-                  ;;
-                apps/labs/**|nix/packages/labs.nix)
-                  labs=true
-                  ;;
-                .github/workflows/publish-images.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/gitops-tag-images.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
-                  mark_all
+                *)
+                  automation_only=false
                   ;;
               esac
-            done < <(git diff --name-only "$base" "${{ github.sha }}")
+            done < <(git diff-tree --no-commit-id --name-only -r "$TARGET_SHA")
+
+            subject="$(git log -1 --format=%s "$TARGET_SHA")"
+            if [[ "$changed" == true && "$automation_only" == true && "$subject" == chore\(gitops\):\ pin\ dsqr\ images\ to\ sha-* ]]; then
+              echo "Skipping image publication for the workflow's tag-only GitOps commit"
+            else
+              mark_all
+            fi
           fi
 
           apps=()
@@ -121,19 +120,26 @@ jobs:
 
   publish-dotdev:
     name: Publish dotdev-web
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
     needs:
       - detect-changes
     if: ${{ needs.detect-changes.outputs.dotdev == 'true' }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -145,26 +151,31 @@ jobs:
       - name: Load and push image
         run: |
           docker load < result-dotdev
-          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
-          docker tag dotdev-web:latest ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:latest
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${{ github.sha }}
+          docker tag dotdev-web:latest "ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${TARGET_SHA}"
+          docker push "ghcr.io/${{ github.repository_owner }}/dotdev-web:sha-${TARGET_SHA}"
 
   publish-studio:
     name: Publish dotdev-studio
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
     needs:
       - detect-changes
     if: ${{ needs.detect-changes.outputs.studio == 'true' }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -176,26 +187,31 @@ jobs:
       - name: Load and push image
         run: |
           docker load < result-studio
-          docker tag dotdev-studio:latest ghcr.io/${{ github.repository_owner }}/dotdev-studio:latest
-          docker tag dotdev-studio:latest ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-studio:latest
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${{ github.sha }}
+          docker tag dotdev-studio:latest "ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${TARGET_SHA}"
+          docker push "ghcr.io/${{ github.repository_owner }}/dotdev-studio:sha-${TARGET_SHA}"
 
   publish-labs:
     name: Publish dotdev-labs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
     needs:
       - detect-changes
     if: ${{ needs.detect-changes.outputs.labs == 'true' }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -207,14 +223,17 @@ jobs:
       - name: Load and push image
         run: |
           docker load < result-labs
-          docker tag dotdev-labs:latest ghcr.io/${{ github.repository_owner }}/dotdev-labs:latest
-          docker tag dotdev-labs:latest ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:latest
-          docker push ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${{ github.sha }}
+          docker tag dotdev-labs:latest "ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${TARGET_SHA}"
+          docker push "ghcr.io/${{ github.repository_owner }}/dotdev-labs:sha-${TARGET_SHA}"
 
   stamp-gitops-tags:
-    name: Stamp GitOps image tags
-    runs-on: ubuntu-latest
+    name: Propose GitOps image tags
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
     needs:
       - detect-changes
       - publish-dotdev
@@ -231,26 +250,41 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.TARGET_SHA }}
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Stamp immutable image tags
-        run: nix run .#gitopsTagImages -- --tag sha-${{ github.sha }} ${{ needs.detect-changes.outputs.apps }}
+        env:
+          APPS: ${{ needs.detect-changes.outputs.apps }}
+        run: |
+          read -r -a apps <<< "$APPS"
+          nix run .#gitopsTagImages -- --tag "sha-${TARGET_SHA}" "${apps[@]}"
 
       - name: Render GitOps manifests
         run: nix develop -c npm run gitops:render
 
-      - name: Commit GitOps tag update
+      - name: Open GitOps tag update pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           if git diff --quiet; then
-            echo "GitOps image tags already point at sha-${{ github.sha }}"
+            echo "GitOps image tags already point at sha-${TARGET_SHA}"
             exit 0
           fi
 
+          branch="automation/gitops-images-${TARGET_SHA}"
+          if [[ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" != "0" ]]; then
+            echo "A GitOps image update pull request already exists for ${TARGET_SHA}"
+            gh workflow run ci.yml --ref "$branch"
+            exit 0
+          fi
+
+          git switch -c "$branch"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add helm/dotdev-web/Chart.yaml helm/dotdev-studio/Chart.yaml helm/dotdev-labs/Chart.yaml
@@ -261,5 +295,11 @@ jobs:
           git add gitops/clusters/homelab/applications/dotdev-web.yaml
           git add gitops/clusters/homelab/applications/dotdev-studio.yaml
           git add gitops/clusters/homelab/applications/dotdev-labs.yaml
-          git commit -m "chore(gitops): pin dsqr images to sha-${{ github.sha }}"
-          git push origin HEAD:${{ github.ref_name }}
+          git commit -m "chore(gitops): pin dsqr images to sha-${TARGET_SHA}"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base master \
+            --head "$branch" \
+            --title "chore(gitops): pin dsqr images to sha-${TARGET_SHA}" \
+            --body "Automated image-tag update after the required checks and image publication succeeded for ${TARGET_SHA}."
+          gh workflow run ci.yml --ref "$branch"

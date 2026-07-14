@@ -275,14 +275,8 @@ function CommentItem({
   expandedReplies,
   toggleReplies,
 }: CommentItemProps) {
-  const { data: session } = authClient.useSession()
-  const userName = (comment as Record<string, unknown>).userName as string | undefined
-  const userEmail = (comment as Record<string, unknown>).userEmail as string | undefined
-  const displayName = userName?.trim?.() || userEmail?.trim?.() || "Anonymous"
-
-  const userImage =
-    ((comment as Record<string, unknown>).userImage as string | undefined) || DEFAULT_AVATAR
-  const isOwner = session?.user?.id === comment.userId
+  const displayName = comment.userName.trim() || "Anonymous"
+  const userImage = comment.userImage || DEFAULT_AVATAR
 
   const hasReplies = comment.replies && comment.replies.length > 0
   const isExpanded = expandedReplies.has(comment.id)
@@ -322,7 +316,7 @@ function CommentItem({
                 <Reply className="w-4 h-4" />
               </button>
             )}
-            {isOwner && (
+            {comment.isOwner && (
               <button
                 type="button"
                 onClick={() => onDelete(comment.id)}

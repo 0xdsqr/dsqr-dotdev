@@ -24,7 +24,7 @@ function isSafePostKey(key: string): boolean {
 }
 
 function sanitizeSegment(value: string): string {
-  return value.replace(/[^a-zA-Z0-9._-]/g, "-")
+  return value.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/\.{2,}/g, "-")
 }
 
 export type PostImage = {

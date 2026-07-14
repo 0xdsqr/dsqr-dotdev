@@ -49,7 +49,9 @@
     "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/observability && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio && npm run typecheck -w labs && npm run typecheck:infra",
     "typecheck:tsc": "npm run build:database && npm run build:api && npm run typecheck:tsc --workspaces --if-present",
     "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
-    "setup": "npm ci"
+    "setup": "npm ci",
+    "test:infra-security": "node --test tests/infra-security.test.ts",
+    "test:security": "npm run build:database && npm run build:api && npm run test:security -w dotdev"
   },
   "devDependencies": {
     "@typescript/native-preview": "7.0.0-dev.20260707.2",

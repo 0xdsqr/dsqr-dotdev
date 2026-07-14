@@ -55,7 +55,6 @@ export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async
         active: subscribers.active,
         subscribedAt: subscribers.subscribedAt,
         unsubscribedAt: subscribers.unsubscribedAt,
-        unsubscribeToken: subscribers.unsubscribeToken,
       })
       .from(subscribers)
       .orderBy(desc(subscribers.subscribedAt)),

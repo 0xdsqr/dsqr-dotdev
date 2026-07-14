@@ -7,6 +7,7 @@
     "dev": "vite dev --port 3020",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
+    "test:security": "vitest run --config vitest.security.config.ts src/api-security-boundaries.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },

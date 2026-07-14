@@ -11,7 +11,6 @@ export type TailscalePlatformArgs = {
   keyProfiles: {
     readonly proxmoxControlPlane: TailscaleKeyProfile
     readonly homelabServer: TailscaleKeyProfile
-    readonly darwinWorkstation: TailscaleKeyProfile
     readonly homelabBackup: TailscaleKeyProfile
     readonly opnsenseExitNode: TailscaleKeyProfile
     readonly hetznerMail: TailscaleKeyProfile
@@ -19,16 +18,25 @@ export type TailscalePlatformArgs = {
   }
 }
 
+export const hardenedTailnetKeyDefaults = {
+  reusable: false,
+  ephemeral: false,
+  preauthorized: false,
+  expiry: 60 * 60,
+  recreateIfInvalid: "never",
+} as const
+
+export const tailnetPolicySafetyDefaults = {
+  overwriteExistingContent: false,
+  resetAclOnDestroy: false,
+} as const
+
 function createTailnetKey(name: string, profile: TailscaleKeyProfile, policy: tailscale.Acl) {
   return new tailscale.TailnetKey(
     name,
     {
       description: profile.description,
-      reusable: true,
-      ephemeral: false,
-      preauthorized: true,
-      expiry: 60 * 60 * 24 * 90,
-      recreateIfInvalid: "always",
+      ...hardenedTailnetKeyDefaults,
       tags: [...profile.tags],
     },
     { dependsOn: [policy] },
@@ -38,8 +46,7 @@ function createTailnetKey(name: string, profile: TailscaleKeyProfile, policy: ta
 export function createTailscalePlatform(args: TailscalePlatformArgs) {
   const policy = new tailscale.Acl("tailnet-policy", {
     acl: JSON.stringify(args.policyDocument, null, 2),
-    overwriteExistingContent: true,
-    resetAclOnDestroy: false,
+    ...tailnetPolicySafetyDefaults,
   })
 
   const proxmoxControlPlaneKey = createTailnetKey(
@@ -50,11 +57,6 @@ export function createTailscalePlatform(args: TailscalePlatformArgs) {
   const homelabServerKey = createTailnetKey(
     "homelab-server-key",
     args.keyProfiles.homelabServer,
-    policy,
-  )
-  const darwinWorkstationKey = createTailnetKey(
-    "darwin-workstation-key",
-    args.keyProfiles.darwinWorkstation,
     policy,
   )
   const homelabBackupKey = createTailnetKey(
@@ -75,7 +77,6 @@ export function createTailscalePlatform(args: TailscalePlatformArgs) {
     authKeys: {
       proxmoxControlPlane: pulumi.secret(proxmoxControlPlaneKey.key),
       homelabServer: pulumi.secret(homelabServerKey.key),
-      darwinWorkstation: pulumi.secret(darwinWorkstationKey.key),
       homelabBackup: pulumi.secret(homelabBackupKey.key),
       opnsenseExitNode: pulumi.secret(opnsenseExitNodeKey.key),
       hetznerMail: pulumi.secret(hetznerMailKey.key),

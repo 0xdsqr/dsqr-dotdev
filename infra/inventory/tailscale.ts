@@ -8,7 +8,6 @@ const tags = {
   },
   role: {
     server: "tag:server",
-    workstation: "tag:workstation",
     infra: "tag:infra",
     mail: "tag:mail",
     backup: "tag:backup",
@@ -18,7 +17,6 @@ const tags = {
 
 type PolicyArgs = {
   adminUser: string
-  openTaggedServerAccess?: boolean | undefined
 }
 
 function tagOwners(adminUser: string) {
@@ -29,7 +27,6 @@ function tagOwners(adminUser: string) {
     [tags.location.hetzner]: [adminUser],
     [tags.location.aws]: [adminUser],
     [tags.role.server]: [adminUser],
-    [tags.role.workstation]: [adminUser],
     [tags.role.infra]: [adminUser],
     [tags.role.mail]: [adminUser],
     [tags.role.backup]: [adminUser],
@@ -44,49 +41,47 @@ function createPolicy(args: PolicyArgs) {
       dst: ["*"],
       ip: ["*"],
     },
-    ...((args.openTaggedServerAccess ?? true)
-      ? [
-          {
-            src: [tags.role.workstation],
-            dst: ["*"],
-            ip: ["*"],
-          },
-          {
-            src: [tags.role.server],
-            dst: [tags.role.server],
-            ip: ["*"],
-          },
-        ]
-      : [
-          {
-            src: [tags.role.workstation],
-            dst: ["*"],
-            ip: ["*"],
-          },
-          {
-            src: [tags.location.homelab],
-            dst: [tags.role.backup],
-            ip: ["*"],
-          },
-          {
-            src: [tags.role.mail],
-            dst: [tags.role.backup],
-            ip: ["*"],
-          },
-          {
-            src: [args.adminUser],
-            dst: [tags.role.mail],
-            ip: ["22", "80", "443", "993", "4190"],
-          },
-        ]),
+    {
+      src: [tags.role.infra],
+      dst: [tags.role.server],
+      ip: ["tcp:22", "tcp:443"],
+    },
+    {
+      src: [tags.role.server],
+      dst: [tags.role.backup],
+      ip: ["tcp:22"],
+    },
+    {
+      src: [tags.role.mail],
+      dst: [tags.role.backup],
+      ip: ["tcp:22"],
+    },
   ] as const
 
   return {
     tagOwners: tagOwners(args.adminUser),
     grants,
-    autoApprovers: {
-      exitNode: [tags.role.exitNode],
-    },
+    tests: [
+      {
+        src: args.adminUser,
+        accept: [`${tags.role.server}:5432`, `${tags.role.infra}:8006`],
+      },
+      {
+        src: tags.role.infra,
+        accept: [`${tags.role.server}:22`, `${tags.role.server}:443`],
+        deny: [`${tags.role.server}:5432`, `${tags.role.backup}:22`],
+      },
+      {
+        src: tags.role.server,
+        accept: [`${tags.role.backup}:22`],
+        deny: [`${tags.role.server}:22`, `${tags.role.infra}:8006`],
+      },
+      {
+        src: tags.role.mail,
+        accept: [`${tags.role.backup}:22`],
+        deny: [`${tags.role.server}:443`, `${tags.role.infra}:8006`],
+      },
+    ],
   } as const
 }
 
@@ -100,10 +95,6 @@ export const tailscale = {
     homelabServer: {
       description: "homelab server auth key",
       tags: [tags.location.homelab, tags.role.server],
-    },
-    darwinWorkstation: {
-      description: "darwin workstation auth key",
-      tags: [tags.location.homelab, tags.role.workstation],
     },
     homelabBackup: {
       description: "homelab backup auth key",

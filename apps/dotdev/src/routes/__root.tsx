@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/api"
+import type { PublicAppRouter } from "@dsqr-dotdev/api"
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
 import type { QueryClient } from "@tanstack/react-query"
@@ -24,7 +24,7 @@ const TanStackRouterDevtoolsPanel = lazy(() =>
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
-  trpc: TRPCOptionsProxy<AppRouter>
+  trpc: TRPCOptionsProxy<PublicAppRouter>
 }>()({
   head: () => ({
     meta: [

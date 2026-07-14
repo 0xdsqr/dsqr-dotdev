@@ -1,5 +1,9 @@
 export type { ProxmoxConnectionConfig } from "./config.ts"
-export { loadProxmoxConnectionConfig, loadProxmoxConnectionConfigEffect } from "./config.ts"
+export {
+  loadProxmoxConnectionConfig,
+  loadProxmoxConnectionConfigEffect,
+  validateProxmoxTransportEffect,
+} from "./config.ts"
 export { createProxmoxPlatform } from "./platform.ts"
 export type { ProxmoxPlatformArgs } from "./platform.ts"
 export { createProxmoxProvider } from "./provider.ts"
