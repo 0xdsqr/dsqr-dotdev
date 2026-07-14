@@ -1,4 +1,7 @@
 {
+  coreutils,
+  findutils,
+  gnugrep,
   gnutar,
   images,
   jq,
@@ -8,6 +11,9 @@
 runCommand "dsqr-dotdev-image-runtime-check"
   {
     nativeBuildInputs = [
+      coreutils
+      findutils
+      gnugrep
       gnutar
       jq
     ];
@@ -81,7 +87,7 @@ runCommand "dsqr-dotdev-image-runtime-check"
         exit 1
       fi
 
-      worldWritablePath="$(find "$root" -xdev -perm -0002 ! -path "$root/tmp" ! -path "$root/tmp/*" -print -quit)"
+      worldWritablePath="$(find "$root" -xdev ! -type l -perm -0002 ! -path "$root/tmp" ! -path "$root/tmp/*" -print -quit)"
       if test -n "$worldWritablePath"; then
         echo "image rootfs contains a world-writable path outside /tmp: $worldWritablePath" >&2
         exit 1

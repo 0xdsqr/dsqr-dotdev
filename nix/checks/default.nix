@@ -9,20 +9,13 @@
     nodeModules = packages.nodeModules;
   };
   helm = pkgs.callPackage ./helm.nix { };
-  image-runtime =
-    if pkgs.stdenvNoCC.hostPlatform.isLinux then
-      pkgs.callPackage ./image-runtime.nix {
-        images = [
-          packages.dotdevImage
-          packages.labsImage
-          packages.studioImage
-        ];
-      }
-    else
-      pkgs.runCommand "dsqr-dotdev-image-runtime-check-unsupported" { } ''
-        mkdir -p "$out"
-        touch "$out/image-runtime-check-skipped"
-      '';
+  image-runtime = pkgs.callPackage ./image-runtime.nix {
+    images = [
+      packages.dotdevImage
+      packages.labsImage
+      packages.studioImage
+    ];
+  };
   gitops = pkgs.callPackage ./gitops.nix {
     gitopsGenerateApplications = packages.gitopsGenerateApplications;
   };
