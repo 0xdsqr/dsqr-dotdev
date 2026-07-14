@@ -26,15 +26,27 @@ runCommand "dsqr-dotdev-image-runtime-check"
       root="$TMPDIR/image-$imageIndex"
       mkdir -p "$root"
       while IFS= read -r layer; do
-        tar -xOf "$image" "$layer" | tar -xf - -C "$root"
+        # GNU tar applies the builder's umask unless permissions are explicitly
+        # preserved, which strips the sticky bit from the image's /tmp directory.
+        tar -xOf "$image" "$layer" | tar -xpf - -C "$root"
       done < <(tar -xOf "$image" manifest.json | jq -er '.[0].Layers[]')
 
-      test -d "$root/var/empty"
-      test "$(stat -c %a "$root/tmp")" = 1777
+      if ! test -d "$root/var/empty"; then
+        echo "image rootfs is missing /var/empty" >&2
+        exit 1
+      fi
+
+      tmpMode="$(stat -c %a "$root/tmp")"
+      if test "$tmpMode" != 1777; then
+        echo "image /tmp mode is $tmpMode; expected 1777" >&2
+        exit 1
+      fi
+
       grep -Fxq 'nobody:x:65534:65534:nobody:/var/empty:/sbin/nologin' "$root/etc/passwd"
 
-      if find "$root" -xdev -perm -0002 ! -path "$root/tmp" ! -path "$root/tmp/*" | grep -q .; then
-        echo "image rootfs contains a world-writable path outside /tmp" >&2
+      worldWritablePath="$(find "$root" -xdev -perm -0002 ! -path "$root/tmp" ! -path "$root/tmp/*" -print -quit)"
+      if test -n "$worldWritablePath"; then
+        echo "image rootfs contains a world-writable path outside /tmp: $worldWritablePath" >&2
         exit 1
       fi
 
