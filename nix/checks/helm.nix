@@ -89,7 +89,7 @@ stdenvNoCC.mkDerivation {
                 "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\")) | .secretRef.name" dotdev-studio-secrets
               ;;
             dotdev-labs)
-              if yq eval "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\"))" "$rendered" | grep -q .; then
+              if yq eval "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\"))" "$rendered" | grep . >/dev/null; then
                 echo "dotdev-labs must not receive an application secret" >&2
                 exit 1
               fi
@@ -97,7 +97,7 @@ stdenvNoCC.mkDerivation {
           esac
 
           networkPolicy='select(.kind == "NetworkPolicy")'
-          yq eval "$networkPolicy | .spec.policyTypes[]" "$rendered" | grep -Fxq Egress
+          yq eval "$networkPolicy | .spec.policyTypes[]" "$rendered" | grep -Fx Egress >/dev/null
           requiredPorts="53 4318"
           case "$chartName" in
             dotdev-web|dotdev-studio)
@@ -105,7 +105,7 @@ stdenvNoCC.mkDerivation {
               ;;
           esac
           for port in $requiredPorts; do
-            yq eval "$networkPolicy | .spec.egress[].ports[]?.port" "$rendered" | grep -Fxq "$port"
+            yq eval "$networkPolicy | .spec.egress[].ports[]?.port" "$rendered" | grep -Fx "$port" >/dev/null
           done
           ;;
         *)
