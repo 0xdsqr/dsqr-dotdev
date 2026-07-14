@@ -19,18 +19,6 @@ function maskEmail(email: string): string {
   return `${visibleLocal}@${domain}`
 }
 
-function maskSecretPrefix(value: string | undefined): string | null {
-  if (!value) {
-    return null
-  }
-
-  if (value.length <= 8) {
-    return `${value.slice(0, 2)}***`
-  }
-
-  return `${value.slice(0, 4)}***${value.slice(-2)}`
-}
-
 function getResend(): Resend {
   if (!resend) {
     const apiKey = process.env.RESEND_API_KEY
@@ -39,10 +27,7 @@ function getResend(): Resend {
       throw new Error("RESEND_API_KEY environment variable is required")
     }
 
-    logger.info("Initializing Resend client for auth email delivery", {
-      hasApiKey: Boolean(apiKey),
-      apiKeyPreview: maskSecretPrefix(apiKey),
-    })
+    logger.info("Initializing Resend client for auth email delivery")
     resend = new Resend(apiKey)
   }
   return resend
@@ -76,9 +61,14 @@ function getCrossSubdomainCookieDomain(baseUrl: string): string | null {
   return null
 }
 
+export function createAuthSurfacePlugins(surface: "public" | "admin"): BetterAuthPlugin[] {
+  return surface === "admin" ? [admin(), organization()] : []
+}
+
 export function initAuth(options: {
   baseUrl: string
   secret: string | undefined
+  surface: "public" | "admin"
   extraPlugins?: BetterAuthPlugin[]
   trustedOrigins?: string[]
 }): ReturnType<typeof betterAuth> {
@@ -87,7 +77,6 @@ export function initAuth(options: {
     hasAuthSecret: Boolean(options.secret),
     trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
     hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
-    resendApiKeyPreview: maskSecretPrefix(process.env.RESEND_API_KEY),
   })
 
   const config: BetterAuthOptions = {
@@ -120,8 +109,7 @@ export function initAuth(options: {
 
     plugins: [
       jwt(),
-      admin(),
-      organization(),
+      ...createAuthSurfacePlugins(options.surface),
       emailOTP({
         async sendVerificationOTP({ email, otp }) {
           const client = getResend()

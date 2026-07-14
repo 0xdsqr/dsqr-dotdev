@@ -1,6 +1,6 @@
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server"
 
-import type { AppRouter } from "./root"
+import type { PublicAppRouter } from "./root"
 
 /**
  * Inference helpers for input types
@@ -8,7 +8,7 @@ import type { AppRouter } from "./root"
  * type PostByIdInput = RouterInputs['post']['byId']
  *      ^? { id: number }
  */
-type RouterInputs = inferRouterInputs<AppRouter>
+type RouterInputs = inferRouterInputs<PublicAppRouter>
 
 /**
  * Inference helpers for output types
@@ -16,9 +16,9 @@ type RouterInputs = inferRouterInputs<AppRouter>
  * type AllPostsOutput = RouterOutputs['post']['all']
  *      ^? Post[]
  */
-type RouterOutputs = inferRouterOutputs<AppRouter>
+type RouterOutputs = inferRouterOutputs<PublicAppRouter>
 
-export { getPostImage } from "./lib/s3"
-export { type AppRouter, appRouter } from "./root"
+export { getPublishedPostImage } from "./lib/s3"
+export { type PublicAppRouter, publicAppRouter } from "./root"
 export { createTRPCContext } from "./trpc"
 export type { RouterInputs, RouterOutputs }

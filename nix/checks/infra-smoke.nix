@@ -13,6 +13,7 @@ import ./workspace-command.nix ({
     ;
   name = "dsqr-dotdev-infra-smoke";
   command = ''
+    npm run test:infra-security
     npm run haven -- outputs >/dev/null
   '';
 })

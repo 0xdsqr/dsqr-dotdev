@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@dsqr-dotdev/api"
+import type { AdminRouterOutputs } from "@dsqr-dotdev/api/admin"
 import { Badge } from "@dsqr-dotdev/react/components/ui/badge"
 import { BlogPostViewer } from "@dsqr-dotdev/react/components/blog-post-viewer"
 import { Button } from "@dsqr-dotdev/react/components/ui/button"
@@ -80,9 +80,9 @@ import { getDotdevBaseUrl } from "../lib/runtime-url"
 import { trpcClient } from "../lib/trpc"
 
 type SectionId = "dashboard" | "posts" | "users" | "subscribers"
-type AdminPost = RouterOutputs["post"]["adminAll"][number]
-type AdminUser = RouterOutputs["auth"]["adminUsers"][number]
-type AdminSubscriber = RouterOutputs["email"]["adminSubscribers"][number]
+type AdminPost = AdminRouterOutputs["post"]["adminAll"][number]
+type AdminUser = AdminRouterOutputs["auth"]["adminUsers"][number]
+type AdminSubscriber = AdminRouterOutputs["email"]["adminSubscribers"][number]
 
 type PostEditorState = {
   title: string
@@ -177,7 +177,6 @@ function StudioPage() {
     void trpcClient.post.content
       .query({
         postId: selectedPost.id,
-        filePath: selectedPost.filePath ?? undefined,
       })
       .then((result) => {
         if (!result.success || cancelled) {
@@ -580,20 +579,6 @@ function StudioPage() {
             {row.original.unsubscribedAt
               ? formatDistanceToNow(new Date(row.original.unsubscribedAt), { addSuffix: true })
               : "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "unsubscribeToken",
-        header: ({ column }) => (
-          <TableHeaderButton
-            label="token"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {row.original.unsubscribeToken.slice(0, 10)}...
           </span>
         ),
       },

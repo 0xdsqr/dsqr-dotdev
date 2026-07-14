@@ -1,4 +1,4 @@
-import type { AppRouter } from "@dsqr-dotdev/api"
+import type { AdminAppRouter } from "@dsqr-dotdev/api/admin"
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
 import type { QueryClient } from "@tanstack/react-query"
@@ -8,7 +8,7 @@ import appCss from "../styles.css?url"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
-  trpc: TRPCOptionsProxy<AppRouter>
+  trpc: TRPCOptionsProxy<AdminAppRouter>
 }>()({
   head: () => ({
     meta: [

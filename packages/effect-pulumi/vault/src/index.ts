@@ -37,7 +37,7 @@ export type VaultSecretPathInventory = Readonly<Record<string, VaultSecretPathSp
 
 export type VaultExternalSecretsPolicyConfig = {
   readonly name: string
-  readonly readPrefixes: readonly string[]
+  readonly readPaths: readonly string[]
 }
 
 export type VaultHumanAdminPolicyConfig = {
@@ -57,7 +57,7 @@ export type VaultFoundationArgs = {
   readonly kv: VaultKvMountConfig
   readonly secretPaths: VaultSecretPathInventory
   readonly humanAdminPolicy: VaultHumanAdminPolicyConfig
-  readonly externalSecretsPolicy: VaultExternalSecretsPolicyConfig
+  readonly externalSecretsPolicies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
   readonly audit: VaultAuditConfig
 }
 
@@ -68,7 +68,7 @@ export function loadVaultConnectionConfigEffect(
     readonly config?: PulumiConfigReader<pulumi.Output<string>> | undefined
     readonly env?: Environment | undefined
   } = {},
-): Effect.Effect<VaultConnectionConfig, MissingPulumiConfigError> {
+): Effect.Effect<VaultConnectionConfig, MissingPulumiConfigError | PulumiResourceConfigError> {
   const env = source.env ?? process.env
   const config = source.config ?? new pulumi.Config("vault")
 
@@ -78,13 +78,18 @@ export function loadVaultConnectionConfigEffect(
       "Vault address",
       ["pulumi config set vault:address <url>", "VAULT_ADDR", "VAULT_ADDRESS"],
     )
+    const caCertFile = firstDefined(config.get("caCertFile"), env.VAULT_CACERT)
+    const skipTlsVerify = config.getBoolean("skipTlsVerify") ?? env.VAULT_SKIP_VERIFY === "true"
+    const allowInsecureLocalDev =
+      config.getBoolean("allowInsecureLocalDev") ?? env.VAULT_ALLOW_INSECURE_LOCAL_DEV === "true"
+
+    yield* validateVaultTransportEffect(address, skipTlsVerify, allowInsecureLocalDev)
+
     const token = yield* requireConfigValueEffect(
       config.getSecret("token") ?? (env.VAULT_TOKEN ? pulumi.secret(env.VAULT_TOKEN) : undefined),
       "Vault token",
       ["pulumi config set --secret vault:token <token>", "VAULT_TOKEN"],
     )
-    const caCertFile = firstDefined(config.get("caCertFile"), env.VAULT_CACERT)
-    const skipTlsVerify = config.getBoolean("skipTlsVerify") ?? env.VAULT_SKIP_VERIFY === "true"
 
     return {
       address,
@@ -93,6 +98,64 @@ export function loadVaultConnectionConfigEffect(
       ...(skipTlsVerify ? { skipTlsVerify } : undefined),
     } satisfies VaultConnectionConfig
   })
+}
+
+function isLoopbackHostname(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
+}
+
+export function validateVaultTransportEffect(
+  address: string,
+  skipTlsVerify: boolean,
+  allowInsecureLocalDev: boolean,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.try({
+    try: () => new URL(address),
+    catch: () =>
+      new PulumiResourceConfigError({
+        resource: "vault:connection",
+        message: "Vault address must be a valid absolute URL.",
+      }),
+  }).pipe(
+    Effect.flatMap((url) => {
+      if (url.username || url.password) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "vault:connection",
+            message: "Vault address must not contain embedded credentials.",
+          }),
+        )
+      }
+
+      const isExplicitLocalDev = allowInsecureLocalDev && isLoopbackHostname(url.hostname)
+
+      if (url.protocol === "http:" && isExplicitLocalDev) {
+        return Effect.void
+      }
+
+      if (url.protocol !== "https:") {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "vault:connection",
+            message:
+              "Vault requires HTTPS. Plain HTTP is allowed only for an explicitly enabled loopback-only disposable development server.",
+          }),
+        )
+      }
+
+      if (skipTlsVerify && !isExplicitLocalDev) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "vault:connection",
+            message:
+              "Vault TLS verification cannot be disabled outside an explicitly enabled loopback-only disposable development server.",
+          }),
+        )
+      }
+
+      return Effect.void
+    }),
+  )
 }
 
 export function loadVaultConnectionConfig(
@@ -141,13 +204,85 @@ function relativeKvPathEffect(
   )
 }
 
-function kvV2ReadRules(mountPath: string, prefixes: readonly string[]) {
-  return prefixes
-    .flatMap((prefix) => [
-      policyRule(`${mountPath}/data/${prefix}`, ["read"]),
-      policyRule(`${mountPath}/metadata/${prefix}`, ["read", "list"]),
+export function renderKvV2ReadPolicy(mountPath: string, paths: readonly string[]) {
+  return paths
+    .flatMap((path) => [
+      policyRule(`${mountPath}/data/${path}`, ["read"]),
+      policyRule(`${mountPath}/metadata/${path}`, ["read"]),
     ])
     .join("\n\n")
+}
+
+export function validateExternalSecretsPoliciesEffect(
+  policies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>,
+  secretPaths: VaultSecretPathInventory,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.gen(function* () {
+    const knownPaths = new Set(Object.values(secretPaths).map((spec) => spec.path))
+    const assignedPaths = new Set<string>()
+    const policyNames = new Set<string>()
+
+    if (Object.keys(policies).length === 0) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource: "vault:external-secrets-policies",
+          message: "At least one scoped External Secrets policy is required.",
+        }),
+      )
+    }
+
+    for (const [key, policy] of Object.entries(policies)) {
+      if (!policy.name || policyNames.has(policy.name)) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `vault:external-secrets-policy:${key}`,
+            message: `External Secrets policy "${key}" must have a unique non-empty Vault policy name.`,
+          }),
+        )
+      }
+      policyNames.add(policy.name)
+
+      if (policy.readPaths.length === 0) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource: `vault:external-secrets-policy:${key}`,
+            message: `External Secrets policy "${key}" must contain at least one exact secret path.`,
+          }),
+        )
+      }
+
+      for (const path of policy.readPaths) {
+        if (path.includes("*") || path.includes("+")) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource: `vault:external-secrets-policy:${key}`,
+              message: `External Secrets policy "${key}" cannot use wildcard path "${path}".`,
+            }),
+          )
+        }
+
+        if (!knownPaths.has(path)) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource: `vault:external-secrets-policy:${key}`,
+              message: `External Secrets policy "${key}" references unknown secret path "${path}".`,
+            }),
+          )
+        }
+
+        if (assignedPaths.has(path)) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource: `vault:external-secrets-policy:${key}`,
+              message: `Secret path "${path}" is assigned to more than one External Secrets policy.`,
+            }),
+          )
+        }
+
+        assignedPaths.add(path)
+      }
+    }
+  })
 }
 
 function humanAdminPolicy(kvMountPath: string) {
@@ -187,6 +322,8 @@ function secretPathOutputEffect(
 
 export function createVaultFoundationEffect(args: VaultFoundationArgs) {
   return Effect.gen(function* () {
+    yield* validateExternalSecretsPoliciesEffect(args.externalSecretsPolicies, args.secretPaths)
+
     const secretPathEntries = yield* Effect.forEach(
       Object.entries(args.secretPaths),
       ([key, spec]) =>
@@ -237,13 +374,19 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       { provider, dependsOn: [kvMount] },
     )
 
-    const externalSecretsPolicy = new vault.Policy(
-      "external-secrets-policy",
-      {
-        name: args.externalSecretsPolicy.name,
-        policy: kvV2ReadRules(args.kv.path, args.externalSecretsPolicy.readPrefixes),
-      },
-      { provider, dependsOn: [kvMount] },
+    const externalSecretsPolicies = Object.fromEntries(
+      Object.entries(args.externalSecretsPolicies).map(([key, policy]) => {
+        const resource = new vault.Policy(
+          `external-secrets-policy-${key}`,
+          {
+            name: policy.name,
+            policy: renderKvV2ReadPolicy(args.kv.path, policy.readPaths),
+          },
+          { provider, dependsOn: [kvMount] },
+        )
+
+        return [key, resource.name]
+      }),
     )
 
     const audit = args.audit.enabled
@@ -268,7 +411,7 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       },
       policies: {
         humanAdmin: adminPolicy.name,
-        externalSecrets: externalSecretsPolicy.name,
+        externalSecrets: externalSecretsPolicies,
       },
       audit: {
         path: audit?.path,

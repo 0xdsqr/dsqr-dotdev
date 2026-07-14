@@ -2,6 +2,7 @@ import * as pulumi from "@pulumi/pulumi"
 import {
   Effect,
   firstDefined,
+  PulumiResourceConfigError,
   requireConfigValueEffect,
   runSyncOrThrow,
   type PulumiConfigReader,
@@ -53,7 +54,65 @@ function readApiToken(config: PulumiConfigReader<pulumi.Input<string>>, env: Nod
 function readInsecure(config: PulumiConfigReader<pulumi.Input<string>>, env: NodeJS.ProcessEnv) {
   return (
     config.getBoolean("insecure") ??
-    (firstDefined(env.PROXMOX_INSECURE_SKIP_VERIFY, env.PROXMOX_VE_INSECURE) ?? "true") === "true"
+    (firstDefined(env.PROXMOX_INSECURE_SKIP_VERIFY, env.PROXMOX_VE_INSECURE) ?? "false") === "true"
+  )
+}
+
+function isLoopbackHostname(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
+}
+
+export function validateProxmoxTransportEffect(
+  endpoint: string,
+  insecure: boolean,
+  allowInsecureLocalDev: boolean,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.try({
+    try: () => new URL(endpoint),
+    catch: () =>
+      new PulumiResourceConfigError({
+        resource: "proxmox:connection",
+        message: "Proxmox endpoint must be a valid absolute URL.",
+      }),
+  }).pipe(
+    Effect.flatMap((url) => {
+      if (url.username || url.password) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "proxmox:connection",
+            message: "Proxmox endpoint must not contain embedded credentials.",
+          }),
+        )
+      }
+
+      const isExplicitLocalDev = allowInsecureLocalDev && isLoopbackHostname(url.hostname)
+
+      if (url.protocol === "http:" && isExplicitLocalDev) {
+        return Effect.void
+      }
+
+      if (url.protocol !== "https:") {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "proxmox:connection",
+            message:
+              "Proxmox requires HTTPS. Plain HTTP is allowed only for an explicitly enabled loopback-only disposable development server.",
+          }),
+        )
+      }
+
+      if (insecure && !isExplicitLocalDev) {
+        return Effect.fail(
+          new PulumiResourceConfigError({
+            resource: "proxmox:connection",
+            message:
+              "Proxmox TLS verification cannot be disabled outside an explicitly enabled loopback-only disposable development server.",
+          }),
+        )
+      }
+
+      return Effect.void
+    }),
   )
 }
 
@@ -73,11 +132,16 @@ export function loadProxmoxConnectionConfigEffect(source: ProxmoxConnectionConfi
       "PROXMOX_VE_API_TOKEN",
       "PROXMOX_USER + PROXMOX_TOKEN_ID + PROXMOX_TOKEN_SECRET",
     ])
+    const insecure = readInsecure(config, env)
+    const allowInsecureLocalDev =
+      config.getBoolean("allowInsecureLocalDev") ?? env.PROXMOX_ALLOW_INSECURE_LOCAL_DEV === "true"
+
+    yield* validateProxmoxTransportEffect(endpoint, insecure, allowInsecureLocalDev)
 
     return {
       endpoint,
       apiToken,
-      insecure: readInsecure(config, env),
+      insecure,
     } satisfies ProxmoxConnectionConfig
   })
 }

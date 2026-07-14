@@ -1,4 +1,4 @@
-import { getPostImage } from "@dsqr-dotdev/api"
+import { getPublishedPostImage } from "@dsqr-dotdev/api"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/api/posts/$slug/images/$fileName")({
@@ -11,7 +11,15 @@ export const Route = createFileRoute("/api/posts/$slug/images/$fileName")({
           return new Response("Not found", { status: 404 })
         }
 
-        const result = await getPostImage(slug, fileName)
+        let result: Awaited<ReturnType<typeof getPublishedPostImage>>
+        try {
+          result = await getPublishedPostImage(slug, fileName)
+        } catch {
+          return new Response("Unable to load image", {
+            status: 500,
+            headers: { "Cache-Control": "no-store" },
+          })
+        }
 
         if (!result) {
           return new Response("Not found", { status: 404 })
@@ -20,7 +28,7 @@ export const Route = createFileRoute("/api/posts/$slug/images/$fileName")({
         return new Response(result.body, {
           headers: {
             "Content-Type": result.contentType,
-            "Cache-Control": "public, max-age=31536000, immutable",
+            "Cache-Control": "public, max-age=300, must-revalidate",
             // Defense in depth: never let the browser sniff a different type, and
             // sandbox the response so an uploaded SVG cannot execute script.
             "X-Content-Type-Options": "nosniff",

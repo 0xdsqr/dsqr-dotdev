@@ -53,33 +53,40 @@ function App() {
           <section className="flex items-start justify-center pt-20 sm:pt-28 lg:pt-32">
             <div className="max-w-3xl text-center">
               <div className="mx-auto inline-flex flex-col items-center gap-3">
-                <p className="font-mono text-sm font-semibold uppercase tracking-[0.36em] text-primary">
+                <h1 className="font-mono text-sm font-semibold uppercase tracking-[0.36em] text-primary">
                   DSQR Labs LLC
-                </p>
+                </h1>
                 <div className="h-px w-36 bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
               </div>
 
               <div className="mx-auto mt-7 max-w-2xl text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
                 <p>
-                  DSQR Labs LLC is a one-person studio. Everyone seems to have one &mdash; so why
-                  not me? David is a{" "}
+                  DSQR Labs LLC is David&apos;s one-person consulting studio. He enjoys working
+                  across{" "}
                   <span className="border-b-2 border-dotted border-primary/55 text-foreground">
-                    systems, infrastructure, and backend
+                    systems, infrastructure, performance, and backend engineering,
                   </span>{" "}
-                  engineer, and the work is simple: help people ship the systems, infrastructure,
-                  and software they need &mdash; the kind that stays{" "}
+                  but the goal is simple: help people ship the systems, infrastructure, and software
+                  they need &mdash; the kind that stays{" "}
                   <span className="border-b-2 border-dotted border-chart-1/55 text-foreground">
                     understandable, operable, and boring in the best way.
-                  </span>
-                </p>
-
-                <p className="mt-8">
+                  </span>{" "}
                   <a
                     href="https://dsqr.dev/about"
-                    className="text-xs uppercase tracking-[0.18em] text-muted-foreground/80 underline decoration-dotted decoration-from-font underline-offset-4 transition-colors hover:text-primary"
+                    className="whitespace-nowrap text-xs uppercase tracking-[0.14em] text-muted-foreground/80 underline decoration-dotted decoration-from-font underline-offset-4 transition-colors hover:text-primary"
                   >
-                    More about David &rarr;
+                    more about David &rarr;
                   </a>
+                </p>
+                <p className="mt-6">
+                  Want to get in touch? Email me at{" "}
+                  <a
+                    href="mailto:me@dsqr.dev"
+                    className="text-foreground underline decoration-dotted decoration-2 underline-offset-4 transition-colors hover:text-primary"
+                  >
+                    me@dsqr.dev
+                  </a>
+                  .
                 </p>
               </div>
             </div>

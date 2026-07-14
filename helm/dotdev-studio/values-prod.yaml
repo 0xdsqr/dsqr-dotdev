@@ -28,11 +28,8 @@ networkPolicy:
       - namespaceSelector:
           matchLabels:
             kubernetes.io/metadata.name: traefik
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: dsqr
   egress:
-    allowAll: true
+    allowAll: false
 ingress:
   enabled: true
   className: traefik

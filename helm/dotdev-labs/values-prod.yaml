@@ -15,7 +15,6 @@ env:
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
   OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
   OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=dsqr
-existingSecret: dotdev-labs-secrets
 networkPolicy:
   enabled: true
   ingress:
@@ -23,11 +22,8 @@ networkPolicy:
       - namespaceSelector:
           matchLabels:
             kubernetes.io/metadata.name: traefik
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: dsqr
   egress:
-    allowAll: true
+    allowAll: false
 ingress:
   enabled: true
   className: traefik

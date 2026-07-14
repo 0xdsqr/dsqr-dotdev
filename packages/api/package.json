@@ -12,6 +12,10 @@
       "import": "./dist/esm/auth/index.js",
       "types": "./dist/types/auth/index.d.ts"
     },
+    "./admin": {
+      "import": "./dist/esm/api/admin.js",
+      "types": "./dist/types/api/admin.d.ts"
+    },
     "./api": {
       "import": "./dist/esm/api/index.js",
       "types": "./dist/types/api/index.d.ts"

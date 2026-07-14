@@ -57,7 +57,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "dsqr.dev",
-        noTlsVerify: true,
+        originServerName: "dsqr.dev",
       },
     },
     {
@@ -67,7 +67,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "studio.dsqr.dev",
-        noTlsVerify: true,
+        originServerName: "studio.dsqr.dev",
       },
     },
     {
@@ -77,7 +77,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "labs.dsqr.dev",
-        noTlsVerify: true,
+        originServerName: "labs.dsqr.dev",
       },
     },
     {
@@ -87,7 +87,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "fidara.io",
-        noTlsVerify: true,
+        originServerName: "fidara.io",
       },
     },
     {
@@ -97,23 +97,29 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "api.fidara.io",
-        noTlsVerify: true,
+        originServerName: "api.fidara.io",
       },
     },
     {
       hostname: "api-hoo.dsqr.dev",
       zone: "dsqrDev",
       service: "http://10.10.30.108:9321",
+      insecureOriginReason:
+        "The Hoo backend does not yet terminate TLS; keep this exception isolated to the tunnel VLAN while migrating it.",
     },
     {
       hostname: "s3.dsqr.dev",
       zone: "dsqrDev",
       service: "http://10.10.30.107:9000",
+      insecureOriginReason:
+        "The private object-store endpoint does not yet terminate TLS; keep this tunnel-only exception until origin TLS is enabled.",
     },
     {
       hostname: "cdn.dsqr.dev",
       zone: "dsqrDev",
       service: "http://10.10.30.107:9000",
+      insecureOriginReason:
+        "The private object-store endpoint does not yet terminate TLS; keep this tunnel-only exception until origin TLS is enabled.",
     },
     {
       hostname: "tastingswithtay.com",
@@ -122,7 +128,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "tastingswithtay.com",
-        noTlsVerify: true,
+        originServerName: "tastingswithtay.com",
       },
     },
     {
@@ -132,7 +138,7 @@ export const cloudflare = {
       originRequest: {
         http2Origin: false,
         httpHostHeader: "admin.tastingswithtay.com",
-        noTlsVerify: true,
+        originServerName: "admin.tastingswithtay.com",
       },
     },
   ],

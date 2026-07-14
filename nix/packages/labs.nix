@@ -2,6 +2,7 @@
   lib,
   stdenvNoCC,
   nodejs_24,
+  nodejs-slim_24,
   nodeModules,
 }:
 import ./app.nix ({
@@ -9,6 +10,7 @@ import ./app.nix ({
     lib
     stdenvNoCC
     nodejs_24
+    nodejs-slim_24
     nodeModules
     ;
   appName = "labs";

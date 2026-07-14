@@ -1,10 +1,12 @@
 name: Check
 
 on:
+  merge_group:
   pull_request:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,7 +17,8 @@ env:
 jobs:
   detect-changes:
     name: Detect app changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     outputs:
       dotdev: ${{ steps.apps.outputs.dotdev }}
       studio: ${{ steps.apps.outputs.studio }}
@@ -24,9 +27,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect affected apps
         id: apps
@@ -45,34 +49,40 @@ jobs:
             labs=true
           }
 
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            base="${{ github.event.pull_request.base.sha }}"
+          event_name="${{ github.event_name }}"
+          if [[ "$event_name" == "workflow_dispatch" || "$event_name" == "merge_group" ]]; then
+            shared=true
+            mark_all
           else
-            base="${{ github.event.before }}"
-            if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
-              base="$(git rev-parse HEAD^)"
+            if [[ "$event_name" == "pull_request" ]]; then
+              base="${{ github.event.pull_request.base.sha }}"
+            else
+              base="${{ github.event.before }}"
+              if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+                base="$(git rev-parse HEAD^)"
+              fi
             fi
+
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+
+              case "$path" in
+                apps/dotdev/**|nix/packages/dotdev.nix)
+                  dotdev=true
+                  ;;
+                apps/studio/**|nix/packages/studio.nix)
+                  studio=true
+                  ;;
+                apps/labs/**|nix/packages/labs.nix)
+                  labs=true
+                  ;;
+                .github/workflows/ci.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
+                  shared=true
+                  mark_all
+                  ;;
+              esac
+            done < <(git diff --name-only "$base" HEAD)
           fi
-
-          while IFS= read -r path; do
-            [[ -z "$path" ]] && continue
-
-            case "$path" in
-              apps/dotdev/**|nix/packages/dotdev.nix)
-                dotdev=true
-                ;;
-              apps/studio/**|nix/packages/studio.nix)
-                studio=true
-                ;;
-              apps/labs/**|nix/packages/labs.nix)
-                labs=true
-                ;;
-              .github/workflows/ci.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
-                shared=true
-                mark_all
-                ;;
-            esac
-          done < <(git diff --name-only "$base" HEAD)
 
           {
             echo "dotdev=$dotdev"
@@ -83,14 +93,17 @@ jobs:
 
   base-checks:
     name: Base checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Run base checks
         run: |
           nix build \
@@ -98,12 +111,17 @@ jobs:
             .#checks.x86_64-linux.lint \
             .#checks.x86_64-linux.helm \
             .#checks.x86_64-linux.gitops \
+            .#checks.x86_64-linux.image-runtime \
             .#checks.x86_64-linux.infra-smoke \
-            .#checks.x86_64-linux.typecheck-infra-native
+            .#checks.x86_64-linux.runtime-smoke \
+            .#checks.x86_64-linux.security-boundaries \
+            .#checks.x86_64-linux.typecheck-infra-native \
+            .#checks.x86_64-linux.workflows
 
   typecheck-shared:
     name: Typecheck workspace
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     needs:
       - detect-changes
       - base-checks
@@ -111,17 +129,20 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Run workspace typecheck
         run: nix build .#checks.x86_64-linux.typecheck
 
   typecheck-dotdev:
     name: Typecheck dotdev-web
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     needs:
       - detect-changes
       - base-checks
@@ -129,17 +150,20 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Run dotdev typecheck
-        run: nix develop -c npm run typecheck -w dotdev
+        run: nix build .#checks.x86_64-linux.typecheck
 
   typecheck-studio:
     name: Typecheck dotdev-studio
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     needs:
       - detect-changes
       - base-checks
@@ -147,17 +171,20 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Run studio typecheck
-        run: nix develop -c npm run typecheck -w studio
+        run: nix build .#checks.x86_64-linux.typecheck
 
   typecheck-labs:
     name: Typecheck dotdev-labs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     needs:
       - detect-changes
       - base-checks
@@ -165,17 +192,20 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Run labs typecheck
-        run: nix develop -c npm run typecheck -w labs
+        run: nix build .#checks.x86_64-linux.typecheck
 
   build-dotdev:
     name: Build dotdev-web image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - detect-changes
       - base-checks
@@ -183,16 +213,23 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Build dotdev image
         run: nix build .#dotdevImage --out-link result-dotdev
+      - name: Smoke-test hardened dotdev container
+        run: |
+          docker load < result-dotdev
+          bash nix/lib/smoke-oci-image.sh dotdev-web:latest 3020
 
   build-studio:
     name: Build dotdev-studio image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - detect-changes
       - base-checks
@@ -200,16 +237,23 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Build studio image
         run: nix build .#studioImage --out-link result-studio
+      - name: Smoke-test hardened studio container
+        run: |
+          docker load < result-studio
+          bash nix/lib/smoke-oci-image.sh dotdev-studio:latest 3021
 
   build-labs:
     name: Build dotdev-labs image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - detect-changes
       - base-checks
@@ -217,9 +261,43 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
       - name: Build labs image
         run: nix build .#labsImage --out-link result-labs
+      - name: Smoke-test hardened labs container
+        run: |
+          docker load < result-labs
+          bash nix/lib/smoke-oci-image.sh dotdev-labs:latest 3022
+
+  required:
+    name: Required checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    if: ${{ always() }}
+    needs:
+      - detect-changes
+      - base-checks
+      - typecheck-shared
+      - typecheck-dotdev
+      - typecheck-studio
+      - typecheck-labs
+      - build-dotdev
+      - build-studio
+      - build-labs
+
+    steps:
+      - name: Require every applicable check
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          if [[ " $RESULTS " == *" failure "* || " $RESULTS " == *" cancelled "* ]]; then
+            echo "One or more required jobs failed or were cancelled: $RESULTS" >&2
+            exit 1
+          fi
+          echo "All applicable checks completed successfully: $RESULTS"

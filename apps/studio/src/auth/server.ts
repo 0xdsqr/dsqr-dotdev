@@ -5,6 +5,7 @@ import { getPublicBaseUrl, getTrustedOrigins } from "../lib/runtime-url"
 export const auth = initAuth({
   baseUrl: getPublicBaseUrl(),
   secret: process.env.AUTH_SECRET,
+  surface: "admin",
   extraPlugins: [tanstackStartCookies()],
   trustedOrigins: getTrustedOrigins(),
 })

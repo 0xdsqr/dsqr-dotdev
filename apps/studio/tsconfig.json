@@ -19,6 +19,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@dsqr-dotdev/api": ["../../packages/api/src/index.ts"],
+      "@dsqr-dotdev/api/admin": ["../../packages/api/src/api/admin.ts"],
       "@dsqr-dotdev/api/auth": ["../../packages/api/src/auth/index.ts"],
       "@dsqr-dotdev/database/*": ["../../packages/database/src/*"]
     }
