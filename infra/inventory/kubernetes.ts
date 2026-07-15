@@ -12,7 +12,12 @@ import {
 const namespaces = {
   argocd: {
     name: "argocd",
+    annotations: {
+      "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+    },
     labels: {
+      "app.kubernetes.io/managed-by": "pulumi",
+      "app.kubernetes.io/part-of": "dsqr-gitops",
       "homelab.dev/owner": "platform",
       "homelab.dev/tier": "gitops",
       "pod-security.kubernetes.io/enforce": "baseline",
@@ -90,7 +95,7 @@ const helmReleases = {
     namespace: "argocd",
     chart: "argo-cd",
     repository: "https://argoproj.github.io/argo-helm",
-    version: "9.5.2",
+    version: "9.5.22",
     valueYamlFiles: [
       "../../gitops/manifests/argocd/base/values-common.yaml",
       "../../gitops/manifests/argocd/overlays/homelab/values-overrides.yaml",
