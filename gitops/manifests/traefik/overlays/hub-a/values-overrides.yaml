@@ -1,0 +1,4 @@
+# hub-a Helm value overrides for Traefik.
+# Use this for cluster-specific service, ingress, dashboard, node placement, or pod metadata settings.
+# Leave empty when hub-a uses the base values unchanged.
+{}

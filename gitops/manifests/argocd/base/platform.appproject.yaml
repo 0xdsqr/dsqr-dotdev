@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: dsqr-gitops
     homelab.dev/tier: platform
 spec:
-  description: Homelab cluster platform add-ons
+  description: hub-a cluster platform add-ons
   sourceRepos:
     - https://github.com/0xdsqr/dsqr-dotdev.git
     - https://argoproj.github.io/argo-helm

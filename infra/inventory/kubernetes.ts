@@ -18,6 +18,9 @@ const namespaces = {
     labels: {
       "app.kubernetes.io/managed-by": "pulumi",
       "app.kubernetes.io/part-of": "dsqr-gitops",
+      "homelab.dev/cluster": "hub-a",
+      "homelab.dev/environment": "homelab",
+      "homelab.dev/physical-host": "dell-r730xd",
       "homelab.dev/owner": "platform",
       "homelab.dev/tier": "gitops",
       "pod-security.kubernetes.io/enforce": "baseline",
@@ -35,7 +38,7 @@ const helmReleases = {
     version: "1.19.1",
     valueYamlFiles: [
       "../../gitops/manifests/cilium/base/values-common.yaml",
-      "../../gitops/manifests/cilium/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/cilium/overlays/hub-a/values-overrides.yaml",
     ],
   },
   metallb: {
@@ -47,7 +50,7 @@ const helmReleases = {
     version: "0.15.3",
     valueYamlFiles: [
       "../../gitops/manifests/metallb/base/values-common.yaml",
-      "../../gitops/manifests/metallb/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/metallb/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -60,7 +63,7 @@ const helmReleases = {
     version: "39.0.7",
     valueYamlFiles: [
       "../../gitops/manifests/traefik/base/values-common.yaml",
-      "../../gitops/manifests/traefik/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/traefik/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -73,7 +76,7 @@ const helmReleases = {
     version: "7.2.2",
     valueYamlFiles: [
       "../../gitops/manifests/kube-state-metrics/base/values-common.yaml",
-      "../../gitops/manifests/kube-state-metrics/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/kube-state-metrics/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -86,7 +89,7 @@ const helmReleases = {
     version: "3.5.3",
     valueYamlFiles: [
       "../../gitops/manifests/k8s-monitoring/base/values-common.yaml",
-      "../../gitops/manifests/k8s-monitoring/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/k8s-monitoring/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["cilium", "kubeStateMetrics"],
   },
@@ -98,7 +101,7 @@ const helmReleases = {
     version: "9.5.22",
     valueYamlFiles: [
       "../../gitops/manifests/argocd/base/values-common.yaml",
-      "../../gitops/manifests/argocd/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml",
     ],
   },
   dotdevWeb: {
@@ -108,7 +111,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-web/values-prod.yaml",
-      "../../gitops/manifests/dotdev-web/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/dotdev-web/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],
   },
@@ -119,7 +122,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-studio/values-prod.yaml",
-      "../../gitops/manifests/dotdev-studio/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/dotdev-studio/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],
   },
@@ -130,7 +133,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-labs/values-prod.yaml",
-      "../../gitops/manifests/dotdev-labs/overlays/homelab/values-overrides.yaml",
+      "../../gitops/manifests/dotdev-labs/overlays/hub-a/values-overrides.yaml",
     ],
     dependsOn: ["traefik"],
   },

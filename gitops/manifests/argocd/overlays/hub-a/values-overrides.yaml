@@ -1,0 +1,8 @@
+# Homelab-only Helm value overrides for Argo CD.
+# Use this for settings that should differ from the shared base on this cluster.
+global:
+  domain: argocd.home.arpa
+
+server:
+  ingress:
+    hostname: argocd.home.arpa

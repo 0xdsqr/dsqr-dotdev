@@ -50,7 +50,7 @@ stdenvNoCC.mkDerivation {
           helm template "$(basename "$chart")" "$chart" \
             --namespace default \
             -f "$chart/values-prod.yaml" \
-            -f "gitops/manifests/$(basename "$chart")/overlays/homelab/values-overrides.yaml" \
+            -f "gitops/manifests/$(basename "$chart")/overlays/hub-a/values-overrides.yaml" \
             >"$rendered"
 
           deployment='select(.kind == "Deployment")'

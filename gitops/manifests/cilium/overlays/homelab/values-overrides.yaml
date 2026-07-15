@@ -1,4 +1,9 @@
 # Homelab-only Helm value overrides for Cilium.
 # Use this for cluster-specific API server, networking, rollout, node placement, or pod metadata settings.
-# Leave empty when homelab uses the base values unchanged.
-{}
+# Transitional values retained until the Argo root ownership handoff completes.
+cluster:
+  name: main
+  id: 1
+
+k8sServiceHost: 10.10.30.104
+k8sServicePort: 6443

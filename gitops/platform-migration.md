@@ -1,6 +1,6 @@
 # Kubernetes Platform Ownership
 
-This is the post-migration runbook for Kubernetes ownership in the homelab cluster.
+This is the post-migration runbook for Kubernetes ownership in the `hub-a` cluster in the homelab environment.
 
 ## Final State
 
@@ -10,7 +10,7 @@ Pulumi/Haven is now the bootstrap layer. Argo CD owns Kubernetes day-2 desired s
 | --- | --- | --- |
 | `argocd` namespace | Pulumi/Haven | Bootstrap root of trust. |
 | `argocd` Helm release | Pulumi/Haven | Leave here unless deliberately moving Argo to self-management. |
-| `homelab` root Application | Argo CD | App-of-apps entrypoint for cluster GitOps. |
+| `hub-a` root Application | Argo CD | App-of-apps entrypoint for cluster GitOps. |
 | `cilium` | Argo CD | Manual sync. This is the CNI and kube-proxy replacement. |
 | `metallb` | Argo CD | Manual sync. |
 | `metallb-config` | Argo CD | Owns `IPAddressPool/ingress` and `L2Advertisement/ingress`. |
@@ -44,6 +44,17 @@ Those remaining resources are the intentional Argo CD bootstrap layer.
 - Put raw cluster resources in Kustomize manifests, not hidden inside Helm values.
 - Runtime secret values are not committed. Create them with `kubectl` or the relevant secret controller.
 
+## Cluster Identity
+
+`hub-a` is the stable logical identity for this Kubernetes cluster. Cilium uses cluster name `hub-a` with numeric cluster ID `1`, and Grafana k8s-monitoring emits new telemetry with cluster name `hub-a`. The homelab name remains the site/environment identity for secrets, network location, DNS, and metadata keys.
+
+Do not rename the Pulumi project/stack, existing VM/node hostnames, or the live kubeadm control-plane configuration as part of this migration. Those are separate stateful migrations. Changing Cilium's cluster name requires a controlled Cilium sync followed by workload restarts so Cilium can recreate workload security identities.
+
+The root Argo Application rename must use the one-time ownership handoff in
+`gitops/README.md`. Keep the legacy tree available until `hub-a` owns every child
+Application, then orphan-delete the old root and remove the legacy tree in a
+follow-up commit.
+
 ## Fresh Cluster Bootstrap
 
 Normal Argo CD pods need cluster networking. On a brand new cluster, seed Cilium before relying on Argo CD.
@@ -58,7 +69,7 @@ helm upgrade --install cilium cilium/cilium \
   --namespace kube-system \
   --version 1.19.1 \
   -f gitops/manifests/cilium/base/values-common.yaml \
-  -f gitops/manifests/cilium/overlays/homelab/values-overrides.yaml
+  -f gitops/manifests/cilium/overlays/hub-a/values-overrides.yaml
 kubectl -n kube-system rollout status ds/cilium --timeout=10m
 kubectl -n kube-system rollout status deploy/cilium-operator --timeout=10m
 ```
@@ -69,7 +80,7 @@ Then bootstrap Argo CD with Pulumi/Haven:
 cd ~/dsqr-dotdev
 npm run infra:k8s:preview
 npm run infra:k8s:up
-kubectl apply -k gitops/clusters/homelab/bootstrap
+kubectl apply -k gitops/clusters/hub-a/bootstrap
 ```
 
 After the root app appears, sync Argo-owned platform apps from Argo CD. The Cilium Application should adopt the seeded release rather than reinstalling a different configuration.
@@ -121,14 +132,14 @@ kubectl -n argocd get application <app-name> -w
 Root app sync:
 
 ```sh
-kubectl -n argocd annotate application homelab argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd patch application homelab --type merge -p '{"operation":{"sync":{"prune":true,"syncOptions":["ApplyOutOfSyncOnly=true","PruneLast=true"]}}}'
-kubectl -n argocd get application homelab -w
+kubectl -n argocd annotate application hub-a argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd patch application hub-a --type merge -p '{"operation":{"sync":{"prune":true,"syncOptions":["ApplyOutOfSyncOnly=true","PruneLast=true"]}}}'
+kubectl -n argocd get application hub-a -w
 ```
 
 ## Argo CD Ownership Boundary
 
-Argo CD does not have a self-management Application in Git. Pulumi owns both the live `argocd` namespace and Helm release, while Argo owns the root `homelab` Application and every day-2 workload below it.
+Argo CD does not have a self-management Application in Git. Pulumi owns both the live `argocd` namespace and Helm release, while Argo owns the root `hub-a` Application and every day-2 workload below it.
 
 Keep this split. It gives the cluster a simple recovery chain:
 

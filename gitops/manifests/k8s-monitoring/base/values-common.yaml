@@ -1,8 +1,6 @@
 # Shared default Helm values for the Grafana k8s-monitoring chart.
 # Keep values here when every cluster should use the same observability pipeline defaults.
-# Put cluster-specific destinations, collectors, or pod settings in overlays/<cluster>/values-overrides.yaml.
-cluster:
-  name: main
+# Put cluster-specific identity, destinations, collectors, or pod settings in overlays/<cluster>/values-overrides.yaml.
 
 destinations:
   - name: loki

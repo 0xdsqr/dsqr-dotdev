@@ -1,0 +1,4 @@
+# hub-a Helm value overrides for dotdev-labs.
+# Use this for cluster-specific hosts, resources, pod labels/annotations, node placement, or integration endpoints.
+# Leave empty when hub-a uses the base values unchanged.
+{}

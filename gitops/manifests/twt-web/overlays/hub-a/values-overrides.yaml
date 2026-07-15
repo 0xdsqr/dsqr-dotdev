@@ -1,0 +1,4 @@
+# hub-a Helm value overrides for twt-web.
+# Use this for cluster-specific external chart values that should layer on top of Tastings with Tay's own values-prod.yaml.
+# Leave empty when hub-a uses the external chart values unchanged.
+existingSecret: twt-web-secrets

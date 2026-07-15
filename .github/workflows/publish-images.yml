@@ -84,9 +84,9 @@ jobs:
                 gitops/templates/applications/dotdev-web.yaml.tmpl|\
                 gitops/templates/applications/dotdev-studio.yaml.tmpl|\
                 gitops/templates/applications/dotdev-labs.yaml.tmpl|\
-                gitops/clusters/homelab/applications/dotdev-web.yaml|\
-                gitops/clusters/homelab/applications/dotdev-studio.yaml|\
-                gitops/clusters/homelab/applications/dotdev-labs.yaml)
+                gitops/clusters/hub-a/applications/dotdev-web.yaml|\
+                gitops/clusters/hub-a/applications/dotdev-studio.yaml|\
+                gitops/clusters/hub-a/applications/dotdev-labs.yaml)
                   ;;
                 *)
                   automation_only=false
@@ -292,9 +292,9 @@ jobs:
           git add gitops/templates/applications/dotdev-web.yaml.tmpl
           git add gitops/templates/applications/dotdev-studio.yaml.tmpl
           git add gitops/templates/applications/dotdev-labs.yaml.tmpl
-          git add gitops/clusters/homelab/applications/dotdev-web.yaml
-          git add gitops/clusters/homelab/applications/dotdev-studio.yaml
-          git add gitops/clusters/homelab/applications/dotdev-labs.yaml
+          git add gitops/clusters/hub-a/applications/dotdev-web.yaml
+          git add gitops/clusters/hub-a/applications/dotdev-studio.yaml
+          git add gitops/clusters/hub-a/applications/dotdev-labs.yaml
           git commit -m "chore(gitops): pin dsqr images to sha-${TARGET_SHA}"
           git push --set-upstream origin "$branch"
           gh pr create \

@@ -39,7 +39,7 @@
     "format": "nix fmt",
     "format:check": "sh -c 'nix build .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).format --no-link'",
     "gitops:generate": "nix run .#gitopsGenerateApplications --",
-    "gitops:render": "kubectl kustomize gitops/clusters/homelab/bootstrap && kubectl kustomize gitops/clusters/homelab/applications",
+    "gitops:render": "kubectl kustomize gitops/clusters/hub-a/bootstrap && kubectl kustomize gitops/clusters/hub-a/applications",
     "gitops:tag-images": "nix run .#gitopsTagImages --",
     "haven": "node packages/haven/src/cli.ts",
     "lint": "oxlint . --deny-warnings",

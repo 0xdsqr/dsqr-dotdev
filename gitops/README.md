@@ -1,6 +1,14 @@
 # GitOps Runbook
 
-This directory is the desired-state layer for the homelab cluster after Cilium and Argo CD bootstrap.
+This directory is the desired-state layer for the `hub-a` Kubernetes cluster in the homelab environment after Cilium and Argo CD bootstrap.
+
+## Naming Model
+
+- `hub-a` is the Kubernetes cluster identity used by GitOps, Cilium, and cluster telemetry.
+- `homelab` is the physical site and environment used by Vault paths, Tailscale tags, private DNS, and the `homelab.dev/*` metadata namespace.
+- `dell-r730xd` identifies the current physical host beneath the cluster; it is metadata rather than part of the durable cluster name.
+- The Pulumi project/stack remains `kubernetes/dev`; changing it would be a state migration, not a cluster rename.
+- Existing `k8s-main-*` VM and node names remain stable because renaming them would require a separate host, certificate, and Pulumi state migration.
 
 ## Ownership
 
@@ -15,12 +23,12 @@ The Argo CD values under `gitops/manifests/argocd/` remain Pulumi Helm inputs; t
 
 ## Argo Flow
 
-1. `gitops/clusters/homelab/bootstrap/argocd-app-of-apps.yaml` creates the root `homelab` Argo application.
-2. `homelab` points at `gitops/clusters/homelab/applications`.
-3. `gitops/clusters/homelab/applications/kustomization.yaml` loads the Argo CD AppProjects, lists one generated Argo `Application` file per Argo-owned app, and owns cluster-local Application patches.
+1. `gitops/clusters/hub-a/bootstrap/argocd-app-of-apps.yaml` creates the root `hub-a` Argo application.
+2. `hub-a` points at `gitops/clusters/hub-a/applications`.
+3. `gitops/clusters/hub-a/applications/kustomization.yaml` loads the Argo CD AppProjects, lists one generated Argo `Application` file per Argo-owned app, and owns cluster-local Application patches.
 4. `gitops/templates/applications/<app>.yaml.tmpl` is the source template for each generated Application.
-5. Helm-backed generated apps point at a chart plus values from `gitops/manifests/<app>/base` and `gitops/manifests/<app>/overlays/homelab`.
-6. Kustomize-backed generated apps point at raw manifests under `gitops/manifests/<app>/overlays/homelab`.
+5. Helm-backed generated apps point at a chart plus values from `gitops/manifests/<app>/base` and `gitops/manifests/<app>/overlays/hub-a`.
+6. Kustomize-backed generated apps point at raw manifests under `gitops/manifests/<app>/overlays/hub-a`.
 7. Apps that target app/service namespaces use Argo CD `CreateNamespace=true` and `managedNamespaceMetadata` to declare namespace labels. Apps targeting existing core namespaces such as `kube-system` do not request namespace creation.
 
 Private app repos need an Argo repository secret in `argocd`. Private GHCR images need an image pull secret in the app namespace. See `gitops/platform-migration.md` for the final platform ownership model and bootstrap notes.
@@ -50,7 +58,7 @@ The live Vault auth and secret-seeding commands are intentionally kept out of th
 
 The app list should show separate app cards. That is intentional.
 
-- `homelab` is the root bootstrap app. It owns the cluster GitOps composition.
+- `hub-a` is the root bootstrap app. It owns the cluster GitOps composition.
 - Platform and control apps stay separate: `cilium`, `metallb`, `metallb-config`, `traefik`, `metrics-server`, `kube-state-metrics`, and `k8s-monitoring`.
 - Product apps stay separate: `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `fidara`, `twt-web`, and `twt-admin`.
 
@@ -58,13 +66,13 @@ Argo CD itself does not have an Application card. Pulumi/Haven owns its namespac
 
 Do not collapse those generated apps into one large Argo app just to make the card view shorter. Separate apps give cleaner health, sync, rollback, and failure boundaries. Use Argo labels such as `app.kubernetes.io/part-of`, `homelab.dev/owner`, and `homelab.dev/tier` to filter/group the view.
 
-Generated Application files are disposable. Change the app's template under `gitops/templates/applications/` or add/remove app resources in `gitops/clusters/homelab/applications/kustomization.yaml`, then run:
+Generated Application files are disposable. Change the app's template under `gitops/templates/applications/` or add/remove app resources in `gitops/clusters/hub-a/applications/kustomization.yaml`, then run:
 
 ```sh
 npm run gitops:generate
 ```
 
-For cluster-local Application overrides, patch the generated Application from `gitops/clusters/homelab/applications/kustomization.yaml`; the file contains a commented JSON6902 example. For Helm values, prefer `gitops/manifests/<app>/overlays/homelab/values-overrides.yaml`.
+For cluster-local Application overrides, patch the generated Application from `gitops/clusters/hub-a/applications/kustomization.yaml`; the file contains a commented JSON6902 example. For Helm values, prefer `gitops/manifests/<app>/overlays/hub-a/values-overrides.yaml`.
 
 ## Chart Ownership
 
@@ -77,36 +85,85 @@ For cluster-local Application overrides, patch the generated Application from `g
 
 ```sh
 npm run gitops:generate
-kubectl kustomize gitops/clusters/homelab/bootstrap
-kubectl kustomize gitops/clusters/homelab/applications
-kubectl kustomize gitops/manifests/metrics-server/overlays/homelab
-kubectl kustomize gitops/manifests/metallb/overlays/homelab
+kubectl kustomize gitops/clusters/hub-a/bootstrap
+kubectl kustomize gitops/clusters/hub-a/applications
+kubectl kustomize gitops/manifests/metrics-server/overlays/hub-a
+kubectl kustomize gitops/manifests/metallb/overlays/hub-a
 ```
 
 ## Root Sync Commands
 
+### One-time `homelab` to `hub-a` handoff
+
+An Argo `Application` name is immutable identity, so this rename is an ownership
+handoff rather than an in-place update. The transition commit intentionally keeps
+both cluster trees. Complete these steps before removing the legacy tree:
+
+1. Disable reconciliation on the old root before creating the new root:
+
+   ```sh
+   kubectl -n argocd patch application homelab --type merge \
+     -p '{"spec":{"syncPolicy":{"automated":{"enabled":false,"prune":false,"selfHeal":false}}}}'
+   kubectl -n argocd get application homelab \
+     -o jsonpath='{.spec.syncPolicy.automated.enabled}{"\n"}'
+   ```
+
+2. Apply and sync the new root:
+
+   ```sh
+   kubectl apply -k gitops/clusters/hub-a/bootstrap
+   kubectl -n argocd annotate application hub-a \
+     argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd patch application hub-a --type merge \
+     -p '{"operation":{"sync":{"prune":true,"syncOptions":["ApplyOutOfSyncOnly=true","PruneLast=true"]}}}'
+   kubectl -n argocd get application hub-a -w
+   ```
+
+3. Confirm every child is healthy and its tracking ID starts with `hub-a:`:
+
+   ```sh
+   kubectl -n argocd get applications
+   kubectl -n argocd get applications -o json | jq -r '
+     .items[]
+     | select(.metadata.name != "homelab" and .metadata.name != "hub-a")
+     | [.metadata.name, (.metadata.annotations["argocd.argoproj.io/tracking-id"] // "MISSING")]
+     | @tsv'
+   ```
+
+4. Only after ownership and health are verified, orphan-delete the old root:
+
+   ```sh
+   kubectl -n argocd delete application homelab --cascade=orphan
+   ```
+
+5. Remove `gitops/clusters/homelab` and the legacy `overlays/homelab`
+   directories in a follow-up commit.
+
+Do not sync Cilium during the root handoff. Its logical cluster-name change is a
+separate maintenance action that requires restarting every workload afterward.
+
 Create or repair the root app:
 
 ```sh
-kubectl apply -k gitops/clusters/homelab/bootstrap
+kubectl apply -k gitops/clusters/hub-a/bootstrap
 ```
 
 Ask Argo to reread Git:
 
 ```sh
-kubectl -n argocd annotate application homelab argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd annotate application hub-a argocd.argoproj.io/refresh=hard --overwrite
 ```
 
 Force a root sync and prune:
 
 ```sh
-kubectl -n argocd patch application homelab --type merge -p '{"operation":{"sync":{"prune":true}}}'
+kubectl -n argocd patch application hub-a --type merge -p '{"operation":{"sync":{"prune":true}}}'
 ```
 
 Watch root state:
 
 ```sh
-kubectl -n argocd get application homelab -w
+kubectl -n argocd get application hub-a -w
 ```
 
 ## App Check Commands
@@ -182,14 +239,14 @@ Live migration commands are intentionally kept out of the public runbook.
 3. Add production Helm values with immutable `sha-<commit>` image tags under the owning app chart's `values-prod.yaml`.
 4. Add the service repo to the right AppProject `sourceRepos` if it is outside `dsqr-dotdev`.
 5. Add the namespace to the AppProject destinations.
-6. Add GitOps-owned resources under `gitops/manifests/<app>/base` and homelab overrides under `gitops/manifests/<app>/overlays/homelab`.
+6. Add GitOps-owned resources under `gitops/manifests/<app>/base` and `hub-a` overrides under `gitops/manifests/<app>/overlays/hub-a`.
 7. Add `gitops/templates/applications/<app>.yaml.tmpl`.
-8. Add `<app>.yaml` to `gitops/clusters/homelab/applications/kustomization.yaml`.
+8. Add `<app>.yaml` to `gitops/clusters/hub-a/applications/kustomization.yaml`.
 9. Run `npm run gitops:generate`.
 10. Add Cloudflare DNS and tunnel routes in `infra/inventory/cloudflare.ts`.
 11. Run Cloudflare preview and apply.
 12. Create Argo repo credentials if the source repo is private.
-13. Sync `homelab` so the generated app appears.
+13. Sync `hub-a` so the generated app appears.
 14. Create the namespace runtime secrets and `ghcr-creds`.
 15. Sync the generated app and verify pods, ingress, and health endpoints.
 

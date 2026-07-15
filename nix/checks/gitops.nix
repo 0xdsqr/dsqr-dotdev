@@ -28,8 +28,8 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
 
     gitops-generate-applications --check
-    kubectl kustomize gitops/clusters/homelab/bootstrap >/dev/null
-    kubectl kustomize gitops/clusters/homelab/applications >/dev/null
+    kubectl kustomize gitops/clusters/hub-a/bootstrap >/dev/null
+    kubectl kustomize gitops/clusters/hub-a/applications >/dev/null
 
     mkdir -p "$out"
     touch "$out/gitops-check"

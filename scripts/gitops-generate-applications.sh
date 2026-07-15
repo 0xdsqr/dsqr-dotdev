@@ -108,6 +108,7 @@ generate() {
 
       export APPLICATION_NAME="$app_name"
       export ARGOCD_NAMESPACE="$argocd_namespace"
+      export CLUSTER_NAME="$cluster"
       export DESTINATION_SERVER="$destination_server"
       export VALUES_REPO_URL="$values_repo_url"
       export VALUES_TARGET_REVISION="$values_target_revision"
