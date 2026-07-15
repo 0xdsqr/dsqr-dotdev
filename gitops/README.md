@@ -93,55 +93,6 @@ kubectl kustomize gitops/manifests/metallb/overlays/hub-a
 
 ## Root Sync Commands
 
-### One-time `homelab` to `hub-a` handoff
-
-An Argo `Application` name is immutable identity, so this rename is an ownership
-handoff rather than an in-place update. The transition commit intentionally keeps
-both cluster trees. Complete these steps before removing the legacy tree:
-
-1. Disable reconciliation on the old root before creating the new root:
-
-   ```sh
-   kubectl -n argocd patch application homelab --type merge \
-     -p '{"spec":{"syncPolicy":{"automated":{"enabled":false,"prune":false,"selfHeal":false}}}}'
-   kubectl -n argocd get application homelab \
-     -o jsonpath='{.spec.syncPolicy.automated.enabled}{"\n"}'
-   ```
-
-2. Apply and sync the new root:
-
-   ```sh
-   kubectl apply -k gitops/clusters/hub-a/bootstrap
-   kubectl -n argocd annotate application hub-a \
-     argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd patch application hub-a --type merge \
-     -p '{"operation":{"sync":{"prune":true,"syncOptions":["ApplyOutOfSyncOnly=true","PruneLast=true"]}}}'
-   kubectl -n argocd get application hub-a -w
-   ```
-
-3. Confirm every child is healthy and its tracking ID starts with `hub-a:`:
-
-   ```sh
-   kubectl -n argocd get applications
-   kubectl -n argocd get applications -o json | jq -r '
-     .items[]
-     | select(.metadata.name != "homelab" and .metadata.name != "hub-a")
-     | [.metadata.name, (.metadata.annotations["argocd.argoproj.io/tracking-id"] // "MISSING")]
-     | @tsv'
-   ```
-
-4. Only after ownership and health are verified, orphan-delete the old root:
-
-   ```sh
-   kubectl -n argocd delete application homelab --cascade=orphan
-   ```
-
-5. Remove `gitops/clusters/homelab` and the legacy `overlays/homelab`
-   directories in a follow-up commit.
-
-Do not sync Cilium during the root handoff. Its logical cluster-name change is a
-separate maintenance action that requires restarting every workload afterward.
-
 Create or repair the root app:
 
 ```sh

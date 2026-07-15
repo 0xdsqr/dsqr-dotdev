@@ -1,4 +1,0 @@
-# Homelab-only Helm value overrides for kube-state-metrics.
-# Use this for cluster-specific scrape, ServiceMonitor, resource, node placement, or pod metadata settings.
-# Leave empty when homelab uses the base values unchanged.
-{}

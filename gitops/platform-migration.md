@@ -50,10 +50,8 @@ Those remaining resources are the intentional Argo CD bootstrap layer.
 
 Do not rename the Pulumi project/stack, existing VM/node hostnames, or the live kubeadm control-plane configuration as part of this migration. Those are separate stateful migrations. Changing Cilium's cluster name requires a controlled Cilium sync followed by workload restarts so Cilium can recreate workload security identities.
 
-The root Argo Application rename must use the one-time ownership handoff in
-`gitops/README.md`. Keep the legacy tree available until `hub-a` owns every child
-Application, then orphan-delete the old root and remove the legacy tree in a
-follow-up commit.
+The legacy `homelab` root has been replaced by `hub-a`; do not recreate the old
+root or its overlays.
 
 ## Fresh Cluster Bootstrap
 
