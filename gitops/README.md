@@ -4,18 +4,20 @@ This directory is the desired-state layer for the homelab cluster after Cilium a
 
 ## Ownership
 
-- Pulumi/Haven owns out-of-cluster infrastructure and the Argo CD bootstrap release.
+- Pulumi/Haven owns out-of-cluster infrastructure, the `argocd` namespace, and the Argo CD bootstrap release.
 - A new cluster needs Cilium seeded before normal Argo CD pods can run.
 - Argo CD owns Kubernetes desired state from `gitops/` after bootstrap, including Cilium day-2 reconciliation.
 - Helm owns application manifests.
 - Kustomize composes the GitOps control layer.
 - Runtime secret values are not committed. Create them with `kubectl`.
 
+The Argo CD values under `gitops/manifests/argocd/` remain Pulumi Helm inputs; they do not define an Argo CD self-management Application.
+
 ## Argo Flow
 
 1. `gitops/clusters/homelab/bootstrap/argocd-app-of-apps.yaml` creates the root `homelab` Argo application.
 2. `homelab` points at `gitops/clusters/homelab/applications`.
-3. `gitops/clusters/homelab/applications/kustomization.yaml` loads Argo CD control manifests, lists one generated Argo `Application` file per app, and owns cluster-local Application patches.
+3. `gitops/clusters/homelab/applications/kustomization.yaml` loads the Argo CD AppProjects, lists one generated Argo `Application` file per Argo-owned app, and owns cluster-local Application patches.
 4. `gitops/templates/applications/<app>.yaml.tmpl` is the source template for each generated Application.
 5. Helm-backed generated apps point at a chart plus values from `gitops/manifests/<app>/base` and `gitops/manifests/<app>/overlays/homelab`.
 6. Kustomize-backed generated apps point at raw manifests under `gitops/manifests/<app>/overlays/homelab`.
@@ -49,8 +51,10 @@ The live Vault auth and secret-seeding commands are intentionally kept out of th
 The app list should show separate app cards. That is intentional.
 
 - `homelab` is the root bootstrap app. It owns the cluster GitOps composition.
-- Platform and control apps stay separate: `argocd`, `cilium`, `metallb`, `metallb-config`, `traefik`, `metrics-server`, `kube-state-metrics`, and `k8s-monitoring`.
+- Platform and control apps stay separate: `cilium`, `metallb`, `metallb-config`, `traefik`, `metrics-server`, `kube-state-metrics`, and `k8s-monitoring`.
 - Product apps stay separate: `dotdev-web`, `dotdev-studio`, `dotdev-labs`, `fidara`, `twt-web`, and `twt-admin`.
+
+Argo CD itself does not have an Application card. Pulumi/Haven owns its namespace and Helm release so the GitOps controller does not reconcile or delete its own installation.
 
 Do not collapse those generated apps into one large Argo app just to make the card view shorter. Separate apps give cleaner health, sync, rollback, and failure boundaries. Use Argo labels such as `app.kubernetes.io/part-of`, `homelab.dev/owner`, and `homelab.dev/tier` to filter/group the view.
 

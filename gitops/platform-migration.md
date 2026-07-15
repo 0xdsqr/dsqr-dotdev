@@ -126,11 +126,11 @@ kubectl -n argocd patch application homelab --type merge -p '{"operation":{"sync
 kubectl -n argocd get application homelab -w
 ```
 
-## Optional Argo CD Self-Management
+## Argo CD Ownership Boundary
 
-Argo CD has a self-management Application in Git, but Pulumi still owns the live Argo CD release.
+Argo CD does not have a self-management Application in Git. Pulumi owns both the live `argocd` namespace and Helm release, while Argo owns the root `homelab` Application and every day-2 workload below it.
 
-Recommendation: leave it this way. It gives the cluster a simple recovery chain:
+Keep this split. It gives the cluster a simple recovery chain:
 
 1. Seed Cilium.
 2. Pulumi installs or repairs Argo CD.
@@ -138,10 +138,11 @@ Recommendation: leave it this way. It gives the cluster a simple recovery chain:
 
 If moving Argo CD to self-management later, do it as its own maintenance task:
 
-1. Sync the `argocd` Application and verify all Argo pods stay healthy.
-2. Remove the Pulumi `argoCd` release from state without deleting live resources.
-3. Remove the `argocd` namespace and `argoCd` release from Pulumi inventory.
-4. Run `npm run infra:k8s:preview` and confirm Pulumi has no Kubernetes resources left to delete.
+1. Add a manual-sync `argocd` Application that exactly matches the Pulumi-managed chart and values.
+2. Sync it once and verify all Argo pods stay healthy.
+3. Remove the Pulumi `argoCd` release and namespace from state without deleting live resources.
+4. Remove both resources from Pulumi inventory.
+5. Run `npm run infra:k8s:preview` and confirm Pulumi has no Kubernetes resources left to delete before enabling self-management.
 
 ## Rollback Shape
 
@@ -153,4 +154,3 @@ To intentionally return a component to Pulumi ownership:
 2. Re-enable only that component in `infra/inventory/kubernetes.ts`.
 3. Run `npm run infra:k8s:preview`.
 4. Run `npm run infra:k8s:up` only if the preview recreates the expected Pulumi state without deleting unrelated resources.
-
