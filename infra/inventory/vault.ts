@@ -229,6 +229,7 @@ const legacyExternalSecretsPolicy = {
 const externalSecretsKubernetesRole = {
   backend: "kubernetes",
   roleName: "hub-a-external-secrets",
+  tokenSelfPolicyName: "hub-a-external-secrets-token-self",
   boundServiceAccountNames: ["external-secrets"],
   boundServiceAccountNamespaces: ["external-secrets"],
   tokenTtlSeconds: 1_200,

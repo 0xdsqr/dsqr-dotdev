@@ -16,6 +16,7 @@ import {
   renderKvV2ReadPolicy,
   renderKvV2PrefixReadPolicy,
   renderPkiIssuePolicy,
+  renderTokenSelfPolicy,
   validateExternalSecretsPoliciesEffect,
   validateExternalSecretsKubernetesRoleEffect,
   validatePkiIssuerInventoryEffect,
@@ -199,6 +200,15 @@ test("hub-a External Secrets auth overlaps the protected legacy policy during mi
   Effect.runSync(validateExternalSecretsKubernetesRoleEffect(vault.externalSecretsKubernetesRole))
 
   assert.equal(vault.externalSecretsKubernetesRole.roleName, "hub-a-external-secrets")
+  assert.equal(
+    vault.externalSecretsKubernetesRole.tokenSelfPolicyName,
+    "hub-a-external-secrets-token-self",
+  )
+  const tokenSelfPolicy = renderTokenSelfPolicy()
+  assert.match(tokenSelfPolicy, /auth\/token\/lookup-self[\s\S]*\["read"\]/)
+  assert.match(tokenSelfPolicy, /auth\/token\/renew-self[\s\S]*\["update"\]/)
+  assert.match(tokenSelfPolicy, /auth\/token\/revoke-self[\s\S]*\["update"\]/)
+  assert.doesNotMatch(tokenSelfPolicy, /"create"|"delete"|"list"|"sudo"/)
   assert.deepEqual(vault.externalSecretsKubernetesRole.boundServiceAccountNames, [
     "external-secrets",
   ])

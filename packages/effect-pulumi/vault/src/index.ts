@@ -48,6 +48,7 @@ export type VaultLegacyExternalSecretsPolicyConfig = {
 export type VaultKubernetesAuthRoleConfig = {
   readonly backend: string
   readonly roleName: string
+  readonly tokenSelfPolicyName: string
   readonly boundServiceAccountNames: readonly string[]
   readonly boundServiceAccountNamespaces: readonly string[]
   readonly tokenTtlSeconds: number
@@ -269,6 +270,14 @@ export function renderKvV2PrefixReadPolicy(mountPath: string, prefixes: readonly
 
 export function renderPkiIssuePolicy(backend: string, roleName: string) {
   return policyRule(`${backend}/issue/${roleName}`, ["create", "update"])
+}
+
+export function renderTokenSelfPolicy() {
+  return [
+    policyRule("auth/token/lookup-self", ["read"]),
+    policyRule("auth/token/renew-self", ["update"]),
+    policyRule("auth/token/revoke-self", ["update"]),
+  ].join("\n\n")
 }
 
 function isDnsName(value: string) {
@@ -512,11 +521,12 @@ export function validateExternalSecretsKubernetesRoleEffect(
       )
     }
 
-    if (!role.roleName) {
+    if (!role.roleName || !role.tokenSelfPolicyName) {
       return yield* Effect.fail(
         new PulumiResourceConfigError({
           resource,
-          message: "External Secrets must use a non-empty Kubernetes auth role name.",
+          message:
+            "External Secrets must use non-empty Kubernetes auth role and token-self policy names.",
         }),
       )
     }
@@ -672,6 +682,15 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       { provider, dependsOn: [kvMount], protect: true },
     )
 
+    const externalSecretsTokenSelfPolicy = new vault.Policy(
+      "external-secrets-token-self-policy",
+      {
+        name: args.externalSecretsKubernetesRole.tokenSelfPolicyName,
+        policy: renderTokenSelfPolicy(),
+      },
+      { provider, protect: true },
+    )
+
     const externalSecretsKubernetesRole = new vault.kubernetes.AuthBackendRole(
       "external-secrets-kubernetes-role-hub-a",
       {
@@ -685,7 +704,10 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
         tokenMaxTtl: args.externalSecretsKubernetesRole.tokenMaxTtlSeconds,
         tokenNoDefaultPolicy: true,
         tokenNumUses: 0,
-        tokenPolicies: Object.values(externalSecretsPolicies),
+        tokenPolicies: [
+          ...Object.values(externalSecretsPolicies),
+          externalSecretsTokenSelfPolicy.name,
+        ],
         tokenTtl: args.externalSecretsKubernetesRole.tokenTtlSeconds,
         tokenType: "service",
       },
@@ -808,6 +830,7 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
         humanAdmin: adminPolicy.name,
         legacyExternalSecrets: legacyExternalSecretsPolicy.name,
         externalSecrets: externalSecretsPolicies,
+        externalSecretsTokenSelf: externalSecretsTokenSelfPolicy.name,
         pkiIssuers: Object.fromEntries(
           Object.entries(pkiIssuers).map(([key, issuer]) => [key, issuer.policyName]),
         ),
