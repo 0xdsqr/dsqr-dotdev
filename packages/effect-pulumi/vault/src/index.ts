@@ -44,6 +44,33 @@ export type VaultHumanAdminPolicyConfig = {
   readonly name: string
 }
 
+export type VaultPkiAppRoleConfig = {
+  readonly backend: string
+  readonly roleName: string
+  readonly secretIdBoundCidrs: readonly string[]
+  readonly tokenBoundCidrs: readonly string[]
+  readonly secretIdNumUses: number
+  readonly secretIdTtlSeconds: number
+  readonly tokenTtlSeconds: number
+  readonly tokenMaxTtlSeconds: number
+  readonly tokenExplicitMaxTtlSeconds: number
+  readonly tokenNumUses: number
+}
+
+export type VaultPkiIssuerConfig = {
+  readonly backend: string
+  readonly roleName: string
+  readonly policyName: string
+  readonly allowedDomains: readonly string[]
+  readonly allowWildcardCertificates: boolean
+  readonly generateLease: boolean
+  readonly ttlHours: number
+  readonly maxTtlHours: number
+  readonly appRole?: VaultPkiAppRoleConfig | undefined
+}
+
+export type VaultPkiIssuerInventory = Readonly<Record<string, VaultPkiIssuerConfig>>
+
 export type VaultAuditConfig = {
   readonly enabled: boolean
   readonly type: "file"
@@ -58,6 +85,7 @@ export type VaultFoundationArgs = {
   readonly secretPaths: VaultSecretPathInventory
   readonly humanAdminPolicy: VaultHumanAdminPolicyConfig
   readonly externalSecretsPolicies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
+  readonly pkiIssuers: VaultPkiIssuerInventory
   readonly audit: VaultAuditConfig
 }
 
@@ -213,6 +241,164 @@ export function renderKvV2ReadPolicy(mountPath: string, paths: readonly string[]
     .join("\n\n")
 }
 
+export function renderPkiIssuePolicy(backend: string, roleName: string) {
+  return policyRule(`${backend}/issue/${roleName}`, ["create", "update"])
+}
+
+function isDnsName(value: string) {
+  if (value.length === 0 || value.length > 253 || value !== value.toLowerCase()) {
+    return false
+  }
+
+  const labels = value.split(".")
+
+  return (
+    labels.length >= 2 &&
+    labels.every(
+      (label) =>
+        label.length > 0 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label),
+    )
+  )
+}
+
+function isBroadCidr(value: string) {
+  return value === "0.0.0.0/0" || value === "::/0"
+}
+
+export function validatePkiIssuerInventoryEffect(
+  issuers: VaultPkiIssuerInventory,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.gen(function* () {
+    const roleNames = new Set<string>()
+    const policyNames = new Set<string>()
+    const appRoleNames = new Set<string>()
+
+    if (Object.keys(issuers).length === 0) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource: "vault:pki-issuers",
+          message: "At least one scoped PKI issuer role is required.",
+        }),
+      )
+    }
+
+    for (const [key, issuer] of Object.entries(issuers)) {
+      const resource = `vault:pki-issuer:${key}`
+
+      if (!issuer.backend || issuer.backend.includes("/") || issuer.backend.includes("*")) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must use a normalized backend mount name.`,
+          }),
+        )
+      }
+
+      if (!issuer.roleName || roleNames.has(issuer.roleName)) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must have a unique non-empty role name.`,
+          }),
+        )
+      }
+      roleNames.add(issuer.roleName)
+
+      if (!issuer.policyName || policyNames.has(issuer.policyName)) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must have a unique non-empty policy name.`,
+          }),
+        )
+      }
+      policyNames.add(issuer.policyName)
+
+      if (
+        issuer.allowedDomains.length === 0 ||
+        new Set(issuer.allowedDomains).size !== issuer.allowedDomains.length ||
+        issuer.allowedDomains.some((domain) => domain.includes("*") || !isDnsName(domain))
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must use a non-empty, unique list of exact lowercase DNS names.`,
+          }),
+        )
+      }
+
+      if (
+        !Number.isInteger(issuer.ttlHours) ||
+        !Number.isInteger(issuer.maxTtlHours) ||
+        issuer.ttlHours <= 0 ||
+        issuer.maxTtlHours < issuer.ttlHours ||
+        issuer.maxTtlHours > 720
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" certificate TTLs must be positive whole hours, ordered, and capped at 30 days.`,
+          }),
+        )
+      }
+
+      const appRole = issuer.appRole
+      if (!appRole) {
+        continue
+      }
+
+      if (!appRole.backend || appRole.backend.includes("/") || appRole.backend.includes("*")) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must use a normalized AppRole backend mount name.`,
+          }),
+        )
+      }
+
+      if (!appRole.roleName || appRoleNames.has(appRole.roleName)) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" must have a unique non-empty AppRole name.`,
+          }),
+        )
+      }
+      appRoleNames.add(appRole.roleName)
+
+      if (
+        appRole.secretIdBoundCidrs.length === 0 ||
+        appRole.tokenBoundCidrs.length === 0 ||
+        appRole.secretIdBoundCidrs.some(isBroadCidr) ||
+        appRole.tokenBoundCidrs.some(isBroadCidr)
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" AppRole must be bound to explicit, non-global source CIDRs.`,
+          }),
+        )
+      }
+
+      if (
+        appRole.secretIdNumUses < 0 ||
+        appRole.secretIdTtlSeconds < 0 ||
+        appRole.tokenTtlSeconds <= 0 ||
+        appRole.tokenMaxTtlSeconds < appRole.tokenTtlSeconds ||
+        appRole.tokenExplicitMaxTtlSeconds < appRole.tokenMaxTtlSeconds ||
+        appRole.tokenNumUses < 0
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" AppRole has unsafe or internally inconsistent token lifetimes.`,
+          }),
+        )
+      }
+    }
+  })
+}
+
 export function validateExternalSecretsPoliciesEffect(
   policies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>,
   secretPaths: VaultSecretPathInventory,
@@ -323,6 +509,7 @@ function secretPathOutputEffect(
 export function createVaultFoundationEffect(args: VaultFoundationArgs) {
   return Effect.gen(function* () {
     yield* validateExternalSecretsPoliciesEffect(args.externalSecretsPolicies, args.secretPaths)
+    yield* validatePkiIssuerInventoryEffect(args.pkiIssuers)
 
     const secretPathEntries = yield* Effect.forEach(
       Object.entries(args.secretPaths),
@@ -341,6 +528,7 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
         : undefined),
     })
     const resourceOptions: pulumi.CustomResourceOptions = { provider }
+    const protectedPkiResourceOptions: pulumi.CustomResourceOptions = { provider, protect: true }
 
     const kvMount = new vault.Mount(
       "kv",
@@ -389,6 +577,95 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       }),
     )
 
+    const pkiIssuers = Object.fromEntries(
+      Object.entries(args.pkiIssuers).map(([key, issuer]) => {
+        const role = new vault.pkisecret.SecretBackendRole(
+          `pki-issuer-role-${key}`,
+          {
+            backend: issuer.backend,
+            name: issuer.roleName,
+            allowedDomains: [...issuer.allowedDomains],
+            allowAnyName: false,
+            allowBareDomains: true,
+            allowGlobDomains: false,
+            allowIpSans: false,
+            allowLocalhost: false,
+            allowSubdomains: false,
+            allowWildcardCertificates: issuer.allowWildcardCertificates,
+            allowedDomainsTemplate: false,
+            clientFlag: false,
+            cnValidations: ["hostname"],
+            codeSigningFlag: false,
+            emailProtectionFlag: false,
+            enforceHostnames: true,
+            extKeyUsages: ["ServerAuth"],
+            generateLease: issuer.generateLease,
+            issuerRef: "default",
+            keyBits: 2_048,
+            keyType: "rsa",
+            keyUsages: ["DigitalSignature", "KeyEncipherment"],
+            maxTtl: `${issuer.maxTtlHours}h`,
+            noStore: false,
+            noStoreMetadata: false,
+            notBeforeDuration: "30s",
+            requireCn: true,
+            serverFlag: true,
+            ttl: `${issuer.ttlHours}h`,
+          },
+          protectedPkiResourceOptions,
+        )
+
+        const policy = new vault.Policy(
+          `pki-issuer-policy-${key}`,
+          {
+            name: issuer.policyName,
+            policy: renderPkiIssuePolicy(issuer.backend, issuer.roleName),
+          },
+          { ...protectedPkiResourceOptions, dependsOn: [role] },
+        )
+
+        const appRole = issuer.appRole
+          ? new vault.approle.AuthBackendRole(
+              `pki-issuer-approle-${key}`,
+              {
+                backend: issuer.appRole.backend,
+                roleName: issuer.appRole.roleName,
+                bindSecretId: true,
+                localSecretIds: false,
+                secretIdBoundCidrs: [...issuer.appRole.secretIdBoundCidrs],
+                secretIdNumUses: issuer.appRole.secretIdNumUses,
+                secretIdTtl: issuer.appRole.secretIdTtlSeconds,
+                tokenBoundCidrs: [...issuer.appRole.tokenBoundCidrs],
+                tokenExplicitMaxTtl: issuer.appRole.tokenExplicitMaxTtlSeconds,
+                tokenMaxTtl: issuer.appRole.tokenMaxTtlSeconds,
+                tokenNoDefaultPolicy: true,
+                tokenNumUses: issuer.appRole.tokenNumUses,
+                tokenPolicies: [policy.name],
+                tokenTtl: issuer.appRole.tokenTtlSeconds,
+                tokenType: "batch",
+              },
+              { ...protectedPkiResourceOptions, dependsOn: [role, policy] },
+            )
+          : undefined
+
+        return [
+          key,
+          {
+            backend: role.backend,
+            roleName: role.name,
+            policyName: policy.name,
+            appRole: appRole
+              ? {
+                  backend: appRole.backend,
+                  roleName: appRole.roleName,
+                  roleId: appRole.roleId,
+                }
+              : undefined,
+          },
+        ]
+      }),
+    )
+
     const audit = args.audit.enabled
       ? new vault.Audit(
           "audit",
@@ -412,7 +689,11 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       policies: {
         humanAdmin: adminPolicy.name,
         externalSecrets: externalSecretsPolicies,
+        pkiIssuers: Object.fromEntries(
+          Object.entries(pkiIssuers).map(([key, issuer]) => [key, issuer.policyName]),
+        ),
       },
+      pkiIssuers,
       audit: {
         path: audit?.path,
         type: audit?.type,

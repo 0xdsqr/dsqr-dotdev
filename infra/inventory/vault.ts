@@ -3,6 +3,7 @@ import type {
   VaultExternalSecretsPolicyConfig,
   VaultHumanAdminPolicyConfig,
   VaultKvMountConfig,
+  VaultPkiIssuerInventory,
   VaultSecretPathInventory,
 } from "../../packages/effect-pulumi/vault/src/index.ts"
 
@@ -218,6 +219,96 @@ const externalSecretsPolicies = {
   },
 } satisfies Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
 
+const renewableAppRoleDefaults = {
+  backend: "approle",
+  secretIdNumUses: 0,
+  secretIdTtlSeconds: 0,
+  tokenTtlSeconds: 900,
+  tokenMaxTtlSeconds: 900,
+  tokenExplicitMaxTtlSeconds: 900,
+  tokenNumUses: 0,
+} as const
+
+const pkiIssuers = {
+  vaultListener: {
+    backend: "pki_int",
+    roleName: "vault-listener",
+    policyName: "homelab-pki-vault-listener",
+    allowedDomains: ["vault.service.home.arpa"],
+    allowWildcardCertificates: false,
+    generateLease: false,
+    ttlHours: 720,
+    maxTtlHours: 720,
+    appRole: {
+      ...renewableAppRoleDefaults,
+      roleName: "vault-listener-renewer",
+      secretIdBoundCidrs: ["127.0.0.1/32", "::1/128", "10.10.30.107/32"],
+      tokenBoundCidrs: ["127.0.0.1/32", "::1/128", "10.10.30.107/32"],
+    },
+  },
+  proxmoxListener: {
+    backend: "pki_int",
+    roleName: "proxmox-dell-r730xd-listener",
+    policyName: "homelab-pki-proxmox-dell-r730xd-listener",
+    allowedDomains: ["proxmox.dell-r730xd.home.arpa"],
+    allowWildcardCertificates: false,
+    generateLease: false,
+    ttlHours: 720,
+    maxTtlHours: 720,
+    appRole: {
+      ...renewableAppRoleDefaults,
+      roleName: "proxmox-dell-r730xd-listener-renewer",
+      secretIdBoundCidrs: ["10.10.10.109/32"],
+      tokenBoundCidrs: ["10.10.10.109/32"],
+    },
+  },
+  gatewayCaddy: {
+    backend: "pki_int",
+    roleName: "gateway-caddy-home-arpa",
+    policyName: "homelab-pki-gateway-caddy-home-arpa",
+    allowedDomains: [
+      "argocd.home.arpa",
+      "argocd.hub-a.home.arpa",
+      "exo.home.arpa",
+      "grafana.home.arpa",
+      "prometheus.home.arpa",
+      "rustfs.home.arpa",
+      "temporal.home.arpa",
+      "vault.home.arpa",
+    ],
+    allowWildcardCertificates: false,
+    generateLease: false,
+    ttlHours: 720,
+    maxTtlHours: 720,
+    appRole: {
+      ...renewableAppRoleDefaults,
+      roleName: "gateway-caddy-pki-renewer",
+      secretIdBoundCidrs: ["10.10.60.100/32"],
+      tokenBoundCidrs: ["10.10.60.100/32"],
+    },
+  },
+  hubATraefikOrigin: {
+    backend: "pki_int",
+    roleName: "hub-a-traefik-origin",
+    policyName: "homelab-pki-hub-a-traefik-origin",
+    allowedDomains: [
+      "admin.tastingswithtay.com",
+      "argocd.home.arpa",
+      "argocd.hub-a.home.arpa",
+      "argocd-hooks.hub-a.dsqr.dev",
+      "dsqr.dev",
+      "fidara.io",
+      "labs.dsqr.dev",
+      "studio.dsqr.dev",
+      "tastingswithtay.com",
+    ],
+    allowWildcardCertificates: false,
+    generateLease: true,
+    ttlHours: 720,
+    maxTtlHours: 720,
+  },
+} satisfies VaultPkiIssuerInventory
+
 export const vault = {
   kv,
   secretPaths,
@@ -225,5 +316,6 @@ export const vault = {
     humanAdmin: humanAdminPolicy,
     externalSecrets: externalSecretsPolicies,
   },
+  pkiIssuers,
   audit,
 } as const

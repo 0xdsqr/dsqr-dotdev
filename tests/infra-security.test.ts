@@ -14,7 +14,9 @@ import {
 } from "../packages/effect-pulumi/tailscale/src/index.ts"
 import {
   renderKvV2ReadPolicy,
+  renderPkiIssuePolicy,
   validateExternalSecretsPoliciesEffect,
+  validatePkiIssuerInventoryEffect,
   validateVaultTransportEffect,
 } from "../packages/effect-pulumi/vault/src/index.ts"
 import { cloudflare } from "../infra/inventory/cloudflare.ts"
@@ -184,4 +186,66 @@ test("External Secrets policies use unique exact paths and exclude infrastructur
     ),
   )
   assert.match(wildcardPolicy.message, /cannot use wildcard path/)
+})
+
+test("Vault PKI issuers are exact, least-privilege, and do not persist SecretIDs", () => {
+  Effect.runSync(validatePkiIssuerInventoryEffect(vault.pkiIssuers))
+
+  const issuers = Object.values(vault.pkiIssuers)
+  assert.equal(new Set(issuers.map((issuer) => issuer.roleName)).size, issuers.length)
+  assert.equal(new Set(issuers.map((issuer) => issuer.policyName)).size, issuers.length)
+
+  for (const issuer of issuers) {
+    assert.ok(issuer.allowedDomains.length > 0)
+    assert.ok(issuer.allowedDomains.every((domain) => !domain.includes("*")))
+    assert.equal(issuer.backend, "pki_int")
+    assert.ok(issuer.ttlHours <= issuer.maxTtlHours)
+    assert.ok(issuer.maxTtlHours <= 720)
+
+    const policy = renderPkiIssuePolicy(issuer.backend, issuer.roleName)
+    assert.match(policy, new RegExp(`path "pki_int/issue/${issuer.roleName}"`))
+    assert.doesNotMatch(policy, /pki_int\/issue\/\*/)
+    assert.doesNotMatch(policy, /"list"/)
+    assert.doesNotMatch(policy, /auth\/token/)
+    assert.doesNotMatch(policy, /\/sign\//)
+    assert.doesNotMatch(policy, /\/issuer\//)
+
+    if ("appRole" in issuer && issuer.appRole) {
+      assert.ok(issuer.appRole.secretIdBoundCidrs.length > 0)
+      assert.ok(issuer.appRole.tokenBoundCidrs.length > 0)
+      assert.ok(!("secretId" in issuer.appRole))
+    }
+  }
+
+  assert.deepEqual(vault.pkiIssuers.proxmoxListener.allowedDomains, [
+    "proxmox.dell-r730xd.home.arpa",
+  ])
+  assert.ok(!("appRole" in vault.pkiIssuers.hubATraefikOrigin))
+
+  const wildcardDomain = Effect.runSync(
+    Effect.flip(
+      validatePkiIssuerInventoryEffect({
+        unsafe: {
+          ...vault.pkiIssuers.vaultListener,
+          allowedDomains: ["*.home.arpa"],
+        },
+      }),
+    ),
+  )
+  assert.match(wildcardDomain.message, /exact lowercase DNS names/)
+
+  const globallyBoundAppRole = Effect.runSync(
+    Effect.flip(
+      validatePkiIssuerInventoryEffect({
+        unsafe: {
+          ...vault.pkiIssuers.vaultListener,
+          appRole: {
+            ...vault.pkiIssuers.vaultListener.appRole,
+            secretIdBoundCidrs: ["0.0.0.0/0"],
+          },
+        },
+      }),
+    ),
+  )
+  assert.match(globallyBoundAppRole.message, /explicit, non-global source CIDRs/)
 })

@@ -10,10 +10,12 @@ export const foundation = createVaultFoundation({
   secretPaths: vault.secretPaths,
   humanAdminPolicy: vault.policies.humanAdmin,
   externalSecretsPolicies: vault.policies.externalSecrets,
+  pkiIssuers: vault.pkiIssuers,
   audit: vault.audit,
 })
 
 export const kvMount = foundation.mounts.kv
 export const policies = foundation.policies
+export const pkiIssuers = foundation.pkiIssuers
 export const audit = foundation.audit
 export const secretPaths = foundation.secretPaths
