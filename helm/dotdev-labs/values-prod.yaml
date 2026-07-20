@@ -3,7 +3,7 @@
 fullnameOverride: dotdev-labs
 image:
   repository: ghcr.io/0xdsqr/dotdev-labs
-  tag: sha-790a32a6f932fea1b953405351552f1a2f9b5f5d
+  tag: sha-4a3bf8edeec68d10cc5250cf964e3f5c4d148e87
   pullPolicy: Always
 imagePullSecrets:
   - name: ghcr-creds
