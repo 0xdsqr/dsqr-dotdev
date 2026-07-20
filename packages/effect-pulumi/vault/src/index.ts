@@ -679,7 +679,7 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
           args.legacyExternalSecretsPolicy.readPrefixes,
         ),
       },
-      { provider, dependsOn: [kvMount], protect: true },
+      { provider, dependsOn: [kvMount] },
     )
 
     const externalSecretsTokenSelfPolicy = new vault.Policy(
