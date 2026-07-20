@@ -40,6 +40,21 @@ export type VaultExternalSecretsPolicyConfig = {
   readonly readPaths: readonly string[]
 }
 
+export type VaultLegacyExternalSecretsPolicyConfig = {
+  readonly name: string
+  readonly readPrefixes: readonly string[]
+}
+
+export type VaultKubernetesAuthRoleConfig = {
+  readonly backend: string
+  readonly roleName: string
+  readonly boundServiceAccountNames: readonly string[]
+  readonly boundServiceAccountNamespaces: readonly string[]
+  readonly tokenTtlSeconds: number
+  readonly tokenMaxTtlSeconds: number
+  readonly tokenExplicitMaxTtlSeconds: number
+}
+
 export type VaultHumanAdminPolicyConfig = {
   readonly name: string
 }
@@ -84,7 +99,9 @@ export type VaultFoundationArgs = {
   readonly kv: VaultKvMountConfig
   readonly secretPaths: VaultSecretPathInventory
   readonly humanAdminPolicy: VaultHumanAdminPolicyConfig
+  readonly legacyExternalSecretsPolicy: VaultLegacyExternalSecretsPolicyConfig
   readonly externalSecretsPolicies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
+  readonly externalSecretsKubernetesRole: VaultKubernetesAuthRoleConfig
   readonly pkiIssuers: VaultPkiIssuerInventory
   readonly audit: VaultAuditConfig
 }
@@ -237,6 +254,15 @@ export function renderKvV2ReadPolicy(mountPath: string, paths: readonly string[]
     .flatMap((path) => [
       policyRule(`${mountPath}/data/${path}`, ["read"]),
       policyRule(`${mountPath}/metadata/${path}`, ["read"]),
+    ])
+    .join("\n\n")
+}
+
+export function renderKvV2PrefixReadPolicy(mountPath: string, prefixes: readonly string[]) {
+  return prefixes
+    .flatMap((prefix) => [
+      policyRule(`${mountPath}/data/${prefix}`, ["read"]),
+      policyRule(`${mountPath}/metadata/${prefix}`, ["read", "list"]),
     ])
     .join("\n\n")
 }
@@ -471,6 +497,62 @@ export function validateExternalSecretsPoliciesEffect(
   })
 }
 
+export function validateExternalSecretsKubernetesRoleEffect(
+  role: VaultKubernetesAuthRoleConfig,
+): Effect.Effect<void, PulumiResourceConfigError> {
+  return Effect.gen(function* () {
+    const resource = "vault:external-secrets-kubernetes-role"
+
+    if (!role.backend || role.backend.includes("/") || role.backend.includes("*")) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource,
+          message: "External Secrets must use a normalized Kubernetes auth backend mount name.",
+        }),
+      )
+    }
+
+    if (!role.roleName) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource,
+          message: "External Secrets must use a non-empty Kubernetes auth role name.",
+        }),
+      )
+    }
+
+    if (
+      role.boundServiceAccountNames.length === 0 ||
+      role.boundServiceAccountNamespaces.length === 0 ||
+      role.boundServiceAccountNames.includes("*") ||
+      role.boundServiceAccountNamespaces.includes("*")
+    ) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource,
+          message:
+            "External Secrets Kubernetes auth must bind exact service accounts and namespaces.",
+        }),
+      )
+    }
+
+    if (
+      role.tokenTtlSeconds <= 0 ||
+      role.tokenMaxTtlSeconds < role.tokenTtlSeconds ||
+      role.tokenExplicitMaxTtlSeconds < role.tokenMaxTtlSeconds ||
+      role.tokenExplicitMaxTtlSeconds > 3_600
+    ) {
+      return yield* Effect.fail(
+        new PulumiResourceConfigError({
+          resource,
+          message:
+            "External Secrets Kubernetes auth tokens must be ordered and capped at one hour.",
+        }),
+      )
+    }
+  })
+}
+
 function humanAdminPolicy(kvMountPath: string) {
   return [
     policyRule(`${kvMountPath}/*`, ["create", "read", "update", "delete", "list", "sudo"]),
@@ -509,6 +591,7 @@ function secretPathOutputEffect(
 export function createVaultFoundationEffect(args: VaultFoundationArgs) {
   return Effect.gen(function* () {
     yield* validateExternalSecretsPoliciesEffect(args.externalSecretsPolicies, args.secretPaths)
+    yield* validateExternalSecretsKubernetesRoleEffect(args.externalSecretsKubernetesRole)
     yield* validatePkiIssuerInventoryEffect(args.pkiIssuers)
 
     const secretPathEntries = yield* Effect.forEach(
@@ -575,6 +658,41 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
 
         return [key, resource.name]
       }),
+    )
+
+    const legacyExternalSecretsPolicy = new vault.Policy(
+      "external-secrets-policy",
+      {
+        name: args.legacyExternalSecretsPolicy.name,
+        policy: renderKvV2PrefixReadPolicy(
+          args.kv.path,
+          args.legacyExternalSecretsPolicy.readPrefixes,
+        ),
+      },
+      { provider, dependsOn: [kvMount], protect: true },
+    )
+
+    const externalSecretsKubernetesRole = new vault.kubernetes.AuthBackendRole(
+      "external-secrets-kubernetes-role-hub-a",
+      {
+        backend: args.externalSecretsKubernetesRole.backend,
+        roleName: args.externalSecretsKubernetesRole.roleName,
+        boundServiceAccountNames: [...args.externalSecretsKubernetesRole.boundServiceAccountNames],
+        boundServiceAccountNamespaces: [
+          ...args.externalSecretsKubernetesRole.boundServiceAccountNamespaces,
+        ],
+        tokenExplicitMaxTtl: args.externalSecretsKubernetesRole.tokenExplicitMaxTtlSeconds,
+        tokenMaxTtl: args.externalSecretsKubernetesRole.tokenMaxTtlSeconds,
+        tokenNoDefaultPolicy: true,
+        tokenNumUses: 0,
+        tokenPolicies: Object.values(externalSecretsPolicies),
+        tokenTtl: args.externalSecretsKubernetesRole.tokenTtlSeconds,
+        tokenType: "service",
+      },
+      {
+        provider,
+        protect: true,
+      },
     )
 
     const pkiIssuers = Object.fromEntries(
@@ -688,10 +806,16 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       },
       policies: {
         humanAdmin: adminPolicy.name,
+        legacyExternalSecrets: legacyExternalSecretsPolicy.name,
         externalSecrets: externalSecretsPolicies,
         pkiIssuers: Object.fromEntries(
           Object.entries(pkiIssuers).map(([key, issuer]) => [key, issuer.policyName]),
         ),
+      },
+      externalSecretsKubernetesRole: {
+        backend: externalSecretsKubernetesRole.backend,
+        roleName: externalSecretsKubernetesRole.roleName,
+        policies: externalSecretsKubernetesRole.tokenPolicies,
       },
       pkiIssuers,
       audit: {

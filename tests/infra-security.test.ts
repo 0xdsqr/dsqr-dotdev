@@ -14,8 +14,10 @@ import {
 } from "../packages/effect-pulumi/tailscale/src/index.ts"
 import {
   renderKvV2ReadPolicy,
+  renderKvV2PrefixReadPolicy,
   renderPkiIssuePolicy,
   validateExternalSecretsPoliciesEffect,
+  validateExternalSecretsKubernetesRoleEffect,
   validatePkiIssuerInventoryEffect,
   validateVaultTransportEffect,
 } from "../packages/effect-pulumi/vault/src/index.ts"
@@ -165,6 +167,11 @@ test("External Secrets policies use unique exact paths and exclude infrastructur
   )
   assert.ok(readPaths.every((path) => !path.includes("*")))
   assert.ok(readPaths.every((path) => !path.startsWith("homelab/infra/")))
+  assert.ok(
+    Object.values(vault.policies.externalSecrets).every((policy) =>
+      policy.name.startsWith("hub-a-external-secrets-"),
+    ),
+  )
 
   for (const policy of Object.values(vault.policies.externalSecrets)) {
     const rendered = renderKvV2ReadPolicy(vault.kv.path, policy.readPaths)
@@ -186,6 +193,37 @@ test("External Secrets policies use unique exact paths and exclude infrastructur
     ),
   )
   assert.match(wildcardPolicy.message, /cannot use wildcard path/)
+})
+
+test("hub-a External Secrets auth overlaps the protected legacy policy during migration", () => {
+  Effect.runSync(validateExternalSecretsKubernetesRoleEffect(vault.externalSecretsKubernetesRole))
+
+  assert.equal(vault.externalSecretsKubernetesRole.roleName, "hub-a-external-secrets")
+  assert.deepEqual(vault.externalSecretsKubernetesRole.boundServiceAccountNames, [
+    "external-secrets",
+  ])
+  assert.deepEqual(vault.externalSecretsKubernetesRole.boundServiceAccountNamespaces, [
+    "external-secrets",
+  ])
+
+  assert.equal(vault.policies.legacyExternalSecrets.name, "homelab-external-secrets")
+  const legacyPolicy = renderKvV2PrefixReadPolicy(
+    vault.kv.path,
+    vault.policies.legacyExternalSecrets.readPrefixes,
+  )
+  assert.match(legacyPolicy, /kv\/data\/homelab\/apps\/\*/)
+  assert.match(legacyPolicy, /kv\/data\/homelab\/platform\/\*/)
+  assert.match(legacyPolicy, /kv\/data\/homelab\/infra\/\*/)
+
+  const wildcardBinding = Effect.runSync(
+    Effect.flip(
+      validateExternalSecretsKubernetesRoleEffect({
+        ...vault.externalSecretsKubernetesRole,
+        boundServiceAccountNamespaces: ["*"],
+      }),
+    ),
+  )
+  assert.match(wildcardBinding.message, /bind exact service accounts and namespaces/)
 })
 
 test("Vault PKI issuers are exact, least-privilege, and do not persist SecretIDs", () => {

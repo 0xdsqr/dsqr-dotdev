@@ -2,7 +2,9 @@ import type {
   VaultAuditConfig,
   VaultExternalSecretsPolicyConfig,
   VaultHumanAdminPolicyConfig,
+  VaultKubernetesAuthRoleConfig,
   VaultKvMountConfig,
+  VaultLegacyExternalSecretsPolicyConfig,
   VaultPkiIssuerInventory,
   VaultSecretPathInventory,
 } from "../../packages/effect-pulumi/vault/src/index.ts"
@@ -174,50 +176,65 @@ const audit = {
 
 const externalSecretsPolicies = {
   dotdevWeb: {
-    name: "homelab-external-secrets-dotdev-web",
+    name: "hub-a-external-secrets-dotdev-web",
     readPaths: [secretPaths.dotdevWeb.path],
   },
   dotdevStudio: {
-    name: "homelab-external-secrets-dotdev-studio",
+    name: "hub-a-external-secrets-dotdev-studio",
     readPaths: [secretPaths.dotdevStudio.path],
   },
   dotdevLabs: {
-    name: "homelab-external-secrets-dotdev-labs",
+    name: "hub-a-external-secrets-dotdev-labs",
     readPaths: [secretPaths.dotdevLabs.path],
   },
   fidaraApi: {
-    name: "homelab-external-secrets-fidara-api",
+    name: "hub-a-external-secrets-fidara-api",
     readPaths: [secretPaths.fidaraApi.path],
   },
   fidaraWeb: {
-    name: "homelab-external-secrets-fidara-web",
+    name: "hub-a-external-secrets-fidara-web",
     readPaths: [secretPaths.fidaraWeb.path],
   },
   tastingsWithTayShared: {
-    name: "homelab-external-secrets-tastingswithtay-shared",
+    name: "hub-a-external-secrets-tastingswithtay-shared",
     readPaths: [secretPaths.tastingsWithTayShared.path],
   },
   tastingsWithTayWeb: {
-    name: "homelab-external-secrets-tastingswithtay-web",
+    name: "hub-a-external-secrets-tastingswithtay-web",
     readPaths: [secretPaths.tastingsWithTayWeb.path],
   },
   tastingsWithTayAdmin: {
-    name: "homelab-external-secrets-tastingswithtay-admin",
+    name: "hub-a-external-secrets-tastingswithtay-admin",
     readPaths: [secretPaths.tastingsWithTayAdmin.path],
   },
   argocdFidaraRepo: {
-    name: "homelab-external-secrets-argocd-fidara-repo",
+    name: "hub-a-external-secrets-argocd-fidara-repo",
     readPaths: [secretPaths.argocdFidaraRepo.path],
   },
   githubArgoRepoRead: {
-    name: "homelab-external-secrets-github-argocd-repo-read",
+    name: "hub-a-external-secrets-github-argocd-repo-read",
     readPaths: [secretPaths.githubArgoRepoRead.path],
   },
   githubGhcrPull: {
-    name: "homelab-external-secrets-github-ghcr-pull",
+    name: "hub-a-external-secrets-github-ghcr-pull",
     readPaths: [secretPaths.githubGhcrPull.path],
   },
 } satisfies Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
+
+const legacyExternalSecretsPolicy = {
+  name: "homelab-external-secrets",
+  readPrefixes: ["homelab/apps/*", "homelab/platform/*", "homelab/infra/*"],
+} satisfies VaultLegacyExternalSecretsPolicyConfig
+
+const externalSecretsKubernetesRole = {
+  backend: "kubernetes",
+  roleName: "hub-a-external-secrets",
+  boundServiceAccountNames: ["external-secrets"],
+  boundServiceAccountNamespaces: ["external-secrets"],
+  tokenTtlSeconds: 1_200,
+  tokenMaxTtlSeconds: 3_600,
+  tokenExplicitMaxTtlSeconds: 3_600,
+} satisfies VaultKubernetesAuthRoleConfig
 
 const renewableAppRoleDefaults = {
   backend: "approle",
@@ -314,8 +331,10 @@ export const vault = {
   secretPaths,
   policies: {
     humanAdmin: humanAdminPolicy,
+    legacyExternalSecrets: legacyExternalSecretsPolicy,
     externalSecrets: externalSecretsPolicies,
   },
+  externalSecretsKubernetesRole,
   pkiIssuers,
   audit,
 } as const
