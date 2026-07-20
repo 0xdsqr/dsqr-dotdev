@@ -40,11 +40,6 @@ export type VaultExternalSecretsPolicyConfig = {
   readonly readPaths: readonly string[]
 }
 
-export type VaultLegacyExternalSecretsPolicyConfig = {
-  readonly name: string
-  readonly readPrefixes: readonly string[]
-}
-
 export type VaultKubernetesAuthRoleConfig = {
   readonly backend: string
   readonly roleName: string
@@ -100,7 +95,6 @@ export type VaultFoundationArgs = {
   readonly kv: VaultKvMountConfig
   readonly secretPaths: VaultSecretPathInventory
   readonly humanAdminPolicy: VaultHumanAdminPolicyConfig
-  readonly legacyExternalSecretsPolicy: VaultLegacyExternalSecretsPolicyConfig
   readonly externalSecretsPolicies: Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
   readonly externalSecretsKubernetesRole: VaultKubernetesAuthRoleConfig
   readonly pkiIssuers: VaultPkiIssuerInventory
@@ -255,15 +249,6 @@ export function renderKvV2ReadPolicy(mountPath: string, paths: readonly string[]
     .flatMap((path) => [
       policyRule(`${mountPath}/data/${path}`, ["read"]),
       policyRule(`${mountPath}/metadata/${path}`, ["read"]),
-    ])
-    .join("\n\n")
-}
-
-export function renderKvV2PrefixReadPolicy(mountPath: string, prefixes: readonly string[]) {
-  return prefixes
-    .flatMap((prefix) => [
-      policyRule(`${mountPath}/data/${prefix}`, ["read"]),
-      policyRule(`${mountPath}/metadata/${prefix}`, ["read", "list"]),
     ])
     .join("\n\n")
 }
@@ -670,18 +655,6 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       }),
     )
 
-    const legacyExternalSecretsPolicy = new vault.Policy(
-      "external-secrets-policy",
-      {
-        name: args.legacyExternalSecretsPolicy.name,
-        policy: renderKvV2PrefixReadPolicy(
-          args.kv.path,
-          args.legacyExternalSecretsPolicy.readPrefixes,
-        ),
-      },
-      { provider, dependsOn: [kvMount] },
-    )
-
     const externalSecretsTokenSelfPolicy = new vault.Policy(
       "external-secrets-token-self-policy",
       {
@@ -828,7 +801,6 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
       },
       policies: {
         humanAdmin: adminPolicy.name,
-        legacyExternalSecrets: legacyExternalSecretsPolicy.name,
         externalSecrets: externalSecretsPolicies,
         externalSecretsTokenSelf: externalSecretsTokenSelfPolicy.name,
         pkiIssuers: Object.fromEntries(

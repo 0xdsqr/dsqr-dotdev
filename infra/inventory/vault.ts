@@ -4,7 +4,6 @@ import type {
   VaultHumanAdminPolicyConfig,
   VaultKubernetesAuthRoleConfig,
   VaultKvMountConfig,
-  VaultLegacyExternalSecretsPolicyConfig,
   VaultPkiIssuerInventory,
   VaultSecretPathInventory,
 } from "../../packages/effect-pulumi/vault/src/index.ts"
@@ -221,11 +220,6 @@ const externalSecretsPolicies = {
   },
 } satisfies Readonly<Record<string, VaultExternalSecretsPolicyConfig>>
 
-const legacyExternalSecretsPolicy = {
-  name: "homelab-external-secrets",
-  readPrefixes: ["homelab/apps/*", "homelab/platform/*", "homelab/infra/*"],
-} satisfies VaultLegacyExternalSecretsPolicyConfig
-
 const externalSecretsKubernetesRole = {
   backend: "kubernetes",
   roleName: "hub-a-external-secrets",
@@ -332,7 +326,6 @@ export const vault = {
   secretPaths,
   policies: {
     humanAdmin: humanAdminPolicy,
-    legacyExternalSecrets: legacyExternalSecretsPolicy,
     externalSecrets: externalSecretsPolicies,
   },
   externalSecretsKubernetesRole,

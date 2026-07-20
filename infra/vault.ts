@@ -9,7 +9,6 @@ export const foundation = createVaultFoundation({
   kv: vault.kv,
   secretPaths: vault.secretPaths,
   humanAdminPolicy: vault.policies.humanAdmin,
-  legacyExternalSecretsPolicy: vault.policies.legacyExternalSecrets,
   externalSecretsPolicies: vault.policies.externalSecrets,
   externalSecretsKubernetesRole: vault.externalSecretsKubernetesRole,
   pkiIssuers: vault.pkiIssuers,

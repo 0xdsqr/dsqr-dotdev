@@ -14,7 +14,6 @@ import {
 } from "../packages/effect-pulumi/tailscale/src/index.ts"
 import {
   renderKvV2ReadPolicy,
-  renderKvV2PrefixReadPolicy,
   renderPkiIssuePolicy,
   renderTokenSelfPolicy,
   validateExternalSecretsPoliciesEffect,
@@ -196,7 +195,7 @@ test("External Secrets policies use unique exact paths and exclude infrastructur
   assert.match(wildcardPolicy.message, /cannot use wildcard path/)
 })
 
-test("hub-a External Secrets auth overlaps the protected legacy policy during migration", () => {
+test("hub-a External Secrets auth is exact and least-privilege after migration", () => {
   Effect.runSync(validateExternalSecretsKubernetesRoleEffect(vault.externalSecretsKubernetesRole))
 
   assert.equal(vault.externalSecretsKubernetesRole.roleName, "hub-a-external-secrets")
@@ -216,14 +215,7 @@ test("hub-a External Secrets auth overlaps the protected legacy policy during mi
     "external-secrets",
   ])
 
-  assert.equal(vault.policies.legacyExternalSecrets.name, "homelab-external-secrets")
-  const legacyPolicy = renderKvV2PrefixReadPolicy(
-    vault.kv.path,
-    vault.policies.legacyExternalSecrets.readPrefixes,
-  )
-  assert.match(legacyPolicy, /kv\/data\/homelab\/apps\/\*/)
-  assert.match(legacyPolicy, /kv\/data\/homelab\/platform\/\*/)
-  assert.match(legacyPolicy, /kv\/data\/homelab\/infra\/\*/)
+  assert.equal("legacyExternalSecrets" in vault.policies, false)
 
   const wildcardBinding = Effect.runSync(
     Effect.flip(
