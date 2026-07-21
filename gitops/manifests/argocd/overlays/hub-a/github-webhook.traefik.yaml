@@ -37,7 +37,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`argocd-hooks.hub-a.dsqr.dev`) && Path(`/api/webhook`) && Method(`POST`)
+      match: Host(`argocd-hooks-hub-a.dsqr.dev`) && Path(`/api/webhook`) && Method(`POST`)
       priority: 100
       middlewares:
         - name: argocd-github-webhook-rate-limit

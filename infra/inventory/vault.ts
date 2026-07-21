@@ -315,7 +315,7 @@ const pkiIssuers = {
       "admin.tastingswithtay.com",
       "api.fidara.io",
       "argocd.hub-a.home.arpa",
-      "argocd-hooks.hub-a.dsqr.dev",
+      "argocd-hooks-hub-a.dsqr.dev",
       "dsqr.dev",
       "fidara.io",
       "labs.dsqr.dev",

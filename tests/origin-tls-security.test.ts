@@ -138,7 +138,7 @@ test("public Argo webhook exposure is authenticated and route-scoped", () => {
     "utf8",
   )
   const cloudflareRule = cloudflare.ingressRules.find(
-    (rule) => rule.hostname === "argocd-hooks.hub-a.dsqr.dev",
+    (rule) => rule.hostname === "argocd-hooks-hub-a.dsqr.dev",
   )
 
   assert.match(values, /githubSecret: "\$argocd-github-webhook:secret"/)
@@ -146,14 +146,14 @@ test("public Argo webhook exposure is authenticated and route-scoped", () => {
   assert.match(externalSecret, /key: homelab\/platform\/argocd\/webhooks\/github/)
   assert.match(externalSecret, /property: secret/)
   assert.match(externalSecret, /app\.kubernetes\.io\/part-of: argocd/)
-  assert.ok(route.includes("Host(`argocd-hooks.hub-a.dsqr.dev`)"))
+  assert.ok(route.includes("Host(`argocd-hooks-hub-a.dsqr.dev`)"))
   assert.ok(route.includes("Path(`/api/webhook`)"))
   assert.ok(route.includes("Method(`POST`)"))
   assert.doesNotMatch(route, /argocd\.hub-a\.home\.arpa/)
   assert.equal(cloudflareRule?.service, "https://10.10.30.200")
   assert.deepEqual(cloudflareRule?.originRequest, {
     http2Origin: false,
-    httpHostHeader: "argocd-hooks.hub-a.dsqr.dev",
-    originServerName: "argocd-hooks.hub-a.dsqr.dev",
+    httpHostHeader: "argocd-hooks-hub-a.dsqr.dev",
+    originServerName: "argocd-hooks-hub-a.dsqr.dev",
   })
 })
