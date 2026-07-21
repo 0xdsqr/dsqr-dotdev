@@ -45,8 +45,12 @@ This satisfies the signed-webhook target of 30 seconds or less.
 
 ## Final deployment verification
 
-Traefik's request-body limit is live. The Pulumi-owned Argo CD Helm release must be updated once on the Kubernetes master, after which `argocd-cm` must contain:
+The Pulumi-owned Argo CD Helm release was updated on the Kubernetes master.
 
-```yaml
-webhook.maxPayloadSizeMB: "5"
-```
+- `argocd-cm` reports `webhook.maxPayloadSizeMB: "5"`.
+- Traefik reports `maxRequestBodyBytes: 5242880` and `memRequestBodyBytes: 1048576`.
+- The Argo server and application-controller rollouts completed successfully.
+- All 16 Applications report `Synced` and `Healthy`.
+- All Argo workloads are Ready; the Redis secret initialization Job completed successfully.
+- A repeated 6 MiB request returned HTTP `413` and an unsigned request returned HTTP `400`.
+- A fresh signed GitHub ping after the rollout returned HTTP `200`.
