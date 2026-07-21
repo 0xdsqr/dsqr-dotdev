@@ -12,6 +12,10 @@ let
     npmDepsHash = nodeModulesHash;
   };
 
+  changeset = pkgs.callPackage ./changeset.nix {
+    inherit nodeModules;
+  };
+
   dotdev = pkgs.callPackage ./dotdev.nix {
     inherit nodeModules;
   };
@@ -29,11 +33,17 @@ let
   gitopsTagImages = pkgs.callPackage ./gitops-tag-images.nix {
     inherit gitopsGenerateApplications;
   };
+
+  gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix {
+    inherit gitopsGenerateApplications;
+  };
 in
 {
   inherit
+    changeset
     dotdev
     gitopsGenerateApplications
+    gitopsReleaseImage
     gitopsTagImages
     labs
     nodeModules

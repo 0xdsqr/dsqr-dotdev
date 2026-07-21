@@ -35,7 +35,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ include "dotdev-studio.name" . }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ include "dotdev-studio.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http

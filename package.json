@@ -1,6 +1,6 @@
 {
   "name": "dsqr-dotdev",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -41,6 +41,10 @@
     "gitops:generate": "nix run .#gitopsGenerateApplications --",
     "gitops:render": "kubectl kustomize gitops/clusters/hub-a/bootstrap && kubectl kustomize gitops/clusters/hub-a/applications",
     "gitops:tag-images": "nix run .#gitopsTagImages --",
+    "changeset": "changeset",
+    "changeset:status": "changeset status",
+    "changeset:version": "changeset version",
+    "release:check-versions": "node scripts/check-release-versions.mjs",
     "haven": "node packages/haven/src/cli.ts",
     "lint": "oxlint . --deny-warnings",
     "lint:fix": "oxlint --fix .",
@@ -54,6 +58,7 @@
     "test:security": "npm run build:database && npm run build:api && npm run test:security -w dotdev"
   },
   "devDependencies": {
+    "@changesets/cli": "2.31.1",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "typescript": "6.0.3"
   },

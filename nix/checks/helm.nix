@@ -9,6 +9,9 @@ stdenvNoCC.mkDerivation {
   src = lib.fileset.toSource {
     root = ../..;
     fileset = lib.fileset.unions [
+      ../../apps/dotdev/package.json
+      ../../apps/labs/package.json
+      ../../apps/studio/package.json
       ../../helm
       ../../gitops/manifests/dotdev-web
       ../../gitops/manifests/dotdev-studio
@@ -47,6 +50,33 @@ stdenvNoCC.mkDerivation {
         dotdev-web|dotdev-studio|dotdev-labs)
           chartName="$(basename "$chart")"
           rendered="$TMPDIR/$chartName.yaml"
+          defaultRendered="$TMPDIR/$chartName-default.yaml"
+
+          case "$chartName" in
+            dotdev-web)
+              packageFile="apps/dotdev/package.json"
+              ;;
+            dotdev-studio)
+              packageFile="apps/studio/package.json"
+              ;;
+            dotdev-labs)
+              packageFile="apps/labs/package.json"
+              ;;
+          esac
+
+          packageVersion="$(yq eval -r '.version' "$packageFile")"
+          chartVersion="$(yq eval -r '.version' "$chart/Chart.yaml")"
+          appVersion="$(yq eval -r '.appVersion' "$chart/Chart.yaml")"
+          if [ "$appVersion" != "$packageVersion" ]; then
+            echo "$chartName appVersion $appVersion must match $packageFile version $packageVersion" >&2
+            exit 1
+          fi
+          if ! printf '%s\n' "$chartVersion" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$'; then
+            echo "$chartName chart version $chartVersion is not SemVer" >&2
+            exit 1
+          fi
+
+          helm template "$chartName" "$chart" --namespace default >"$defaultRendered"
           helm template "$(basename "$chart")" "$chart" \
             --namespace default \
             -f "$chart/values-prod.yaml" \
@@ -54,6 +84,34 @@ stdenvNoCC.mkDerivation {
             >"$rendered"
 
           deployment='select(.kind == "Deployment")'
+          defaultImage="$(yq eval "$deployment | .spec.template.spec.containers[0].image" "$defaultRendered")"
+          case "$defaultImage" in
+            *":$appVersion") ;;
+            *)
+              echo "$chartName default image must use Chart.appVersion $appVersion, got $defaultImage" >&2
+              exit 1
+              ;;
+          esac
+
+          productionImage="$(yq eval "$deployment | .spec.template.spec.containers[0].image" "$rendered")"
+          if ! printf '%s\n' "$productionImage" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+            echo "$chartName production image must use an immutable sha256 digest, got $productionImage" >&2
+            exit 1
+          fi
+          assertRenderedValue "$rendered" \
+            "$deployment | .spec.template.spec.containers[0].imagePullPolicy" IfNotPresent
+
+          if helm template "$chartName" "$chart" --namespace default \
+            -f "$chart/values-prod.yaml" --set-string image.digest= >/dev/null 2>&1; then
+            echo "$chartName production values must reject a missing digest" >&2
+            exit 1
+          fi
+          if helm template "$chartName" "$chart" --namespace default \
+            --set-string image.tag=latest >/dev/null 2>&1; then
+            echo "$chartName must reject the mutable latest tag" >&2
+            exit 1
+          fi
+
           assertRenderedValue "$rendered" \
             "$deployment | .spec.template.spec.automountServiceAccountToken" false
           assertRenderedValue "$rendered" \

@@ -2,8 +2,12 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/0xdsqr/dotdev-web
-  tag: latest
-  pullPolicy: Always
+  # An empty tag defaults to Chart.appVersion.
+  tag: ""
+  # Production sets an immutable sha256 digest and requires it below.
+  digest: ""
+  requireDigest: false
+  pullPolicy: IfNotPresent
 
 imagePullSecrets:
   - name: ghcr-creds

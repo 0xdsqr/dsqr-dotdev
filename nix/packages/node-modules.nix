@@ -5,11 +5,12 @@
   npmDepsHash,
 }:
 let
+  rootPackage = builtins.fromJSON (builtins.readFile ../../package.json);
   src = import ../lib/manifest-source.nix { inherit lib; };
 in
 (buildNpmPackage.override { nodejs = nodejs_24; }) {
   pname = "dsqr-dotdev-node-modules";
-  version = "0.0.0";
+  version = rootPackage.version;
   inherit src npmDepsHash;
 
   npmDepsFetcherVersion = 2;

@@ -9,17 +9,18 @@ metadata:
     argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: labs.dsqr.dev
     homelab.dev/image-repository: ghcr.io/0xdsqr/dotdev-labs
-    homelab.dev/image-tag: sha-f75162f5a9ccb8654db5604052f7aff0d09aab09
     homelab.dev/source-path: helm/dotdev-labs
     homelab.dev/sync-stage: canary
     homelab.dev/values-prod-file: helm/dotdev-labs/values-prod.yaml
     homelab.dev/values-overlay-file: gitops/manifests/dotdev-labs/overlays/hub-a/values-overrides.yaml
+    homelab.dev/image-digest: sha256:410bcf806a2e76f6b1edae66e44054acda018db42b39bce3af1d4fee6faad183
+    homelab.dev/source-revision: f75162f5a9ccb8654db5604052f7aff0d09aab09
   labels:
     app.kubernetes.io/instance: dotdev-labs
     app.kubernetes.io/managed-by: argocd
     app.kubernetes.io/name: dotdev-labs
     app.kubernetes.io/part-of: dsqr-dotdev
-    app.kubernetes.io/version: sha-f75162f5a9ccb8654db5604052f7aff0d09aab09
+    app.kubernetes.io/version: 0.0.1
     homelab.dev/owner: dsqr
     homelab.dev/tier: application
 spec:

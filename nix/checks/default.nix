@@ -25,6 +25,7 @@
   runtime-smoke = pkgs.callPackage ./runtime-smoke.nix {
     inherit (packages) dotdev labs studio;
   };
+  release-versioning = pkgs.callPackage ./release-versioning.nix { };
   typecheck = pkgs.callPackage ./typecheck.nix {
     nodeModules = packages.nodeModules;
   };

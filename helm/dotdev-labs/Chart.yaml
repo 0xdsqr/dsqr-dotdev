@@ -2,5 +2,5 @@ apiVersion: v2
 name: dotdev-labs
 description: Helm chart for the labs.dsqr.dev static app
 type: application
-version: 0.1.0
-appVersion: sha-f75162f5a9ccb8654db5604052f7aff0d09aab09
+version: 0.0.1
+appVersion: 0.0.1

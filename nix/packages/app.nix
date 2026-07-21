@@ -9,13 +9,14 @@
   runtimeDependencies ? [ ],
 }:
 let
+  appPackage = builtins.fromJSON (builtins.readFile ../../apps/${appName}/package.json);
   src = import ../lib/source.nix { inherit lib; };
   workspaceLinks = import ../lib/workspace-links.nix;
   defaultPort = toString port;
 in
 stdenvNoCC.mkDerivation {
   pname = "dsqr-dotdev-${appName}";
-  version = "0.0.0";
+  version = appPackage.version;
   inherit src;
 
   nativeBuildInputs = [

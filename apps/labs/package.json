@@ -1,6 +1,6 @@
 {
   "name": "labs",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@dsqr-dotdev/react": "0.0.0",
+    "@dsqr-dotdev/react": "0.0.1",
     "@fontsource/geist-mono": "5.2.7",
     "@fontsource/geist-sans": "5.2.5",
     "lucide-react": "0.552.0",

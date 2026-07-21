@@ -1,6 +1,7 @@
 {
   "name": "@dsqr-dotdev/database",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "private": true,
   "files": [
     "src",
     "dist"
@@ -28,7 +29,7 @@
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@dsqr-dotdev/tsconfig": "0.0.0",
+    "@dsqr-dotdev/tsconfig": "0.0.1",
     "drizzle-orm": "0.45.2",
     "drizzle-zod": "0.8.3",
     "pg": "8.20.0",

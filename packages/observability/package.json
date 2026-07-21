@@ -1,6 +1,6 @@
 {
   "name": "@dsqr-dotdev/observability",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "exports": {
@@ -16,7 +16,7 @@
     "effect": "3.21.2"
   },
   "devDependencies": {
-    "@dsqr-dotdev/tsconfig": "0.0.0",
+    "@dsqr-dotdev/tsconfig": "0.0.1",
     "@types/node": "22.19.17"
   }
 }
