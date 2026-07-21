@@ -3,4 +3,4 @@ name: dotdev-labs
 description: Helm chart for the labs.dsqr.dev static app
 type: application
 version: 0.1.0
-appVersion: sha-790a32a6f932fea1b953405351552f1a2f9b5f5d
+appVersion: sha-71b464deeb22c9564d9afe7c5575f79cc8425db0
