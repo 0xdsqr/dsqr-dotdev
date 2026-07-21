@@ -111,13 +111,6 @@ export const cloudflare = {
       },
     },
     {
-      hostname: "api-hoo.dsqr.dev",
-      zone: "dsqrDev",
-      service: "http://10.10.30.108:9321",
-      insecureOriginReason:
-        "The Hoo backend does not yet terminate TLS; keep this exception isolated to the tunnel VLAN while migrating it.",
-    },
-    {
       hostname: "s3.dsqr.dev",
       zone: "dsqrDev",
       service: "http://10.10.30.107:9000",
