@@ -1,0 +1,15 @@
+[Unit]
+Description=Renew the Proxmox listener certificate from Vault PKI
+Wants=network-online.target
+After=network-online.target pve-cluster.service
+Requires=pve-cluster.service
+ConditionPathExists=/etc/proxmox-vault-pki.env
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/proxmox-vault-certificate
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+TimeoutStartSec=90

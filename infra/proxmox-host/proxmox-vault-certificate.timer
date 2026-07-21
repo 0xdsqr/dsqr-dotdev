@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Proxmox listener certificate renewal check
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1h
+Unit=proxmox-vault-certificate.service
+
+[Install]
+WantedBy=timers.target
