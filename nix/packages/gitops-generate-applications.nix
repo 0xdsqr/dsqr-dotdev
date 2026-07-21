@@ -8,6 +8,7 @@ pkgs.writeShellApplication {
     pkgs.findutils
     pkgs.gettext
     pkgs.gnugrep
+    pkgs.kubectl
     pkgs.yq-go
   ];
 

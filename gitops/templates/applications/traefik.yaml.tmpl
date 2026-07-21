@@ -34,6 +34,7 @@ spec:
     - repoURL: ${VALUES_REPO_URL}
       targetRevision: ${VALUES_TARGET_REVISION}
       ref: values
+      path: ${VALUES_OVERLAY_DIR}
   destination:
     server: ${DESTINATION_SERVER}
     namespace: traefik
@@ -42,10 +43,6 @@ spec:
       enabled: false
       prune: false
       selfHeal: false
-    managedNamespaceMetadata:
-      labels:
-        homelab.dev/owner: platform
-        homelab.dev/tier: platform
     retry:
       limit: 3
       refresh: true
@@ -54,5 +51,5 @@ spec:
         factor: 2
         maxDuration: 2m
     syncOptions:
-      - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true

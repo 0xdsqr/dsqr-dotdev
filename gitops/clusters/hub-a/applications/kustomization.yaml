@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - namespaces.yaml
   - ../../../manifests/argocd/overlays/hub-a
   - cilium.yaml
   - metallb.yaml
@@ -23,16 +24,3 @@ labels:
   - pairs:
       homelab.dev/cluster: hub-a
       homelab.dev/environment: homelab
-
-patches: []
-# Example cluster-local override for a generated Application:
-# patches:
-#   - target:
-#       group: argoproj.io
-#       version: v1alpha1
-#       kind: Application
-#       name: dotdev-web
-#     patch: |-
-#       - op: add
-#         path: /metadata/annotations/homelab.dev~1override-note
-#         value: hub-a-only

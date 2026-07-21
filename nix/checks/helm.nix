@@ -13,9 +13,9 @@ stdenvNoCC.mkDerivation {
       ../../apps/labs/package.json
       ../../apps/studio/package.json
       ../../helm
-      ../../gitops/manifests/dotdev-web
-      ../../gitops/manifests/dotdev-studio
-      ../../gitops/manifests/dotdev-labs
+      ../../gitops/values/dotdev-web
+      ../../gitops/values/dotdev-studio
+      ../../gitops/values/dotdev-labs
     ];
   };
 
@@ -84,7 +84,7 @@ stdenvNoCC.mkDerivation {
           helm template "$(basename "$chart")" "$chart" \
             --namespace default \
             -f "$chart/values-prod.yaml" \
-            -f "gitops/manifests/$(basename "$chart")/overlays/hub-a/values-overrides.yaml" \
+            -f "gitops/values/$(basename "$chart")/hub-a.yaml" \
             >"$rendered"
 
           deployment='select(.kind == "Deployment")'
@@ -104,6 +104,10 @@ stdenvNoCC.mkDerivation {
           fi
           assertRenderedValue "$rendered" \
             "$deployment | .spec.template.spec.containers[0].imagePullPolicy" IfNotPresent
+          assertRenderedValue "$rendered" \
+            "$deployment | .metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
+          assertRenderedValue "$rendered" \
+            "$deployment | .spec.template.metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
 
           if helm template "$chartName" "$chart" --namespace default \
             -f "$chart/values-prod.yaml" --set-string image.digest= >/dev/null 2>&1; then

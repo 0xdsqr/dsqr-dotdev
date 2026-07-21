@@ -12,6 +12,10 @@ stdenvNoCC.mkDerivation {
       ../../.github/workflows
       ../../nix/lib/smoke-oci-image.sh
       ../scripts/release-prepare.sh
+      ../scripts/gitops-generate-applications.sh
+      ../scripts/gitops-release-image.sh
+      ../scripts/gitops-render.sh
+      ../scripts/check-gitops.sh
       ../scripts/release-publish-charts.sh
       ../scripts/release-publish-images.sh
     ];
@@ -31,6 +35,10 @@ stdenvNoCC.mkDerivation {
     actionlint -no-color .github/workflows/*.yml
     shellcheck \
       nix/lib/smoke-oci-image.sh \
+      nix/scripts/check-gitops.sh \
+      nix/scripts/gitops-generate-applications.sh \
+      nix/scripts/gitops-release-image.sh \
+      nix/scripts/gitops-render.sh \
       nix/scripts/release-prepare.sh \
       nix/scripts/release-publish-charts.sh \
       nix/scripts/release-publish-images.sh

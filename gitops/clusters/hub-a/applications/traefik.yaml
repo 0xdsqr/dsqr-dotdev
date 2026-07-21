@@ -10,8 +10,8 @@ metadata:
     homelab.dev/chart: traefik
     homelab.dev/chart-repository: https://traefik.github.io/charts
     homelab.dev/chart-version: 39.0.7
-    homelab.dev/values-common-file: gitops/manifests/traefik/base/values-common.yaml
-    homelab.dev/values-overlay-file: gitops/manifests/traefik/overlays/hub-a/values-overrides.yaml
+    homelab.dev/values-common-file: gitops/values/traefik/common.yaml
+    homelab.dev/values-overlay-file: gitops/values/traefik/hub-a.yaml
   labels:
     app.kubernetes.io/instance: traefik
     app.kubernetes.io/managed-by: argocd
@@ -29,11 +29,12 @@ spec:
       helm:
         releaseName: traefik
         valueFiles:
-          - $values/gitops/manifests/traefik/base/values-common.yaml
-          - $values/gitops/manifests/traefik/overlays/hub-a/values-overrides.yaml
+          - $values/gitops/values/traefik/common.yaml
+          - $values/gitops/values/traefik/hub-a.yaml
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-      targetRevision: master
+      targetRevision: refs/heads/master
       ref: values
+      path: gitops/manifests/traefik/overlays/hub-a
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
@@ -42,10 +43,6 @@ spec:
       enabled: false
       prune: false
       selfHeal: false
-    managedNamespaceMetadata:
-      labels:
-        homelab.dev/owner: platform
-        homelab.dev/tier: platform
     retry:
       limit: 3
       refresh: true
@@ -54,5 +51,5 @@ spec:
         factor: 2
         maxDuration: 2m
     syncOptions:
-      - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true

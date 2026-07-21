@@ -30,9 +30,9 @@ let
 
   gitopsGenerateApplications = pkgs.callPackage ./gitops-generate-applications.nix { };
 
-  gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix {
-    inherit gitopsGenerateApplications;
-  };
+  gitopsRender = pkgs.callPackage ./gitops-render.nix { };
+
+  gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix { };
 
   releasePrepare = pkgs.callPackage ./release-prepare.nix {
     inherit changeset gitopsReleaseImage;
@@ -47,6 +47,7 @@ in
     changeset
     dotdev
     gitopsGenerateApplications
+    gitopsRender
     gitopsReleaseImage
     labs
     nodeModules

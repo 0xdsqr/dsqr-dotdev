@@ -1,0 +1,4 @@
+# hub-a deployment pin and cluster-specific overrides for dotdev-labs.
+image:
+  version: 0.0.2
+  digest: sha256:7fbc2b75ebf91cdf2f73419379132ef4adac3a3f7b8154030df3abf15ee2831f

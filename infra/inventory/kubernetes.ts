@@ -37,8 +37,8 @@ const helmReleases = {
     repository: "https://helm.cilium.io/",
     version: "1.19.1",
     valueYamlFiles: [
-      "../../gitops/manifests/cilium/base/values-common.yaml",
-      "../../gitops/manifests/cilium/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/cilium/common.yaml",
+      "../../gitops/values/cilium/hub-a.yaml",
     ],
   },
   metallb: {
@@ -49,8 +49,8 @@ const helmReleases = {
     repository: "https://metallb.github.io/metallb",
     version: "0.15.3",
     valueYamlFiles: [
-      "../../gitops/manifests/metallb/base/values-common.yaml",
-      "../../gitops/manifests/metallb/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/metallb/common.yaml",
+      "../../gitops/values/metallb/hub-a.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -62,8 +62,8 @@ const helmReleases = {
     repository: "https://traefik.github.io/charts",
     version: "39.0.7",
     valueYamlFiles: [
-      "../../gitops/manifests/traefik/base/values-common.yaml",
-      "../../gitops/manifests/traefik/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/traefik/common.yaml",
+      "../../gitops/values/traefik/hub-a.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -75,8 +75,8 @@ const helmReleases = {
     repository: "https://prometheus-community.github.io/helm-charts",
     version: "7.2.2",
     valueYamlFiles: [
-      "../../gitops/manifests/kube-state-metrics/base/values-common.yaml",
-      "../../gitops/manifests/kube-state-metrics/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/kube-state-metrics/common.yaml",
+      "../../gitops/values/kube-state-metrics/hub-a.yaml",
     ],
     dependsOn: ["cilium"],
   },
@@ -88,8 +88,8 @@ const helmReleases = {
     repository: "https://grafana.github.io/helm-charts",
     version: "3.5.3",
     valueYamlFiles: [
-      "../../gitops/manifests/k8s-monitoring/base/values-common.yaml",
-      "../../gitops/manifests/k8s-monitoring/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/k8s-monitoring/common.yaml",
+      "../../gitops/values/k8s-monitoring/hub-a.yaml",
     ],
     dependsOn: ["cilium", "kubeStateMetrics"],
   },
@@ -100,8 +100,8 @@ const helmReleases = {
     repository: "https://argoproj.github.io/argo-helm",
     version: "9.5.22",
     valueYamlFiles: [
-      "../../gitops/manifests/argocd/base/values-common.yaml",
-      "../../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/argocd/common.yaml",
+      "../../gitops/values/argocd/hub-a.yaml",
     ],
   },
   dotdevWeb: {
@@ -111,7 +111,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-web/values-prod.yaml",
-      "../../gitops/manifests/dotdev-web/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/dotdev-web/hub-a.yaml",
     ],
     dependsOn: ["traefik"],
   },
@@ -122,7 +122,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-studio/values-prod.yaml",
-      "../../gitops/manifests/dotdev-studio/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/dotdev-studio/hub-a.yaml",
     ],
     dependsOn: ["traefik"],
   },
@@ -133,7 +133,7 @@ const helmReleases = {
     enabled: false,
     valueYamlFiles: [
       "../../helm/dotdev-labs/values-prod.yaml",
-      "../../gitops/manifests/dotdev-labs/overlays/hub-a/values-overrides.yaml",
+      "../../gitops/values/dotdev-labs/hub-a.yaml",
     ],
     dependsOn: ["traefik"],
   },

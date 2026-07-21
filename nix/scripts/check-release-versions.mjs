@@ -74,13 +74,13 @@ for (const { directory, manifest } of manifests.values()) {
   }
 }
 
-const chartByApp = new Map([
-  ["dotdev", "helm/dotdev-web/Chart.yaml"],
-  ["studio", "helm/dotdev-studio/Chart.yaml"],
-  ["labs", "helm/dotdev-labs/Chart.yaml"],
+const releaseByApp = new Map([
+  ["dotdev", { chart: "helm/dotdev-web/Chart.yaml", deployment: "dotdev-web" }],
+  ["studio", { chart: "helm/dotdev-studio/Chart.yaml", deployment: "dotdev-studio" }],
+  ["labs", { chart: "helm/dotdev-labs/Chart.yaml", deployment: "dotdev-labs" }],
 ])
 
-for (const [app, chartPath] of chartByApp) {
+for (const [app, { chart: chartPath, deployment }] of releaseByApp) {
   const chart = await readFile(path.join(root, chartPath), "utf8")
   const chartVersion = chart.match(/^version:\s*["']?([^\s"']+)/m)?.[1]
   const appVersion = chart.match(/^appVersion:\s*["']?([^\s"']+)/m)?.[1]
@@ -94,6 +94,26 @@ for (const [app, chartPath] of chartByApp) {
   }
   if (appVersion !== packageVersion) {
     errors.push(`${chartPath} appVersion is ${appVersion}; expected ${packageVersion}`)
+  }
+
+  const productionValuesPath = `helm/${deployment}/values-prod.yaml`
+  const productionValues = await readFile(path.join(root, productionValuesPath), "utf8")
+  if (!/^\s*requireDigest:\s*true\s*$/m.test(productionValues)) {
+    errors.push(`${productionValuesPath} must require an immutable image digest`)
+  }
+  if (!/^\s*digest:\s*["']{2}\s*$/m.test(productionValues)) {
+    errors.push(`${productionValuesPath} must not contain a cluster-specific digest`)
+  }
+
+  const clusterValuesPath = `gitops/values/${deployment}/hub-a.yaml`
+  const clusterValues = await readFile(path.join(root, clusterValuesPath), "utf8")
+  const promotedVersion = clusterValues.match(/^\s*version:\s*["']?([^\s"']+)/m)?.[1]
+  const promotedDigest = clusterValues.match(/^\s*digest:\s*["']?(sha256:[0-9a-f]{64})/m)?.[1]
+  if (promotedVersion !== packageVersion) {
+    errors.push(`${clusterValuesPath} image.version is ${promotedVersion}; expected ${packageVersion}`)
+  }
+  if (!promotedDigest) {
+    errors.push(`${clusterValuesPath} must pin a lowercase sha256 image digest`)
   }
 }
 

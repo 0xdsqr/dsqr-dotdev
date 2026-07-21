@@ -2,7 +2,9 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/0xdsqr/dotdev-labs
-  # An empty tag defaults to Chart.appVersion.
+  # An empty version defaults to Chart.appVersion. Cluster overlays pin it.
+  version: ""
+  # An empty tag defaults to image.version.
   tag: ""
   # Production sets an immutable sha256 digest and requires it below.
   digest: ""

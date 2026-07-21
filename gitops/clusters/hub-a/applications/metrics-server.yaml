@@ -10,8 +10,8 @@ metadata:
     homelab.dev/chart: metrics-server
     homelab.dev/chart-repository: https://kubernetes-sigs.github.io/metrics-server/
     homelab.dev/chart-version: 3.13.0
-    homelab.dev/values-common-file: gitops/manifests/metrics-server/base/values-common.yaml
-    homelab.dev/values-overlay-file: gitops/manifests/metrics-server/overlays/hub-a/values-overrides.yaml
+    homelab.dev/values-common-file: gitops/values/metrics-server/common.yaml
+    homelab.dev/values-overlay-file: gitops/values/metrics-server/hub-a.yaml
   labels:
     app.kubernetes.io/instance: metrics-server
     app.kubernetes.io/managed-by: argocd
@@ -29,10 +29,10 @@ spec:
       helm:
         releaseName: metrics-server
         valueFiles:
-          - $values/gitops/manifests/metrics-server/base/values-common.yaml
-          - $values/gitops/manifests/metrics-server/overlays/hub-a/values-overrides.yaml
+          - $values/gitops/values/metrics-server/common.yaml
+          - $values/gitops/values/metrics-server/hub-a.yaml
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-      targetRevision: master
+      targetRevision: refs/heads/master
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -51,3 +51,4 @@ spec:
         maxDuration: 2m
     syncOptions:
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true

@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         {{- include "dotdev-web.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/version: {{ default .Chart.AppVersion .Values.image.version | quote }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

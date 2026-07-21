@@ -10,8 +10,8 @@ metadata:
     homelab.dev/chart: k8s-monitoring
     homelab.dev/chart-repository: https://grafana.github.io/helm-charts
     homelab.dev/chart-version: 3.5.3
-    homelab.dev/values-common-file: gitops/manifests/k8s-monitoring/base/values-common.yaml
-    homelab.dev/values-overlay-file: gitops/manifests/k8s-monitoring/overlays/hub-a/values-overrides.yaml
+    homelab.dev/values-common-file: gitops/values/k8s-monitoring/common.yaml
+    homelab.dev/values-overlay-file: gitops/values/k8s-monitoring/hub-a.yaml
   labels:
     app.kubernetes.io/instance: k8s-monitoring
     app.kubernetes.io/managed-by: argocd
@@ -29,10 +29,10 @@ spec:
       helm:
         releaseName: k8s-monitoring
         valueFiles:
-          - $values/gitops/manifests/k8s-monitoring/base/values-common.yaml
-          - $values/gitops/manifests/k8s-monitoring/overlays/hub-a/values-overrides.yaml
+          - $values/gitops/values/k8s-monitoring/common.yaml
+          - $values/gitops/values/k8s-monitoring/hub-a.yaml
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-      targetRevision: master
+      targetRevision: refs/heads/master
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -42,10 +42,6 @@ spec:
       enabled: false
       prune: false
       selfHeal: false
-    managedNamespaceMetadata:
-      labels:
-        homelab.dev/owner: platform
-        homelab.dev/tier: platform
     retry:
       limit: 3
       refresh: true
@@ -54,5 +50,5 @@ spec:
         factor: 2
         maxDuration: 2m
     syncOptions:
-      - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true

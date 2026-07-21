@@ -3,6 +3,8 @@ kind: AppProject
 metadata:
   name: dsqr
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "1"
   labels:
@@ -13,18 +15,25 @@ spec:
   description: dsqr.dev application workloads
   sourceRepos:
     - https://github.com/0xdsqr/dsqr-dotdev.git
-    - https://github.com/0xdsqr/fidara.git
-    - https://github.com/0xdsqr/tastingswithtay.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: dsqr
-    - server: https://kubernetes.default.svc
-      namespace: fidara
-    - server: https://kubernetes.default.svc
-      namespace: twt
-  clusterResourceWhitelist:
-    - group: ""
-      kind: Namespace
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: policy
+      kind: PodDisruptionBudget

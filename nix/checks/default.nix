@@ -17,7 +17,7 @@
     ];
   };
   gitops = pkgs.callPackage ./gitops.nix {
-    gitopsGenerateApplications = packages.gitopsGenerateApplications;
+    inherit (packages) gitopsGenerateApplications gitopsRender;
   };
   infra-smoke = pkgs.callPackage ./infra-smoke.nix {
     nodeModules = packages.nodeModules;
@@ -25,7 +25,9 @@
   runtime-smoke = pkgs.callPackage ./runtime-smoke.nix {
     inherit (packages) dotdev labs studio;
   };
-  release-versioning = pkgs.callPackage ./release-versioning.nix { };
+  release-versioning = pkgs.callPackage ./release-versioning.nix {
+    inherit (packages) gitopsReleaseImage;
+  };
   typecheck = pkgs.callPackage ./typecheck.nix {
     nodeModules = packages.nodeModules;
   };

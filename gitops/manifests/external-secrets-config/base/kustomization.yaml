@@ -3,10 +3,5 @@ kind: Kustomization
 
 resources:
   - dsqr-home-root-ca.configmap.yaml
-  - dsqr-home-root-ca.traefik.configmap.yaml
   - vault-hub-a.clustersecretstore.yaml
-  - traefik-origin-issuer.serviceaccount.yaml
-  - hub-a-traefik-origin.vaultdynamicsecret.yaml
-  - hub-a-traefik-origin.externalsecret.yaml
   - ghcr-pull.clusterexternalsecret.yaml
-  - argocd-fidara-repo.externalsecret.yaml

@@ -10,8 +10,8 @@ metadata:
     homelab.dev/chart: cilium
     homelab.dev/chart-repository: https://helm.cilium.io/
     homelab.dev/chart-version: 1.19.1
-    homelab.dev/values-common-file: gitops/manifests/cilium/base/values-common.yaml
-    homelab.dev/values-overlay-file: gitops/manifests/cilium/overlays/hub-a/values-overrides.yaml
+    homelab.dev/values-common-file: gitops/values/cilium/common.yaml
+    homelab.dev/values-overlay-file: gitops/values/cilium/hub-a.yaml
   labels:
     app.kubernetes.io/instance: cilium
     app.kubernetes.io/managed-by: argocd
@@ -29,10 +29,10 @@ spec:
       helm:
         releaseName: cilium
         valueFiles:
-          - $values/gitops/manifests/cilium/base/values-common.yaml
-          - $values/gitops/manifests/cilium/overlays/hub-a/values-overrides.yaml
+          - $values/gitops/values/cilium/common.yaml
+          - $values/gitops/values/cilium/hub-a.yaml
     - repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-      targetRevision: master
+      targetRevision: refs/heads/master
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -70,4 +70,5 @@ spec:
         maxDuration: 2m
     syncOptions:
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true
       - RespectIgnoreDifferences=true

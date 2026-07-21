@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -euo pipefail
 
 # shellcheck disable=SC2016
@@ -8,11 +10,12 @@ usage() {
 Usage:
   gitops-generate-applications [--check] [--repo-root PATH]
 
-Renders gitops/clusters/<cluster>/applications/*.yaml from
-local YAML resources listed in gitops/clusters/<cluster>/applications/kustomization.yaml.
+Renders the Applications declared in each gitops/clusters/<cluster>/config.yaml
+from gitops/templates/applications/*.yaml.tmpl. All clusters are rendered and
+validated in a staging tree before generated files in the repository change.
 
 Options:
-  --check      render into a temporary copy and fail if generated files differ
+  --check      fail when committed generated files differ from a clean render
   --repo-root  repository root to render; defaults to the current directory
 EOF
 }
@@ -46,92 +49,199 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-generate() {
+repo_root="$(cd "$repo_root" && pwd)"
+gitops_root="$repo_root/gitops"
+
+if [[ ! -d "$gitops_root/clusters" || ! -d "$gitops_root/templates/applications" ]]; then
+  echo "Expected gitops/clusters and gitops/templates/applications under $repo_root" >&2
+  exit 1
+fi
+
+workspace="$(mktemp -d)"
+trap 'rm -rf "$workspace"' EXIT
+cp -R "$gitops_root" "$workspace/gitops"
+
+render_tree() {
   local root="$1"
   local clusters_dir="$root/gitops/clusters"
   local templates_dir="$root/gitops/templates/applications"
-
-  if [[ ! -d "$clusters_dir" ]]; then
-    echo "Missing clusters directory: $clusters_dir" >&2
-    exit 1
-  fi
-
-  local argocd_namespace="argocd"
-  local destination_server="https://kubernetes.default.svc"
-  local values_repo_url="https://github.com/0xdsqr/dsqr-dotdev.git"
-  local values_target_revision="master"
-
   local cluster_dir
+
   for cluster_dir in "$clusters_dir"/*; do
     [[ -d "$cluster_dir" ]] || continue
-    local applications_dir="$cluster_dir/applications"
-    local applications_kustomization="$applications_dir/kustomization.yaml"
-    [[ -f "$applications_kustomization" ]] || continue
 
     local cluster
+    local config_file
+    local applications_dir
+    local applications_kustomization
     cluster="$(basename "$cluster_dir")"
+    config_file="$cluster_dir/config.yaml"
+    applications_dir="$cluster_dir/applications"
+    applications_kustomization="$applications_dir/kustomization.yaml"
 
-    find "$applications_dir" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" -print |
+    if [[ ! -f "$config_file" ]]; then
+      echo "Cluster $cluster is missing config.yaml" >&2
+      return 1
+    fi
+    if [[ ! -f "$applications_kustomization" ]]; then
+      echo "Cluster $cluster is missing applications/kustomization.yaml" >&2
+      return 1
+    fi
+
+    local configured_name
+    local argocd_namespace
+    local destination_server
+    local values_repo_url
+    local values_target_revision
+    configured_name="$(yq -er '.cluster.name' "$config_file")"
+    argocd_namespace="$(yq -er '.argocd.namespace' "$config_file")"
+    destination_server="$(yq -er '.argocd.destinationServer' "$config_file")"
+    values_repo_url="$(yq -er '.source.repoURL' "$config_file")"
+    values_target_revision="$(yq -er '.source.targetRevision' "$config_file")"
+
+    if [[ "$configured_name" != "$cluster" ]]; then
+      echo "Cluster directory $cluster disagrees with config name $configured_name" >&2
+      return 1
+    fi
+    if [[ ! "$destination_server" =~ ^https:// ]]; then
+      echo "Cluster $cluster destinationServer must use HTTPS" >&2
+      return 1
+    fi
+    if [[ ! "$values_repo_url" =~ ^https:// ]]; then
+      echo "Cluster $cluster source.repoURL must use HTTPS" >&2
+      return 1
+    fi
+
+    mapfile -t cluster_apps < <(yq -er '.applications[]' "$config_file")
+    if [[ "${#cluster_apps[@]}" -eq 0 ]]; then
+      echo "Cluster $cluster must declare at least one application" >&2
+      return 1
+    fi
+
+    local duplicates
+    duplicates="$(printf '%s\n' "${cluster_apps[@]}" | sort | uniq -d)"
+    if [[ -n "$duplicates" ]]; then
+      echo "Cluster $cluster declares duplicate applications:" >&2
+      printf '%s\n' "$duplicates" >&2
+      return 1
+    fi
+
+    local app_name
+    for app_name in "${cluster_apps[@]}"; do
+      if [[ ! "$app_name" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+        echo "Cluster $cluster has invalid application name: $app_name" >&2
+        return 1
+      fi
+      if [[ ! -f "$templates_dir/$app_name.yaml.tmpl" ]]; then
+        echo "Cluster $cluster is missing template for $app_name" >&2
+        return 1
+      fi
+      if ! RESOURCE="$app_name.yaml" yq -e '.resources[] | select(. == strenv(RESOURCE))' \
+        "$applications_kustomization" >/dev/null; then
+        echo "Cluster $cluster kustomization does not include $app_name.yaml" >&2
+        return 1
+      fi
+    done
+
+    find "$applications_dir" -maxdepth 1 -type f -name '*.yaml' ! -name 'kustomization.yaml' -print |
       while IFS= read -r existing_file; do
         if grep -qF "$marker" "$existing_file"; then
           rm "$existing_file"
         fi
       done
 
-    mapfile -t cluster_apps < <(
-      yq -r '.resources[] | select(test("^[A-Za-z0-9._-]+\\.yaml$"))' "$applications_kustomization"
-    )
-
-    local app_name
-    local app_file
-    for app_file in "${cluster_apps[@]}"; do
-      app_name="${app_file%.yaml}"
+    for app_name in "${cluster_apps[@]}"; do
       local template_path
-      template_path="$templates_dir/$app_name.yaml.tmpl"
-
-      if [[ -z "$app_name" ]]; then
-        echo "Cluster $cluster has an empty application entry" >&2
-        exit 1
-      fi
-
-      if [[ ! -f "$template_path" ]]; then
-        echo "Missing template: $template_path" >&2
-        exit 1
-      fi
-
+      local output_path
       local values_common_file
       local values_overlay_file
       local values_overlay_dir
-      values_common_file="gitops/manifests/$app_name/base/values-common.yaml"
-      values_overlay_file="gitops/manifests/$app_name/overlays/$cluster/values-overrides.yaml"
+      template_path="$templates_dir/$app_name.yaml.tmpl"
+      output_path="$applications_dir/$app_name.yaml"
+      values_common_file="gitops/values/$app_name/common.yaml"
+      values_overlay_file="gitops/values/$app_name/$cluster.yaml"
       values_overlay_dir="gitops/manifests/$app_name/overlays/$cluster"
 
-      export APPLICATION_NAME="$app_name"
-      export ARGOCD_NAMESPACE="$argocd_namespace"
-      export CLUSTER_NAME="$cluster"
-      export DESTINATION_SERVER="$destination_server"
-      export VALUES_REPO_URL="$values_repo_url"
-      export VALUES_TARGET_REVISION="$values_target_revision"
       # shellcheck disable=SC2016
-      export VALUES_REF='$values'
-      export VALUES_COMMON_FILE="$values_common_file"
-      export VALUES_OVERLAY_FILE="$values_overlay_file"
-      export VALUES_OVERLAY_DIR="$values_overlay_dir"
+      if grep -qF '${VALUES_COMMON_FILE}' "$template_path" && \
+        [[ ! -f "$root/$values_common_file" ]]; then
+        echo "Cluster $cluster application $app_name is missing $values_common_file" >&2
+        return 1
+      fi
+      # shellcheck disable=SC2016
+      if grep -qF '${VALUES_OVERLAY_FILE}' "$template_path" && \
+        [[ ! -f "$root/$values_overlay_file" ]]; then
+        echo "Cluster $cluster application $app_name is missing $values_overlay_file" >&2
+        return 1
+      fi
+      # shellcheck disable=SC2016
+      if grep -qF '${VALUES_OVERLAY_DIR}' "$template_path" && \
+        [[ ! -f "$root/$values_overlay_dir/kustomization.yaml" ]]; then
+        echo "Cluster $cluster application $app_name is missing $values_overlay_dir/kustomization.yaml" >&2
+        return 1
+      fi
 
-      envsubst <"$template_path" >"$applications_dir/$app_file"
+      # shellcheck disable=SC2016
+      APPLICATION_NAME="$app_name" \
+      ARGOCD_NAMESPACE="$argocd_namespace" \
+      CLUSTER_NAME="$cluster" \
+      DESTINATION_SERVER="$destination_server" \
+      VALUES_REPO_URL="$values_repo_url" \
+      VALUES_TARGET_REVISION="$values_target_revision" \
+      VALUES_REF='$values' \
+      VALUES_COMMON_FILE="$values_common_file" \
+      VALUES_OVERLAY_FILE="$values_overlay_file" \
+      VALUES_OVERLAY_DIR="$values_overlay_dir" \
+        envsubst '${APPLICATION_NAME} ${ARGOCD_NAMESPACE} ${CLUSTER_NAME} ${DESTINATION_SERVER} ${VALUES_REPO_URL} ${VALUES_TARGET_REVISION} ${VALUES_REF} ${VALUES_COMMON_FILE} ${VALUES_OVERLAY_FILE} ${VALUES_OVERLAY_DIR}' \
+          <"$template_path" >"$output_path"
+
+      if grep -Eq '\$\{[A-Z_][A-Z0-9_]*\}' "$output_path"; then
+        echo "Rendered application $cluster/$app_name contains an unresolved variable" >&2
+        return 1
+      fi
+
+      APPLICATION_NAME="$app_name" ARGOCD_NAMESPACE="$argocd_namespace" \
+        yq -e '
+          .apiVersion == "argoproj.io/v1alpha1" and
+          .kind == "Application" and
+          .metadata.name == strenv(APPLICATION_NAME) and
+          .metadata.namespace == strenv(ARGOCD_NAMESPACE)
+        ' "$output_path" >/dev/null
     done
+
+    kubectl kustomize "$applications_dir" >/dev/null
+    kubectl kustomize "$cluster_dir/bootstrap" >/dev/null
   done
 }
 
+render_tree "$workspace"
+
 if [[ "$check" == true ]]; then
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
-
-  mkdir -p "$tmpdir"
-  cp -R "$repo_root/gitops" "$tmpdir/gitops"
-  generate "$tmpdir"
-
-  diff -ru "$repo_root/gitops/clusters" "$tmpdir/gitops/clusters"
-else
-  generate "$repo_root"
+  diff -ru "$gitops_root/clusters" "$workspace/gitops/clusters"
+  exit 0
 fi
+
+# The staged tree is complete and valid. Replace marker-owned files only now.
+for staged_cluster_dir in "$workspace/gitops/clusters"/*; do
+  [[ -d "$staged_cluster_dir" ]] || continue
+  cluster="$(basename "$staged_cluster_dir")"
+  staged_applications_dir="$staged_cluster_dir/applications"
+  applications_dir="$gitops_root/clusters/$cluster/applications"
+
+  find "$applications_dir" -maxdepth 1 -type f -name '*.yaml' ! -name 'kustomization.yaml' -print |
+    while IFS= read -r existing_file; do
+      if grep -qF "$marker" "$existing_file"; then
+        rm "$existing_file"
+      fi
+    done
+
+  find "$staged_applications_dir" -maxdepth 1 -type f -name '*.yaml' ! -name 'kustomization.yaml' -print |
+    while IFS= read -r staged_file; do
+      if grep -qF "$marker" "$staged_file"; then
+        destination="$applications_dir/$(basename "$staged_file")"
+        temporary="$destination.tmp.$$"
+        cp "$staged_file" "$temporary"
+        mv "$temporary" "$destination"
+      fi
+    done
+done

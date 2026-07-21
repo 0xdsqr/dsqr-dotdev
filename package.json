@@ -39,7 +39,7 @@
     "format": "nix fmt",
     "format:check": "sh -c 'nix build .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).format --no-link'",
     "gitops:generate": "nix run .#gitopsGenerateApplications --",
-    "gitops:render": "kubectl kustomize gitops/clusters/hub-a/bootstrap && kubectl kustomize gitops/clusters/hub-a/applications",
+    "gitops:render": "nix run .#gitopsRender --",
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",

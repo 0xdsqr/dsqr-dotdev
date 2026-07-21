@@ -11,10 +11,10 @@ metadata:
     homelab.dev/physical-host: dell-r730xd
     homelab.dev/tier: gitops
 spec:
-  project: default
+  project: bootstrap
   source:
     repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
-    targetRevision: master
+    targetRevision: refs/heads/master
     path: gitops/clusters/hub-a/applications
   destination:
     server: https://kubernetes.default.svc
@@ -33,3 +33,4 @@ spec:
         maxDuration: 3m
     syncOptions:
       - ApplyOutOfSyncOnly=true
+      - PruneLast=true

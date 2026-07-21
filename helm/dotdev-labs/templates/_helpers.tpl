@@ -16,7 +16,8 @@
 
 {{- define "dotdev-labs.image" -}}
 {{- $repository := required "image.repository is required" .Values.image.repository -}}
-{{- $tag := default .Chart.AppVersion .Values.image.tag -}}
+{{- $version := default .Chart.AppVersion .Values.image.version -}}
+{{- $tag := default $version .Values.image.tag -}}
 {{- $digest := default "" .Values.image.digest -}}
 {{- if and .Values.image.requireDigest (eq $digest "") -}}
 {{- fail "image.digest must be set when image.requireDigest is true" -}}
@@ -38,7 +39,7 @@
 helm.sh/chart: {{ include "dotdev-labs.chart" . }}
 app.kubernetes.io/name: {{ include "dotdev-labs.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/version: {{ default .Chart.AppVersion .Values.image.version | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 

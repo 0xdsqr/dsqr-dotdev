@@ -5,6 +5,7 @@ set -euo pipefail
 source_revision="${RELEASE_SOURCE_REVISION:-${GITHUB_SHA:-}}"
 registry="${RELEASE_REGISTRY:-ghcr.io}"
 owner="${RELEASE_REGISTRY_OWNER:-${GITHUB_REPOSITORY_OWNER:-}}"
+cluster="${RELEASE_CLUSTER:-hub-a}"
 
 if [[ ! "$source_revision" =~ ^[0-9a-f]{40}$ ]]; then
   echo "RELEASE_SOURCE_REVISION must be a full lowercase Git commit." >&2
@@ -71,10 +72,10 @@ prepare_app() {
   fi
 
   gitops-release-image \
+    --cluster "$cluster" \
     --app "$app" \
     --version "$version" \
-    --digest "$digest" \
-    --source-revision "$source_revision"
+    --digest "$digest"
 
   echo "$app $version prepared as $candidate@$digest"
 }

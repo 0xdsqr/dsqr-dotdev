@@ -1,10 +1,11 @@
 # Production Helm values for dotdev-labs.
-# Keep cluster-only overrides in gitops/manifests/dotdev-labs/overlays/<cluster>/values-overrides.yaml.
+# Keep deployment pins and cluster-only overrides in gitops/values/dotdev-labs/<cluster>.yaml.
 fullnameOverride: dotdev-labs
 image:
   repository: ghcr.io/0xdsqr/dotdev-labs
+  version: ""
   tag: ""
-  digest: sha256:7fbc2b75ebf91cdf2f73419379132ef4adac3a3f7b8154030df3abf15ee2831f
+  digest: ""
   requireDigest: true
   pullPolicy: IfNotPresent
 imagePullSecrets:

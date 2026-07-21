@@ -2,13 +2,17 @@
   lib,
   stdenvNoCC,
   gitopsGenerateApplications,
+  gitopsRender,
   kubectl,
+  ripgrep,
+  yq-go,
 }:
 let
   src = lib.fileset.toSource {
     root = ../..;
     fileset = lib.fileset.unions [
       ../../gitops
+      ../scripts/check-gitops.sh
     ];
   };
 in
@@ -18,7 +22,10 @@ stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = [
     gitopsGenerateApplications
+    gitopsRender
     kubectl
+    ripgrep
+    yq-go
   ];
 
   dontConfigure = true;
@@ -27,9 +34,7 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    gitops-generate-applications --check
-    kubectl kustomize gitops/clusters/hub-a/bootstrap >/dev/null
-    kubectl kustomize gitops/clusters/hub-a/applications >/dev/null
+    bash ${../scripts/check-gitops.sh}
 
     mkdir -p "$out"
     touch "$out/gitops-check"

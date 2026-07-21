@@ -3,5 +3,6 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - fidara-repo.externalsecret.yaml
   - github-webhook.externalsecret.yaml
   - github-webhook.traefik.yaml
