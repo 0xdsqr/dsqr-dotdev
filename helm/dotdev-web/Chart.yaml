@@ -3,4 +3,4 @@ name: dotdev-web
 description: Helm chart for the dsqr.dev dotdev app
 type: application
 version: 0.1.0
-appVersion: sha-790a32a6f932fea1b953405351552f1a2f9b5f5d
+appVersion: sha-a5662e3db5d6390e56dc3be8b0408810bdf09d61
