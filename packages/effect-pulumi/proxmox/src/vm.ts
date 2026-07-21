@@ -94,6 +94,9 @@ export function createProxmoxVm(args: {
           {
             bridge: resolvedSpec.bridge,
             model: "virtio",
+            ...(resolvedSpec.macAddress === undefined
+              ? {}
+              : { macAddress: resolvedSpec.macAddress }),
             ...(resolvedSpec.vlanTag === undefined ? {} : { vlanId: resolvedSpec.vlanTag }),
           },
         ],

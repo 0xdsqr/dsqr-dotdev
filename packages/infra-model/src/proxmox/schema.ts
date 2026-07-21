@@ -8,6 +8,7 @@ export const VmSpecSchema = Schema.Struct({
   templateVmId: Schema.Number,
   datastoreId: Schema.NonEmptyString,
   bridge: Schema.NonEmptyString,
+  macAddress: Schema.optional(Schema.NonEmptyString),
   vlanTag: Schema.optional(Schema.Number),
   cloudInitDiskDatastoreId: Schema.NonEmptyString,
   cloudInitUserDataFileId: Schema.NonEmptyString,
