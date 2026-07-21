@@ -10,209 +10,46 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  HELM_REGISTRY_REPOSITORY: oci://ghcr.io/${{ github.repository }}/charts
-  TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
 permissions:
   contents: read
+  packages: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
 concurrency:
   group: publish-helm-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
-  detect-charts:
-    name: Detect chart changes
+  publish:
+    name: Publish released chart versions
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     if: >-
       ${{
         (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master') ||
-        (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+        (
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.conclusion == 'success'
+        )
       }}
-    outputs:
-      dotdev: ${{ steps.charts.outputs.dotdev }}
-      studio: ${{ steps.charts.outputs.studio }}
-      labs: ${{ steps.charts.outputs.labs }}
 
     steps:
-      - name: Check out repository
+      - name: Check out release commit
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 2
           persist-credentials: false
 
-      - name: Detect affected charts
-        id: charts
-        shell: bash
-        run: |
-          set -euo pipefail
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
-          dotdev=false
-          studio=false
-          labs=false
-
-          mark_all() {
-            dotdev=true
-            studio=true
-            labs=true
-          }
-
-          # workflow_run does not expose the full push range. Charts are small,
-          # so publish all of them after the required checks succeed.
-          mark_all
-
-          {
-            echo "dotdev=$dotdev"
-            echo "studio=$studio"
-            echo "labs=$labs"
-          } | tee -a "$GITHUB_OUTPUT"
-
-  publish-dotdev:
-    name: Publish dotdev-web chart
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: write
-    needs:
-      - detect-charts
-    if: ${{ needs.detect-charts.outputs.dotdev == 'true' }}
-    env:
-      CHART_VERSION: 0.1.${{ github.run_number }}-r${{ github.run_attempt }}
-      CHART_NAME: dotdev-web
-      CHART_NAMESPACE: dsqr
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          ref: ${{ env.TARGET_SHA }}
-          persist-credentials: false
-
-      - name: Set up Helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
-
-      - name: Log in to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
-            --username "${{ github.repository_owner }}" \
-            --password-stdin
-
-      - name: Verify chart
-        run: helm lint "./helm/${CHART_NAME}"
-
-      - name: Render chart
-        run: |
-          helm template "${CHART_NAME}" "./helm/${CHART_NAME}" \
-            --namespace "${CHART_NAMESPACE}" \
-            -f "./helm/${CHART_NAME}/values-prod.yaml"
-
-      - name: Publish chart
-        run: |
-          package_dir="$(mktemp -d)"
-          helm package "./helm/${CHART_NAME}" \
-            --version "${CHART_VERSION}" \
-            --destination "${package_dir}"
-          helm push "${package_dir}/${CHART_NAME}-${CHART_VERSION}.tgz" \
-            "${HELM_REGISTRY_REPOSITORY}"
-
-  publish-studio:
-    name: Publish dotdev-studio chart
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: write
-    needs:
-      - detect-charts
-    if: ${{ needs.detect-charts.outputs.studio == 'true' }}
-    env:
-      CHART_VERSION: 0.1.${{ github.run_number }}-r${{ github.run_attempt }}
-      CHART_NAME: dotdev-studio
-      CHART_NAMESPACE: dsqr
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          ref: ${{ env.TARGET_SHA }}
-          persist-credentials: false
-
-      - name: Set up Helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
-
-      - name: Log in to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
-            --username "${{ github.repository_owner }}" \
-            --password-stdin
-
-      - name: Verify chart
-        run: helm lint "./helm/${CHART_NAME}"
-
-      - name: Render chart
-        run: |
-          helm template "${CHART_NAME}" "./helm/${CHART_NAME}" \
-            --namespace "${CHART_NAMESPACE}" \
-            -f "./helm/${CHART_NAME}/values-prod.yaml"
-
-      - name: Publish chart
-        run: |
-          package_dir="$(mktemp -d)"
-          helm package "./helm/${CHART_NAME}" \
-            --version "${CHART_VERSION}" \
-            --destination "${package_dir}"
-          helm push "${package_dir}/${CHART_NAME}-${CHART_VERSION}.tgz" \
-            "${HELM_REGISTRY_REPOSITORY}"
-
-  publish-labs:
-    name: Publish dotdev-labs chart
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: write
-    needs:
-      - detect-charts
-    if: ${{ needs.detect-charts.outputs.labs == 'true' }}
-    env:
-      CHART_VERSION: 0.1.${{ github.run_number }}-r${{ github.run_attempt }}
-      CHART_NAME: dotdev-labs
-      CHART_NAMESPACE: dsqr
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          ref: ${{ env.TARGET_SHA }}
-          persist-credentials: false
-
-      - name: Set up Helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
-
-      - name: Log in to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
-            --username "${{ github.repository_owner }}" \
-            --password-stdin
-
-      - name: Verify chart
-        run: helm lint "./helm/${CHART_NAME}"
-
-      - name: Render chart
-        run: |
-          helm template "${CHART_NAME}" "./helm/${CHART_NAME}" \
-            --namespace "${CHART_NAMESPACE}" \
-            -f "./helm/${CHART_NAME}/values-prod.yaml"
-
-      - name: Publish chart
-        run: |
-          package_dir="$(mktemp -d)"
-          helm package "./helm/${CHART_NAME}" \
-            --version "${CHART_VERSION}" \
-            --destination "${package_dir}"
-          helm push "${package_dir}/${CHART_NAME}-${CHART_VERSION}.tgz" \
-            "${HELM_REGISTRY_REPOSITORY}"
+      - name: Publish immutable SemVer charts
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USERNAME: ${{ github.repository_owner }}
+          RELEASE_HEAD_REVISION: ${{ env.TARGET_SHA }}
+        run: nix run .#releasePublishCharts --

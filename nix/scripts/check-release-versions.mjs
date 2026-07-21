@@ -89,6 +89,9 @@ for (const [app, chartPath] of chartByApp) {
   if (!semverPattern.test(chartVersion ?? "")) {
     errors.push(`${chartPath} version is not SemVer: ${chartVersion}`)
   }
+  if (chartVersion !== packageVersion) {
+    errors.push(`${chartPath} version is ${chartVersion}; expected ${packageVersion}`)
+  }
   if (appVersion !== packageVersion) {
     errors.push(`${chartPath} appVersion is ${appVersion}; expected ${packageVersion}`)
   }

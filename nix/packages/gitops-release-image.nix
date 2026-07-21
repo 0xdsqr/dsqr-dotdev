@@ -114,7 +114,7 @@ pkgs.writeShellApplication {
       exit 1
     fi
 
-    yq -i ".appVersion = \"$version\"" "$chart_file"
+    yq -i ".version = \"$version\" | .appVersion = \"$version\"" "$chart_file"
     yq -i '.image.tag = ""' "$values_file"
     yq -i ".image.digest = \"$digest\"" "$values_file"
     yq -i '.image.requireDigest = true' "$values_file"

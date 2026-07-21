@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows:
+      - Check
+    types:
+      - completed
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+concurrency:
+  group: changesets-release-master
+  cancel-in-progress: true
+
+jobs:
+  version:
+    name: Update Version Packages pull request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master') ||
+        (
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.conclusion == 'success'
+        )
+      }}
+
+    steps:
+      - name: Check out master
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require the validated master revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          if [[ "$actual" != "$TARGET_SHA" ]]; then
+            echo "Validated revision $TARGET_SHA is no longer master ($actual); a newer run will handle it."
+            exit 1
+          fi
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create or update signed Version Packages pull request
+        id: changesets
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          branch: master
+          commit: "chore(release): version packages"
+          commitMode: github-api
+          createGithubReleases: false
+          prDraft: create
+          title: "chore(release): version packages"
+          version: nix run .#releasePrepare --
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_REGISTRY_OWNER: ${{ github.repository_owner }}
+          RELEASE_SOURCE_REVISION: ${{ env.TARGET_SHA }}
+
+      - name: Run checks for the release pull request
+        if: ${{ steps.changesets.outputs.pullRequestNumber != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+        run: |
+          set -euo pipefail
+          head_ref="$(gh pr view "$PULL_REQUEST_NUMBER" --json headRefName --jq '.headRefName')"
+          gh workflow run ci.yml --ref "$head_ref"

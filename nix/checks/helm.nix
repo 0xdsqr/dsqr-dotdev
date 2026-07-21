@@ -71,6 +71,10 @@ stdenvNoCC.mkDerivation {
             echo "$chartName appVersion $appVersion must match $packageFile version $packageVersion" >&2
             exit 1
           fi
+          if [ "$chartVersion" != "$packageVersion" ]; then
+            echo "$chartName version $chartVersion must match $packageFile version $packageVersion" >&2
+            exit 1
+          fi
           if ! printf '%s\n' "$chartVersion" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$'; then
             echo "$chartName chart version $chartVersion is not SemVer" >&2
             exit 1

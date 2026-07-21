@@ -8,20 +8,3 @@
 </p>
 
 </div>
-
-## Homelab migration
-
-This repository owns the dsqr.dev apps, app image builds, Helm charts, and Pulumi/Haven infrastructure code. Host NixOS and nix-darwin configuration is intentionally managed outside this repo.
-
-Useful checks:
-
-```sh
-nix flake check
-nix build .#dotdev .#studio .#labs
-nix build .#dotdevImage .#studioImage .#labsImage
-npm run haven -- outputs
-npm run gitops:render
-npm run typecheck:infra:native
-```
-
-Argo CD is LAN-only during this migration slice. Cloudflare Access and R2 bucket management are paused until the Cloudflare API token has the required account permissions.

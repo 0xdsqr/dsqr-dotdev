@@ -11,5 +11,5 @@ pkgs.writeShellApplication {
     pkgs.yq-go
   ];
 
-  text = builtins.readFile ../../scripts/gitops-generate-applications.sh;
+  text = builtins.readFile ../scripts/gitops-generate-applications.sh;
 }

@@ -1,12 +1,16 @@
 {
   buildNpmPackage,
+  jq,
   lib,
   nodejs_24,
   npmDepsHash,
+  runCommand,
 }:
 let
   rootPackage = builtins.fromJSON (builtins.readFile ../../package.json);
-  src = import ../lib/manifest-source.nix { inherit lib; };
+  src = import ../lib/manifest-source.nix {
+    inherit jq lib runCommand;
+  };
 in
 (buildNpmPackage.override { nodejs = nodejs_24; }) {
   pname = "dsqr-dotdev-node-modules";

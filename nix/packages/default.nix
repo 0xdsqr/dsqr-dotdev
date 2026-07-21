@@ -30,13 +30,17 @@ let
 
   gitopsGenerateApplications = pkgs.callPackage ./gitops-generate-applications.nix { };
 
-  gitopsTagImages = pkgs.callPackage ./gitops-tag-images.nix {
-    inherit gitopsGenerateApplications;
-  };
-
   gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix {
     inherit gitopsGenerateApplications;
   };
+
+  releasePrepare = pkgs.callPackage ./release-prepare.nix {
+    inherit changeset gitopsReleaseImage;
+  };
+
+  releasePublishCharts = pkgs.callPackage ./release-publish-charts.nix { };
+
+  releasePublishImages = pkgs.callPackage ./release-publish-images.nix { };
 in
 {
   inherit
@@ -44,9 +48,11 @@ in
     dotdev
     gitopsGenerateApplications
     gitopsReleaseImage
-    gitopsTagImages
     labs
     nodeModules
+    releasePrepare
+    releasePublishCharts
+    releasePublishImages
     studio
     ;
 
