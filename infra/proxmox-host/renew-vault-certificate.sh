@@ -39,6 +39,31 @@ certificate_matches_key() {
   [[ "$certificate_public_key" == "$private_public_key" ]]
 }
 
+listener_is_healthy() {
+  systemctl is-active --quiet pveproxy.service \
+    && curl --fail --silent --show-error \
+      --cacert "$ca_file" \
+      --connect-timeout 5 \
+      --max-time 15 \
+      --resolve "$common_name:8006:127.0.0.1" \
+      --output /dev/null \
+      "https://$common_name:8006/"
+}
+
+wait_for_listener() {
+  local attempt
+
+  for attempt in {1..15}; do
+    if listener_is_healthy; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "Proxmox listener did not become healthy after certificate installation." >&2
+  return 1
+}
+
 readonly request_fingerprint="$({
   printf '%s\0' "$vault_addr" "$auth_path" "$issue_path" "$common_name" "$ttl"
 } | sha256sum | cut -d ' ' -f 1)"
@@ -50,8 +75,13 @@ if [[ -s "$certificate_file" ]] \
   && openssl x509 -checkend "$renew_before_seconds" -noout -in "$certificate_file" >/dev/null \
   && openssl x509 -checkhost "$common_name" -noout -in "$certificate_file" >/dev/null \
   && certificate_matches_key "$certificate_file" "$key_file"; then
-  echo "Proxmox listener certificate is still valid."
-  exit 0
+  if listener_is_healthy; then
+    echo "Proxmox listener certificate is still valid."
+    exit 0
+  fi
+
+  echo "The certificate is valid, but the Proxmox listener is unhealthy." >&2
+  exit 1
 fi
 
 if [[ ! -r "$environment_file" ]]; then
@@ -178,13 +208,6 @@ if ! certificate_matches_key "$certificate_file" "$key_file"; then
   echo "Installed Proxmox certificate does not match its private key." >&2
   exit 1
 fi
-systemctl is-active --quiet pveproxy.service
-curl --silent --show-error \
-  --cacert "$ca_file" \
-  --connect-timeout 5 \
-  --max-time 15 \
-  --resolve "$common_name:8006:127.0.0.1" \
-  --output /dev/null \
-  "https://$common_name:8006/api2/json/version"
+wait_for_listener
 
 echo "Renewed Proxmox listener certificate for $common_name."
