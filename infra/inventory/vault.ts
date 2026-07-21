@@ -279,7 +279,6 @@ const pkiIssuers = {
     roleName: "gateway-caddy-home-arpa",
     policyName: "homelab-pki-gateway-caddy-home-arpa",
     allowedDomains: [
-      "argocd.home.arpa",
       "argocd.hub-a.home.arpa",
       "exo.home.arpa",
       "grafana.home.arpa",
@@ -306,7 +305,6 @@ const pkiIssuers = {
     allowedDomains: [
       "admin.tastingswithtay.com",
       "api.fidara.io",
-      "argocd.home.arpa",
       "argocd.hub-a.home.arpa",
       "argocd-hooks.hub-a.dsqr.dev",
       "dsqr.dev",

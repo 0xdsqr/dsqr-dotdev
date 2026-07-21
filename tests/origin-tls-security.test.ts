@@ -95,14 +95,13 @@ test("hub-a owns its cluster-specific private Argo hostname", () => {
     "utf8",
   )
   const hubValues = readFileSync(
-    new URL(
-      "../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml",
-      import.meta.url,
-    ),
+    new URL("../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml", import.meta.url),
     "utf8",
   )
 
   assert.doesNotMatch(commonValues, /argocd\.home\.arpa/)
+  assert.ok(!vault.pkiIssuers.gatewayCaddy.allowedDomains.includes("argocd.home.arpa"))
+  assert.ok(!vault.pkiIssuers.hubATraefikOrigin.allowedDomains.includes("argocd.home.arpa"))
   assert.match(hubValues, /domain: argocd\.hub-a\.home\.arpa/)
   assert.match(hubValues, /hostname: argocd\.hub-a\.home\.arpa/)
 })
