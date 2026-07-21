@@ -142,6 +142,7 @@ test("public Argo webhook exposure is authenticated and route-scoped", () => {
   )
 
   assert.match(values, /githubSecret: "\$argocd-github-webhook:secret"/)
+  assert.match(values, /webhook\.maxPayloadSizeMB: "5"/)
   assert.doesNotMatch(values, /webhook\.github\.secret:/)
   assert.match(externalSecret, /key: homelab\/platform\/argocd\/webhooks\/github/)
   assert.match(externalSecret, /property: secret/)
@@ -149,6 +150,9 @@ test("public Argo webhook exposure is authenticated and route-scoped", () => {
   assert.ok(route.includes("Host(`argocd-hooks-hub-a.dsqr.dev`)"))
   assert.ok(route.includes("Path(`/api/webhook`)"))
   assert.ok(route.includes("Method(`POST`)"))
+  assert.match(route, /name: argocd-github-webhook-body-limit/)
+  assert.match(route, /maxRequestBodyBytes: 5242880/)
+  assert.match(route, /memRequestBodyBytes: 1048576/)
   assert.doesNotMatch(route, /argocd\.hub-a\.home\.arpa/)
   assert.equal(cloudflareRule?.service, "https://10.10.30.200")
   assert.deepEqual(cloudflareRule?.originRequest, {

@@ -4,6 +4,8 @@ global:
   domain: argocd.hub-a.home.arpa
 
 configs:
+  cm:
+    webhook.maxPayloadSizeMB: "5"
   secret:
     githubSecret: "$argocd-github-webhook:secret"
 
