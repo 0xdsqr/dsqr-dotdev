@@ -1,5 +1,11 @@
 # dotdev
 
+## 0.0.2
+
+### Patch Changes
+
+- 1075e74: Adopt signed Changesets release pull requests and immutable SemVer deployment artifacts.
+
 ## 0.0.1
 
 ### Patch Changes
