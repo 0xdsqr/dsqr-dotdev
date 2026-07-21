@@ -68,6 +68,16 @@ export type VaultPkiAppRoleConfig = {
   readonly tokenNumUses: number
 }
 
+export type VaultPkiKubernetesAuthRoleConfig = {
+  readonly backend: string
+  readonly roleName: string
+  readonly boundServiceAccountNames: readonly string[]
+  readonly boundServiceAccountNamespaces: readonly string[]
+  readonly tokenTtlSeconds: number
+  readonly tokenMaxTtlSeconds: number
+  readonly tokenExplicitMaxTtlSeconds: number
+}
+
 export type VaultPkiIssuerConfig = {
   readonly backend: string
   readonly roleName: string
@@ -78,6 +88,7 @@ export type VaultPkiIssuerConfig = {
   readonly ttlHours: number
   readonly maxTtlHours: number
   readonly appRole?: VaultPkiAppRoleConfig | undefined
+  readonly kubernetesAuthRole?: VaultPkiKubernetesAuthRoleConfig | undefined
 }
 
 export type VaultPkiIssuerInventory = Readonly<Record<string, VaultPkiIssuerConfig>>
@@ -292,6 +303,7 @@ export function validatePkiIssuerInventoryEffect(
     const roleNames = new Set<string>()
     const policyNames = new Set<string>()
     const appRoleNames = new Set<string>()
+    const kubernetesAuthRoleNames = new Set<string>()
 
     if (Object.keys(issuers).length === 0) {
       return yield* Effect.fail(
@@ -363,55 +375,112 @@ export function validatePkiIssuerInventoryEffect(
       }
 
       const appRole = issuer.appRole
-      if (!appRole) {
+      if (appRole) {
+        if (!appRole.backend || appRole.backend.includes("/") || appRole.backend.includes("*")) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource,
+              message: `PKI issuer "${key}" must use a normalized AppRole backend mount name.`,
+            }),
+          )
+        }
+
+        if (!appRole.roleName || appRoleNames.has(appRole.roleName)) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource,
+              message: `PKI issuer "${key}" must have a unique non-empty AppRole name.`,
+            }),
+          )
+        }
+        appRoleNames.add(appRole.roleName)
+
+        if (
+          appRole.secretIdBoundCidrs.length === 0 ||
+          appRole.tokenBoundCidrs.length === 0 ||
+          appRole.secretIdBoundCidrs.some(isBroadCidr) ||
+          appRole.tokenBoundCidrs.some(isBroadCidr)
+        ) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource,
+              message: `PKI issuer "${key}" AppRole must be bound to explicit, non-global source CIDRs.`,
+            }),
+          )
+        }
+
+        if (
+          appRole.secretIdNumUses < 0 ||
+          appRole.secretIdTtlSeconds < 0 ||
+          appRole.tokenTtlSeconds <= 0 ||
+          appRole.tokenMaxTtlSeconds < appRole.tokenTtlSeconds ||
+          appRole.tokenExplicitMaxTtlSeconds < appRole.tokenMaxTtlSeconds ||
+          appRole.tokenNumUses < 0
+        ) {
+          return yield* Effect.fail(
+            new PulumiResourceConfigError({
+              resource,
+              message: `PKI issuer "${key}" AppRole has unsafe or internally inconsistent token lifetimes.`,
+            }),
+          )
+        }
+      }
+
+      const kubernetesAuthRole = issuer.kubernetesAuthRole
+      if (!kubernetesAuthRole) {
         continue
       }
 
-      if (!appRole.backend || appRole.backend.includes("/") || appRole.backend.includes("*")) {
-        return yield* Effect.fail(
-          new PulumiResourceConfigError({
-            resource,
-            message: `PKI issuer "${key}" must use a normalized AppRole backend mount name.`,
-          }),
-        )
-      }
-
-      if (!appRole.roleName || appRoleNames.has(appRole.roleName)) {
-        return yield* Effect.fail(
-          new PulumiResourceConfigError({
-            resource,
-            message: `PKI issuer "${key}" must have a unique non-empty AppRole name.`,
-          }),
-        )
-      }
-      appRoleNames.add(appRole.roleName)
-
       if (
-        appRole.secretIdBoundCidrs.length === 0 ||
-        appRole.tokenBoundCidrs.length === 0 ||
-        appRole.secretIdBoundCidrs.some(isBroadCidr) ||
-        appRole.tokenBoundCidrs.some(isBroadCidr)
+        !kubernetesAuthRole.backend ||
+        kubernetesAuthRole.backend.includes("/") ||
+        kubernetesAuthRole.backend.includes("*")
       ) {
         return yield* Effect.fail(
           new PulumiResourceConfigError({
             resource,
-            message: `PKI issuer "${key}" AppRole must be bound to explicit, non-global source CIDRs.`,
+            message: `PKI issuer "${key}" must use a normalized Kubernetes auth backend mount name.`,
           }),
         )
       }
 
       if (
-        appRole.secretIdNumUses < 0 ||
-        appRole.secretIdTtlSeconds < 0 ||
-        appRole.tokenTtlSeconds <= 0 ||
-        appRole.tokenMaxTtlSeconds < appRole.tokenTtlSeconds ||
-        appRole.tokenExplicitMaxTtlSeconds < appRole.tokenMaxTtlSeconds ||
-        appRole.tokenNumUses < 0
+        !kubernetesAuthRole.roleName ||
+        kubernetesAuthRoleNames.has(kubernetesAuthRole.roleName)
       ) {
         return yield* Effect.fail(
           new PulumiResourceConfigError({
             resource,
-            message: `PKI issuer "${key}" AppRole has unsafe or internally inconsistent token lifetimes.`,
+            message: `PKI issuer "${key}" must have a unique non-empty Kubernetes auth role name.`,
+          }),
+        )
+      }
+      kubernetesAuthRoleNames.add(kubernetesAuthRole.roleName)
+
+      if (
+        kubernetesAuthRole.boundServiceAccountNames.length === 0 ||
+        kubernetesAuthRole.boundServiceAccountNamespaces.length === 0 ||
+        kubernetesAuthRole.boundServiceAccountNames.includes("*") ||
+        kubernetesAuthRole.boundServiceAccountNamespaces.includes("*")
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" Kubernetes auth must bind exact service accounts and namespaces.`,
+          }),
+        )
+      }
+
+      if (
+        kubernetesAuthRole.tokenTtlSeconds <= 0 ||
+        kubernetesAuthRole.tokenMaxTtlSeconds < kubernetesAuthRole.tokenTtlSeconds ||
+        kubernetesAuthRole.tokenExplicitMaxTtlSeconds < kubernetesAuthRole.tokenMaxTtlSeconds ||
+        kubernetesAuthRole.tokenExplicitMaxTtlSeconds > 3_600
+      ) {
+        return yield* Effect.fail(
+          new PulumiResourceConfigError({
+            resource,
+            message: `PKI issuer "${key}" Kubernetes auth tokens must be ordered and capped at one hour.`,
           }),
         )
       }
@@ -761,6 +830,31 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
             )
           : undefined
 
+        const kubernetesAuthRole = issuer.kubernetesAuthRole
+          ? new vault.kubernetes.AuthBackendRole(
+              `pki-issuer-kubernetes-role-${key}`,
+              {
+                backend: issuer.kubernetesAuthRole.backend,
+                roleName: issuer.kubernetesAuthRole.roleName,
+                boundServiceAccountNames: [...issuer.kubernetesAuthRole.boundServiceAccountNames],
+                boundServiceAccountNamespaces: [
+                  ...issuer.kubernetesAuthRole.boundServiceAccountNamespaces,
+                ],
+                tokenExplicitMaxTtl: issuer.kubernetesAuthRole.tokenExplicitMaxTtlSeconds,
+                tokenMaxTtl: issuer.kubernetesAuthRole.tokenMaxTtlSeconds,
+                tokenNoDefaultPolicy: true,
+                tokenNumUses: 0,
+                tokenPolicies: [policy.name, externalSecretsTokenSelfPolicy.name],
+                tokenTtl: issuer.kubernetesAuthRole.tokenTtlSeconds,
+                tokenType: "service",
+              },
+              {
+                ...protectedPkiResourceOptions,
+                dependsOn: [role, policy, externalSecretsTokenSelfPolicy],
+              },
+            )
+          : undefined
+
         return [
           key,
           {
@@ -772,6 +866,13 @@ export function createVaultFoundationEffect(args: VaultFoundationArgs) {
                   backend: appRole.backend,
                   roleName: appRole.roleName,
                   roleId: appRole.roleId,
+                }
+              : undefined,
+            kubernetesAuthRole: kubernetesAuthRole
+              ? {
+                  backend: kubernetesAuthRole.backend,
+                  roleName: kubernetesAuthRole.roleName,
+                  policies: kubernetesAuthRole.tokenPolicies,
                 }
               : undefined,
           },

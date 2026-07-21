@@ -4,6 +4,9 @@
 deployment:
   replicas: 1
 
+api:
+  dashboard: false
+
 service:
   type: LoadBalancer
 
@@ -18,4 +21,4 @@ ports:
 
 ingressRoute:
   dashboard:
-    enabled: true
+    enabled: false

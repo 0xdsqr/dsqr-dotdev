@@ -305,6 +305,7 @@ const pkiIssuers = {
     policyName: "homelab-pki-hub-a-traefik-origin",
     allowedDomains: [
       "admin.tastingswithtay.com",
+      "api.fidara.io",
       "argocd.home.arpa",
       "argocd.hub-a.home.arpa",
       "argocd-hooks.hub-a.dsqr.dev",
@@ -318,6 +319,15 @@ const pkiIssuers = {
     generateLease: true,
     ttlHours: 720,
     maxTtlHours: 720,
+    kubernetesAuthRole: {
+      backend: "kubernetes",
+      roleName: "hub-a-traefik-origin-issuer",
+      boundServiceAccountNames: ["traefik-origin-issuer"],
+      boundServiceAccountNamespaces: ["traefik"],
+      tokenTtlSeconds: 1_200,
+      tokenMaxTtlSeconds: 3_600,
+      tokenExplicitMaxTtlSeconds: 3_600,
+    },
   },
 } satisfies VaultPkiIssuerInventory
 

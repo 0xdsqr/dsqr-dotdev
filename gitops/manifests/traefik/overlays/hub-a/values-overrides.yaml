@@ -1,4 +1,10 @@
 # hub-a Helm value overrides for Traefik.
-# Use this for cluster-specific service, ingress, dashboard, node placement, or pod metadata settings.
-# Leave empty when hub-a uses the base values unchanged.
-{}
+service:
+  annotations:
+    metallb.io/address-pool: ingress
+    metallb.io/loadBalancerIPs: 10.10.30.200
+
+tlsStore:
+  default:
+    defaultCertificate:
+      secretName: hub-a-traefik-origin-tls
