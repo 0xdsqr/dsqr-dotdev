@@ -88,3 +88,21 @@ test("hub-a Traefik declarations pin the VIP and materialize the exact Vault cer
     assert.ok(generator.includes(domain), `Vault certificate generator is missing ${domain}`)
   }
 })
+
+test("hub-a owns its cluster-specific private Argo hostname", () => {
+  const commonValues = readFileSync(
+    new URL("../gitops/manifests/argocd/base/values-common.yaml", import.meta.url),
+    "utf8",
+  )
+  const hubValues = readFileSync(
+    new URL(
+      "../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+
+  assert.doesNotMatch(commonValues, /argocd\.home\.arpa/)
+  assert.match(hubValues, /domain: argocd\.hub-a\.home\.arpa/)
+  assert.match(hubValues, /hostname: argocd\.hub-a\.home\.arpa/)
+})

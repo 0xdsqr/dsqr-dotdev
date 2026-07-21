@@ -1,9 +1,6 @@
 # Shared default Helm values for the Argo CD chart.
 # Keep values here when every cluster should use the same Argo CD defaults.
 # Put cluster-specific changes in overlays/<cluster>/values-overrides.yaml.
-global:
-  domain: argocd.home.arpa
-
 configs:
   cm:
     timeout.reconciliation: 120s
@@ -19,7 +16,6 @@ server:
   ingress:
     enabled: true
     ingressClassName: traefik
-    hostname: argocd.home.arpa
     path: /
     pathType: Prefix
     tls: false

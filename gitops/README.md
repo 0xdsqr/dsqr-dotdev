@@ -227,7 +227,7 @@ The last command should return `401` without an API key.
 ## Argo UI
 
 ```text
-https://argocd.home.arpa
+https://argocd.hub-a.home.arpa
 ```
 
 Get the initial admin password if it has not been rotated:
