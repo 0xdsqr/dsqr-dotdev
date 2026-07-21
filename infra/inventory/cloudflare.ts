@@ -51,6 +51,16 @@ export const cloudflare = {
   r2Buckets: [],
   ingressRules: [
     {
+      hostname: "argocd-hooks.hub-a.dsqr.dev",
+      zone: "dsqrDev",
+      service: "https://10.10.30.200",
+      originRequest: {
+        http2Origin: false,
+        httpHostHeader: "argocd-hooks.hub-a.dsqr.dev",
+        originServerName: "argocd-hooks.hub-a.dsqr.dev",
+      },
+    },
+    {
       hostname: "dsqr.dev",
       zone: "dsqrDev",
       service: "https://10.10.30.200",

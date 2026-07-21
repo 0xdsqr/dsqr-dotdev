@@ -3,6 +3,10 @@
 global:
   domain: argocd.hub-a.home.arpa
 
+configs:
+  secret:
+    githubSecret: "$argocd-github-webhook:secret"
+
 server:
   ingress:
     hostname: argocd.hub-a.home.arpa

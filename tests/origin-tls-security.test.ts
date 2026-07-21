@@ -117,3 +117,43 @@ test("Argo GitHub webhook secret has one exact Vault path", () => {
     readPaths: ["homelab/platform/argocd/webhooks/github"],
   })
 })
+
+test("public Argo webhook exposure is authenticated and route-scoped", () => {
+  const values = readFileSync(
+    new URL("../gitops/manifests/argocd/overlays/hub-a/values-overrides.yaml", import.meta.url),
+    "utf8",
+  )
+  const externalSecret = readFileSync(
+    new URL(
+      "../gitops/manifests/argocd/overlays/hub-a/github-webhook.externalsecret.yaml",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+  const route = readFileSync(
+    new URL(
+      "../gitops/manifests/argocd/overlays/hub-a/github-webhook.traefik.yaml",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+  const cloudflareRule = cloudflare.ingressRules.find(
+    (rule) => rule.hostname === "argocd-hooks.hub-a.dsqr.dev",
+  )
+
+  assert.match(values, /githubSecret: "\$argocd-github-webhook:secret"/)
+  assert.doesNotMatch(values, /webhook\.github\.secret:/)
+  assert.match(externalSecret, /key: homelab\/platform\/argocd\/webhooks\/github/)
+  assert.match(externalSecret, /property: secret/)
+  assert.match(externalSecret, /app\.kubernetes\.io\/part-of: argocd/)
+  assert.ok(route.includes("Host(`argocd-hooks.hub-a.dsqr.dev`)"))
+  assert.ok(route.includes("Path(`/api/webhook`)"))
+  assert.ok(route.includes("Method(`POST`)"))
+  assert.doesNotMatch(route, /argocd\.hub-a\.home\.arpa/)
+  assert.equal(cloudflareRule?.service, "https://10.10.30.200")
+  assert.deepEqual(cloudflareRule?.originRequest, {
+    http2Origin: false,
+    httpHostHeader: "argocd-hooks.hub-a.dsqr.dev",
+    originServerName: "argocd-hooks.hub-a.dsqr.dev",
+  })
+})
