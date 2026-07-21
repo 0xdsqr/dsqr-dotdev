@@ -84,6 +84,11 @@ const secretPaths = {
     description: "Argo CD private repository credentials for Fidara.",
     fields: ["type", "url", "username", "password"],
   },
+  argocdGithubWebhook: {
+    path: "homelab/platform/argocd/webhooks/github",
+    description: "Shared HMAC secret for authenticated GitHub webhook deliveries to Argo CD.",
+    fields: ["secret"],
+  },
   githubHomelabToken: {
     path: "homelab/platform/github/homelab-token",
     description: "Temporary shared GitHub token while narrower tokens are split out.",
@@ -209,6 +214,10 @@ const externalSecretsPolicies = {
   argocdFidaraRepo: {
     name: "hub-a-external-secrets-argocd-fidara-repo",
     readPaths: [secretPaths.argocdFidaraRepo.path],
+  },
+  argocdGithubWebhook: {
+    name: "hub-a-external-secrets-argocd-github-webhook",
+    readPaths: [secretPaths.argocdGithubWebhook.path],
   },
   githubArgoRepoRead: {
     name: "hub-a-external-secrets-github-argocd-repo-read",

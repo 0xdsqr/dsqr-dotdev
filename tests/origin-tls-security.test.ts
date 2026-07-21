@@ -105,3 +105,15 @@ test("hub-a owns its cluster-specific private Argo hostname", () => {
   assert.match(hubValues, /domain: argocd\.hub-a\.home\.arpa/)
   assert.match(hubValues, /hostname: argocd\.hub-a\.home\.arpa/)
 })
+
+test("Argo GitHub webhook secret has one exact Vault path", () => {
+  assert.deepEqual(vault.secretPaths.argocdGithubWebhook, {
+    path: "homelab/platform/argocd/webhooks/github",
+    description: "Shared HMAC secret for authenticated GitHub webhook deliveries to Argo CD.",
+    fields: ["secret"],
+  })
+  assert.deepEqual(vault.policies.externalSecrets.argocdGithubWebhook, {
+    name: "hub-a-external-secrets-argocd-github-webhook",
+    readPaths: ["homelab/platform/argocd/webhooks/github"],
+  })
+})
