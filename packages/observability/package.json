@@ -11,9 +11,9 @@
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@effect/opentelemetry": "0.63.0",
-    "@effect/platform": "0.96.1",
-    "effect": "3.21.2"
+    "@effect/opentelemetry": "0.64.0",
+    "@effect/platform": "0.97.0",
+    "effect": "3.22.0"
   },
   "devDependencies": {
     "@dsqr-dotdev/tsconfig": "0.0.1",

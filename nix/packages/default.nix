@@ -45,6 +45,8 @@ let
   releasePublishImages = pkgs.callPackage ./release-publish-images.nix { };
 
   releaseVerifyCandidates = pkgs.callPackage ./release-verify-candidates.nix { };
+
+  securityAudit = pkgs.callPackage ./security-audit.nix { };
 in
 {
   inherit
@@ -60,6 +62,7 @@ in
     releasePublishCharts
     releasePublishImages
     releaseVerifyCandidates
+    securityAudit
     studio
     ;
 

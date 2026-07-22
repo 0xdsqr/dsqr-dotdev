@@ -2,8 +2,8 @@ import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { nitro } from "nitro/vite"
+import { fileURLToPath } from "node:url"
 import { defineConfig } from "vite"
-import viteTsConfigPaths from "vite-tsconfig-paths"
 
 export default defineConfig({
   build: {
@@ -11,15 +11,25 @@ export default defineConfig({
       external: ["pg", "pg-native"],
     },
   },
-  plugins: [
-    tanstackStart(),
-    viteReact(),
-    tailwindcss(),
-    viteTsConfigPaths({
-      projects: ["./tsconfig.json"],
-    }),
-    nitro({ preset: "node-server" }),
-  ],
+  resolve: {
+    alias: [
+      {
+        find: "@dsqr-dotdev/api/auth",
+        replacement: fileURLToPath(
+          new URL("../../packages/api/src/auth/index.ts", import.meta.url),
+        ),
+      },
+      {
+        find: "@dsqr-dotdev/api/runtime",
+        replacement: fileURLToPath(new URL("../../packages/api/src/runtime.ts", import.meta.url)),
+      },
+      {
+        find: "@",
+        replacement: fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    ],
+  },
+  plugins: [tanstackStart(), viteReact(), tailwindcss(), nitro({ preset: "node-server" })],
   nitro: {
     preset: "node-server",
     rollupConfig: {

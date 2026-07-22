@@ -1,16 +1,18 @@
 import tailwindcss from "@tailwindcss/vite"
 import viteReact from "@vitejs/plugin-react"
+import { fileURLToPath } from "node:url"
 import { defineConfig } from "vite"
-import viteTsConfigPaths from "vite-tsconfig-paths"
 
 export default defineConfig({
-  plugins: [
-    viteReact(),
-    tailwindcss(),
-    viteTsConfigPaths({
-      projects: ["./tsconfig.json"],
-    }),
-  ],
+  resolve: {
+    alias: [
+      {
+        find: "@",
+        replacement: fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    ],
+  },
+  plugins: [viteReact(), tailwindcss()],
   server: {
     host: "0.0.0.0",
     port: 3022,

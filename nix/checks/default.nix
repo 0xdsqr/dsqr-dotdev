@@ -5,6 +5,7 @@
 }:
 {
   format = treefmtCheck;
+  dependency-policy = pkgs.callPackage ./dependency-policy.nix { };
   lint = pkgs.callPackage ./lint.nix {
     nodeModules = packages.nodeModules;
   };

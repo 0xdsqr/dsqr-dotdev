@@ -15,8 +15,8 @@
     "@dsqr-dotdev/effect-pulumi-core": "0.0.1",
     "@dsqr-dotdev/infra-model": "0.0.1",
     "@muhlba91/pulumi-proxmoxve": "7.13.0",
-    "@pulumi/pulumi": "3.234.0",
-    "effect": "3.21.2"
+    "@pulumi/pulumi": "3.253.0",
+    "effect": "3.22.0"
   },
   "devDependencies": {
     "@types/node": "22.19.17",

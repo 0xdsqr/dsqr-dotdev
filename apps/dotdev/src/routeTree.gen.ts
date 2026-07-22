@@ -9,18 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MiscRouteImport } from './routes/misc'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as MiscRouteImport } from './routes/misc'
 import { Route as PostsIndexRouteImport } from './routes/posts/index'
 import { Route as PostsSlugRouteImport } from './routes/posts/$slug'
-import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
+import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiPostsSlugImagesFileNameRouteImport } from './routes/api/posts.$slug.images.$fileName'
 
-const MiscRoute = MiscRouteImport.update({
-  id: '/misc',
-  path: '/misc',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -28,9 +28,9 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const MiscRoute = MiscRouteImport.update({
+  id: '/misc',
+  path: '/misc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIndexRoute = PostsIndexRouteImport.update({
@@ -43,14 +43,14 @@ const PostsSlugRoute = PostsSlugRouteImport.update({
   path: '/posts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
-  id: '/api/trpc/$',
-  path: '/api/trpc/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
+  id: '/api/trpc/$',
+  path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPostsSlugImagesFileNameRoute =
@@ -65,7 +65,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/misc': typeof MiscRoute
   '/posts/$slug': typeof PostsSlugRoute
-  '/posts': typeof PostsIndexRoute
+  '/posts/': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/api/posts/$slug/images/$fileName': typeof ApiPostsSlugImagesFileNameRoute
@@ -98,7 +98,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/misc'
     | '/posts/$slug'
-    | '/posts'
+    | '/posts/'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/api/posts/$slug/images/$fileName'
@@ -137,11 +137,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/misc': {
-      id: '/misc'
-      path: '/misc'
-      fullPath: '/misc'
-      preLoaderRoute: typeof MiscRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -151,17 +151,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/misc': {
+      id: '/misc'
+      path: '/misc'
+      fullPath: '/misc'
+      preLoaderRoute: typeof MiscRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts/': {
       id: '/posts/'
       path: '/posts'
-      fullPath: '/posts'
+      fullPath: '/posts/'
       preLoaderRoute: typeof PostsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -172,18 +172,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/trpc/$': {
-      id: '/api/trpc/$'
-      path: '/api/trpc/$'
-      fullPath: '/api/trpc/$'
-      preLoaderRoute: typeof ApiTrpcSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/trpc/$': {
+      id: '/api/trpc/$'
+      path: '/api/trpc/$'
+      fullPath: '/api/trpc/$'
+      preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/posts/$slug/images/$fileName': {
@@ -214,6 +214,7 @@ import type { getRouter } from './router.tsx'
 import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
   interface Register {
+    ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }

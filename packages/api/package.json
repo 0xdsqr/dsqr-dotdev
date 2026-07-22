@@ -26,26 +26,24 @@
     }
   },
   "scripts": {
-    "auth:generate": "better-auth generate --config src/auth/auth-cli.ts --output ../database/src/auth-schema.ts",
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "clean": "git clean -xdf dist node_modules",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1037.0",
+    "@aws-sdk/client-s3": "3.1093.0",
     "@dsqr-dotdev/database": "0.0.1",
     "@dsqr-dotdev/observability": "0.0.1",
     "@trpc/server": "11.16.0",
-    "better-auth": "1.4.21",
+    "better-auth": "1.6.24",
     "drizzle-orm": "0.45.2",
-    "effect": "3.21.2",
-    "resend": "6.12.2",
+    "effect": "3.22.0",
+    "resend": "6.18.0",
     "superjson": "2.2.6",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@better-auth/cli": "1.4.21",
     "@dsqr-dotdev/tsconfig": "0.0.1",
     "@types/node": "22.19.17",
     "@types/pg": "8.20.0"
