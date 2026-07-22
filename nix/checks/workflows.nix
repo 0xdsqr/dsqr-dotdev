@@ -1,5 +1,6 @@
 {
   actionlint,
+  git,
   jq,
   lib,
   shellcheck,
@@ -27,6 +28,7 @@ stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = [
     actionlint
+    git
     jq
     shellcheck
     yq-go
@@ -110,6 +112,98 @@ stdenvNoCC.mkDerivation {
     grep -Fqx \
       'Dry run complete: 2 stale tracking annotations are eligible for removal.' \
       <<<"$cleanupOutput"
+
+    publishTest="$TMPDIR/release-publish-charts"
+    publishMockBin="$publishTest/bin"
+    publishRepo="$publishTest/repo"
+    publishLog="$publishTest/helm.log"
+    publishScript="$PWD/nix/scripts/release-publish-charts.sh"
+    validationDigest="sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    mkdir -p "$publishMockBin" "$publishRepo/helm"
+
+    for chart in dotdev-web dotdev-studio dotdev-labs; do
+      mkdir -p "$publishRepo/helm/$chart"
+      cat >"$publishRepo/helm/$chart/Chart.yaml" <<EOF
+    apiVersion: v2
+    name: $chart
+    type: application
+    version: 0.0.3
+    appVersion: 0.0.3
+    EOF
+      touch "$publishRepo/helm/$chart/values-prod.yaml"
+    done
+
+    cat >"$publishMockBin/helm" <<'EOF'
+    #!${stdenvNoCC.shell}
+    set -euo pipefail
+    printf '%s\n' "$*" >>"$MOCK_HELM_LOG"
+    case "$1" in
+      lint|template)
+        ;;
+      show)
+        [[ "$MOCK_CHART_EXISTS" == 1 ]]
+        ;;
+      package)
+        chart="$(basename "$2")"
+        version="$(awk '$1 == "version:" { print $2 }' "$2/Chart.yaml")"
+        touch "$4/$chart-$version.tgz"
+        ;;
+      push)
+        [[ -f "$2" ]]
+        ;;
+      *)
+        echo "unexpected helm invocation: $*" >&2
+        exit 2
+        ;;
+    esac
+    EOF
+    chmod +x "$publishMockBin/helm"
+
+    (
+      cd "$publishRepo"
+      git init --initial-branch=master >/dev/null
+      git config user.email release-check@example.invalid
+      git config user.name release-check
+      git add .
+      git commit -m release >/dev/null
+      releaseHead="$(git rev-parse HEAD)"
+
+      PATH="$publishMockBin:$PATH" \
+        MOCK_HELM_LOG="$publishLog" \
+        MOCK_CHART_EXISTS=0 \
+        RELEASE_HEAD_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead" \
+        RELEASE_REGISTRY=ghcr.io \
+        HELM_REGISTRY_REPOSITORY_PATH=0xdsqr/dsqr-dotdev \
+        REGISTRY_PASSWORD= \
+        ${stdenvNoCC.shell} "$publishScript"
+    )
+
+    for chart in dotdev-web dotdev-studio dotdev-labs; do
+      grep -Fqx \
+        "lint helm/$chart -f helm/$chart/values-prod.yaml --set-string image.digest=$validationDigest" \
+        "$publishLog"
+      grep -Fqx \
+        "template $chart helm/$chart --namespace dsqr -f helm/$chart/values-prod.yaml --set-string image.digest=$validationDigest" \
+        "$publishLog"
+    done
+    [[ "$(awk '/^push / { count++ } END { print count + 0 }' "$publishLog")" == 3 ]]
+
+    : >"$publishLog"
+    (
+      cd "$publishRepo"
+      releaseHead="$(git rev-parse HEAD)"
+      PATH="$publishMockBin:$PATH" \
+        MOCK_HELM_LOG="$publishLog" \
+        MOCK_CHART_EXISTS=1 \
+        RELEASE_HEAD_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead" \
+        RELEASE_REGISTRY=ghcr.io \
+        HELM_REGISTRY_REPOSITORY_PATH=0xdsqr/dsqr-dotdev \
+        REGISTRY_PASSWORD= \
+        ${stdenvNoCC.shell} "$publishScript"
+    )
+    [[ "$(awk '/^push / { count++ } END { print count + 0 }' "$publishLog")" == 0 ]]
 
     grep -F 'changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0' \
       .github/workflows/release.yml >/dev/null

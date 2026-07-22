@@ -6,6 +6,7 @@ head_revision="${RELEASE_HEAD_REVISION:-${GITHUB_SHA:-HEAD}}"
 base_revision="${RELEASE_BASE_REVISION:-$head_revision^}"
 registry="${RELEASE_REGISTRY:-ghcr.io}"
 repository_path="${HELM_REGISTRY_REPOSITORY_PATH:-${GITHUB_REPOSITORY:-}}"
+validation_digest="sha256:0000000000000000000000000000000000000000000000000000000000000000"
 
 if [[ -z "$repository_path" ]]; then
   echo "HELM_REGISTRY_REPOSITORY_PATH or GITHUB_REPOSITORY is required." >&2
@@ -37,17 +38,20 @@ publish_chart() {
 
   previous_version="$(chart_version_at "$base_revision" "$chart_file")"
   version="$(chart_version_at "$head_revision" "$chart_file")"
-  if [[ "$previous_version" == "$version" ]]; then
-    return 0
-  fi
-
-  helm lint "helm/$chart"
+  helm lint "helm/$chart" \
+    -f "helm/$chart/values-prod.yaml" \
+    --set-string image.digest="$validation_digest"
   helm template "$chart" "helm/$chart" --namespace dsqr \
-    -f "helm/$chart/values-prod.yaml" >/dev/null
+    -f "helm/$chart/values-prod.yaml" \
+    --set-string image.digest="$validation_digest" >/dev/null
 
   if helm show chart "oci://$registry/$repository_path/charts/$chart" --version "$version" >/dev/null 2>&1; then
     echo "$chart $version is already published."
     return 0
+  fi
+
+  if [[ "$previous_version" == "$version" ]]; then
+    echo "$chart $version is missing from the registry; publishing the current version."
   fi
 
   package_dir="$(mktemp -d)"
