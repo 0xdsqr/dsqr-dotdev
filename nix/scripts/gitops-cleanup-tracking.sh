@@ -81,7 +81,7 @@ plan_file="$work_dir/plan.tsv"
 
 helm get manifest "$release_name" --namespace "$release_namespace" >"$manifest_file"
 
-yq eval-all --no-doc '
+yq eval --no-doc '
   select(
     .apiVersion != null and
     .kind != null and

@@ -1,8 +1,10 @@
 {
   actionlint,
+  jq,
   lib,
   shellcheck,
   stdenvNoCC,
+  yq-go,
 }:
 stdenvNoCC.mkDerivation {
   name = "dsqr-dotdev-workflow-check";
@@ -25,7 +27,9 @@ stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = [
     actionlint
+    jq
     shellcheck
+    yq-go
   ];
 
   dontConfigure = true;
@@ -46,6 +50,66 @@ stdenvNoCC.mkDerivation {
       nix/scripts/release-publish-charts.sh \
       nix/scripts/release-publish-images.sh \
       nix/scripts/release-verify-candidates.sh
+
+    cleanupTest="$TMPDIR/gitops-cleanup-tracking"
+    mockBin="$cleanupTest/bin"
+    mkdir -p "$mockBin"
+    cat >"$mockBin/helm" <<'EOF'
+    #!${stdenvNoCC.shell}
+    set -euo pipefail
+    case "$1 $2" in
+      "status argocd")
+        printf '%s\n' '{"name":"argocd","namespace":"argocd","info":{"status":"deployed"}}'
+        ;;
+      "get manifest")
+        cat <<'MANIFEST'
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: first
+      namespace: argocd
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: second
+      namespace: argocd
+    MANIFEST
+        ;;
+      *)
+        echo "unexpected helm invocation: $*" >&2
+        exit 2
+        ;;
+    esac
+    EOF
+    cat >"$mockBin/kubectl" <<'EOF'
+    #!${stdenvNoCC.shell}
+    set -euo pipefail
+    case "$*" in
+      *"get applications.argoproj.io argocd"*)
+        ;;
+      *"get ConfigMap second"*)
+        printf '%s\n' 'v1|ConfigMap|argocd|second|argocd|argocd|argocd:/ConfigMap:argocd/second'
+        ;;
+      *"get ServiceAccount first"*)
+        printf '%s\n' 'v1|ServiceAccount|argocd|first|argocd|argocd|argocd:/ServiceAccount:argocd/first'
+        ;;
+      *)
+        echo "unexpected kubectl invocation: $*" >&2
+        exit 2
+        ;;
+    esac
+    EOF
+    chmod +x "$mockBin/helm" "$mockBin/kubectl"
+
+    cleanupOutput="$(
+      PATH="$mockBin:$PATH" ${stdenvNoCC.shell} \
+        nix/scripts/gitops-cleanup-tracking.sh
+    )"
+    [[ "$(grep -c '^DRY-RUN remove ' <<<"$cleanupOutput")" == 2 ]]
+    grep -Fqx \
+      'Dry run complete: 2 stale tracking annotations are eligible for removal.' \
+      <<<"$cleanupOutput"
 
     grep -F 'changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0' \
       .github/workflows/release.yml >/dev/null
