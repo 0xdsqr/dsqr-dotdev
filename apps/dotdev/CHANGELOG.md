@@ -1,5 +1,11 @@
 # dotdev
 
+## 0.0.4
+
+### Patch Changes
+
+- 3848542: Upgrade and pin the application toolchain and runtime dependency graph, remove vulnerable transitive packages, and enforce dependency security policy in Nix and CI.
+
 ## 0.0.3
 
 ### Patch Changes
