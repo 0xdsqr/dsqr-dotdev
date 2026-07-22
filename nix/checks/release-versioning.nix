@@ -123,6 +123,13 @@ stdenvNoCC.mkDerivation {
     cp "$testClusterApplications" \
       "$candidateRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
     cp "$testClusterValues" "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
+    yq -i '.version = "9.9.8"' "$candidateRoot/apps/dotdev/package.json"
+    yq -i '.version = "9.9.8" | .appVersion = "9.9.8"' \
+      "$candidateRoot/helm/dotdev-web/Chart.yaml"
+    yq -i '
+      .image.version = "9.9.8" |
+      .image.digest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ' "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
 
     mockSkopeo="$TMPDIR/mock-skopeo"
     cat >"$mockSkopeo" <<'EOF'
@@ -132,7 +139,7 @@ stdenvNoCC.mkDerivation {
       echo "unexpected skopeo invocation" >&2
       exit 2
     fi
-    expected="docker://ghcr.io/0xdsqr/dotdev-web:candidate-0.0.3-$MOCK_BASE_SHA"
+    expected="docker://ghcr.io/0xdsqr/dotdev-web:candidate-9.9.9-$MOCK_BASE_SHA"
     if [ "$4" != "$expected" ]; then
       echo "unexpected candidate: $4" >&2
       exit 1
@@ -150,10 +157,10 @@ stdenvNoCC.mkDerivation {
       git commit -m base >/dev/null
       baseSha="$(git rev-parse HEAD)"
 
-      yq -i '.version = "0.0.3"' apps/dotdev/package.json
-      yq -i '.version = "0.0.3" | .appVersion = "0.0.3"' helm/dotdev-web/Chart.yaml
+      yq -i '.version = "9.9.9"' apps/dotdev/package.json
+      yq -i '.version = "9.9.9" | .appVersion = "9.9.9"' helm/dotdev-web/Chart.yaml
       yq -i '
-        .image.version = "0.0.3" |
+        .image.version = "9.9.9" |
         .image.digest = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       ' "gitops/values/dotdev-web/$testCluster.yaml"
       git add .
