@@ -1,5 +1,11 @@
 # studio
 
+## 0.0.3
+
+### Patch Changes
+
+- 6252b8c: Align application release metadata with cluster-scoped immutable image promotion.
+
 ## 0.0.2
 
 ### Patch Changes
