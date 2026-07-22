@@ -30,6 +30,8 @@ let
 
   gitopsGenerateApplications = pkgs.callPackage ./gitops-generate-applications.nix { };
 
+  gitopsCleanupTracking = pkgs.callPackage ./gitops-cleanup-tracking.nix { };
+
   gitopsRender = pkgs.callPackage ./gitops-render.nix { };
 
   gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix { };
@@ -41,11 +43,14 @@ let
   releasePublishCharts = pkgs.callPackage ./release-publish-charts.nix { };
 
   releasePublishImages = pkgs.callPackage ./release-publish-images.nix { };
+
+  releaseVerifyCandidates = pkgs.callPackage ./release-verify-candidates.nix { };
 in
 {
   inherit
     changeset
     dotdev
+    gitopsCleanupTracking
     gitopsGenerateApplications
     gitopsRender
     gitopsReleaseImage
@@ -54,6 +59,7 @@ in
     releasePrepare
     releasePublishCharts
     releasePublishImages
+    releaseVerifyCandidates
     studio
     ;
 

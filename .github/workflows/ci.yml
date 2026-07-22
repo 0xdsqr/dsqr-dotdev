@@ -142,6 +142,72 @@ jobs:
       - name: Validate pending release intent
         run: nix run .#changeset -- status --since "${{ github.event.pull_request.base.sha }}"
 
+  release-candidate-provenance:
+    name: Release candidate provenance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    if: >-
+      ${{
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.head.ref == 'changeset-release/master'
+        ) ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/changeset-release/master'
+        )
+      }}
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Check out release candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve the release base revision
+        id: release-base
+        shell: bash
+        env:
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="$PULL_REQUEST_BASE_SHA"
+            if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              git fetch --no-tags origin "$base"
+            fi
+          else
+            git fetch --no-tags origin master:refs/remotes/origin/master
+            base="$(git merge-base HEAD origin/master)"
+          fi
+          git cat-file -e "$base^{commit}"
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+          echo "Release base revision: $base"
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify immutable release candidates
+        env:
+          RELEASE_BASE_REVISION: ${{ steps.release-base.outputs.sha }}
+          RELEASE_REGISTRY_OWNER: ${{ github.repository_owner }}
+        run: >-
+          nix run
+          "github:$GITHUB_REPOSITORY/$RELEASE_BASE_REVISION#releaseVerifyCandidates"
+          --
+
   typecheck-shared:
     name: Typecheck workspace
     runs-on: ubuntu-24.04
@@ -307,6 +373,7 @@ jobs:
       - detect-changes
       - base-checks
       - changeset-status
+      - release-candidate-provenance
       - typecheck-shared
       - typecheck-dotdev
       - typecheck-studio

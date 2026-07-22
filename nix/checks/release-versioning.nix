@@ -1,8 +1,10 @@
 {
   lib,
   stdenvNoCC,
+  git,
   nodejs_24,
   gitopsReleaseImage,
+  releaseVerifyCandidates,
   yq-go,
 }:
 stdenvNoCC.mkDerivation {
@@ -34,8 +36,10 @@ stdenvNoCC.mkDerivation {
   };
 
   nativeBuildInputs = [
+    git
     gitopsReleaseImage
     nodejs_24
+    releaseVerifyCandidates
     yq-go
   ];
   dontConfigure = true;
@@ -101,6 +105,88 @@ stdenvNoCC.mkDerivation {
       cmp "$TMPDIR/chart-before-failure.yaml" helm/dotdev-web/Chart.yaml
       cmp "$TMPDIR/values-before-failure.yaml" \
         "gitops/values/dotdev-web/$testCluster.yaml"
+    )
+
+    candidateRoot="$TMPDIR/release-candidate-test"
+    mkdir -p \
+      "$candidateRoot/apps/dotdev" \
+      "$candidateRoot/apps/studio" \
+      "$candidateRoot/apps/labs" \
+      "$candidateRoot/helm/dotdev-web" \
+      "$candidateRoot/gitops/clusters/$testCluster/applications" \
+      "$candidateRoot/gitops/values/dotdev-web"
+    cp apps/dotdev/package.json "$candidateRoot/apps/dotdev/package.json"
+    cp apps/studio/package.json "$candidateRoot/apps/studio/package.json"
+    cp apps/labs/package.json "$candidateRoot/apps/labs/package.json"
+    cp helm/dotdev-web/Chart.yaml "$candidateRoot/helm/dotdev-web/Chart.yaml"
+    cp helm/dotdev-web/values-prod.yaml "$candidateRoot/helm/dotdev-web/values-prod.yaml"
+    cp "$testClusterApplications" \
+      "$candidateRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
+    cp "$testClusterValues" "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
+
+    mockSkopeo="$TMPDIR/mock-skopeo"
+    cat >"$mockSkopeo" <<'EOF'
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "$#" -ne 4 ] || [ "$1" != inspect ] || [ "$2" != --format ]; then
+      echo "unexpected skopeo invocation" >&2
+      exit 2
+    fi
+    expected="docker://ghcr.io/0xdsqr/dotdev-web:candidate-0.0.3-$MOCK_BASE_SHA"
+    if [ "$4" != "$expected" ]; then
+      echo "unexpected candidate: $4" >&2
+      exit 1
+    fi
+    printf '%s\n' "$MOCK_CANDIDATE_DIGEST"
+    EOF
+    chmod +x "$mockSkopeo"
+
+    (
+      cd "$candidateRoot"
+      git init --initial-branch=master >/dev/null
+      git config user.email release-check@example.invalid
+      git config user.name release-check
+      git add .
+      git commit -m base >/dev/null
+      baseSha="$(git rev-parse HEAD)"
+
+      yq -i '.version = "0.0.3"' apps/dotdev/package.json
+      yq -i '.version = "0.0.3" | .appVersion = "0.0.3"' helm/dotdev-web/Chart.yaml
+      yq -i '
+        .image.version = "0.0.3" |
+        .image.digest = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ' "gitops/values/dotdev-web/$testCluster.yaml"
+      git add .
+      git commit -m release >/dev/null
+      releaseHead="$(git rev-parse HEAD)"
+
+      MOCK_BASE_SHA="$baseSha" \
+        MOCK_CANDIDATE_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+        RELEASE_SKOPEO_BIN="$mockSkopeo" \
+        release-verify-candidates \
+          --base-revision "$baseSha" \
+          --head-revision "$releaseHead" \
+          --cluster "$testCluster" \
+          --owner 0xdsqr >/dev/null
+
+      yq -i \
+        '.image.digest = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"' \
+        "gitops/values/dotdev-web/$testCluster.yaml"
+      git add .
+      git commit -m tamper >/dev/null
+      tamperedHead="$(git rev-parse HEAD)"
+
+      if MOCK_BASE_SHA="$baseSha" \
+        MOCK_CANDIDATE_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+        RELEASE_SKOPEO_BIN="$mockSkopeo" \
+        release-verify-candidates \
+          --base-revision "$baseSha" \
+          --head-revision "$tamperedHead" \
+          --cluster "$testCluster" \
+          --owner 0xdsqr >/dev/null 2>&1; then
+        echo "candidate verification accepted an arbitrary promotion digest" >&2
+        exit 1
+      fi
     )
 
     mkdir -p "$out"

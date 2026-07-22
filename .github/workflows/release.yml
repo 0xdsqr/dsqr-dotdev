@@ -46,20 +46,26 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Require the validated master revision
+      - name: Select the validated master revision
+        id: revision
         shell: bash
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
+          echo "actual=$actual" >> "$GITHUB_OUTPUT"
           if [[ "$actual" != "$TARGET_SHA" ]]; then
             echo "Validated revision $TARGET_SHA is no longer master ($actual); a newer run will handle it."
-            exit 1
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
 
       - name: Install Nix
+        if: ${{ steps.revision.outputs.current == 'true' }}
         uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
 
       - name: Log in to GitHub Container Registry
+        if: ${{ steps.revision.outputs.current == 'true' }}
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
         with:
           registry: ghcr.io
@@ -68,6 +74,7 @@ jobs:
 
       - name: Create or update signed Version Packages pull request
         id: changesets
+        if: ${{ steps.revision.outputs.current == 'true' }}
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
           branch: master
@@ -83,7 +90,11 @@ jobs:
           RELEASE_SOURCE_REVISION: ${{ env.TARGET_SHA }}
 
       - name: Run checks for the release pull request
-        if: ${{ steps.changesets.outputs.pullRequestNumber != '' }}
+        if: >-
+          ${{
+            steps.revision.outputs.current == 'true' &&
+            steps.changesets.outputs.pullRequestNumber != ''
+          }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
@@ -91,3 +102,34 @@ jobs:
           set -euo pipefail
           head_ref="$(gh pr view "$PULL_REQUEST_NUMBER" --json headRefName --jq '.headRefName')"
           gh workflow run ci.yml --ref "$head_ref"
+
+      - name: Summarize the release decision
+        if: ${{ always() }}
+        shell: bash
+        env:
+          ACTUAL_SHA: ${{ steps.revision.outputs.actual }}
+          CHANGESETS_OUTCOME: ${{ steps.changesets.outcome }}
+          CURRENT_REVISION: ${{ steps.revision.outputs.current }}
+          PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Changesets release"
+            echo
+            if [[ "$CURRENT_REVISION" == "true" ]]; then
+              echo "Validated current master revision \`$TARGET_SHA\`."
+              if [[ "$CHANGESETS_OUTCOME" == "failure" || "$CHANGESETS_OUTCOME" == "cancelled" ]]; then
+                echo "Changesets processing did not complete successfully; inspect the failed step above."
+              elif [[ -n "$PULL_REQUEST_NUMBER" ]]; then
+                echo "Created or updated release pull request #$PULL_REQUEST_NUMBER and dispatched its checks."
+              else
+                echo "No release pull request required an update."
+              fi
+            elif [[ "$CURRENT_REVISION" == "false" ]]; then
+              echo "Skipped superseded revision \`$TARGET_SHA\`; current master is \`$ACTUAL_SHA\`."
+              echo "A newer successful Check run owns release processing."
+            else
+              echo "The workflow could not determine whether \`$TARGET_SHA\` is current master."
+              echo "Inspect the checkout and revision-selection steps above."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

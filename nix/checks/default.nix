@@ -26,7 +26,7 @@
     inherit (packages) dotdev labs studio;
   };
   release-versioning = pkgs.callPackage ./release-versioning.nix {
-    inherit (packages) gitopsReleaseImage;
+    inherit (packages) gitopsReleaseImage releaseVerifyCandidates;
   };
   typecheck = pkgs.callPackage ./typecheck.nix {
     nodeModules = packages.nodeModules;

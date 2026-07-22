@@ -17,8 +17,6 @@ while IFS= read -r cluster_dir; do
   bootstrap_dir="$cluster_dir/bootstrap"
   cluster="$(basename "$cluster_dir")"
   cluster_namespace_count=0
-  handoff_child_count=0
-  root_handoff_active=false
   applications_kustomization="$applications_dir/kustomization.yaml"
   root_application="$bootstrap_dir/argocd-app-of-apps.yaml"
 
@@ -38,27 +36,14 @@ while IFS= read -r cluster_dir; do
     (.spec.destination.server | test("^https://")) and
     .spec.project == "bootstrap" and
     .spec.syncPolicy.automated.enabled == true and
-    (.spec.syncPolicy.automated | has("prune")) and
+    .spec.syncPolicy.automated.prune == true and
+    .metadata.annotations."homelab.dev/ownership-handoff" == null and
     .metadata.finalizers == null
   ' "$root_application" >/dev/null ||
     fail "$cluster root Application bootstrap policy is invalid"
   root_repo_url="$(yq -er '.spec.source.repoURL' "$root_application")"
   root_destination_server="$(yq -er '.spec.destination.server' "$root_application")"
   root_destination_namespace="$(yq -er '.spec.destination.namespace' "$root_application")"
-  root_ownership_handoff="$(yq -r \
-    '.metadata.annotations."homelab.dev/ownership-handoff" // ""' "$root_application")"
-  root_prune="$(yq -r '.spec.syncPolicy.automated.prune' "$root_application")"
-
-  if [[ "$cluster" == "hub-a" && "$root_ownership_handoff" == "root-to-child" ]]; then
-    [[ "$root_prune" == "false" ]] ||
-      fail "$cluster ownership handoff requires automated pruning to be disabled"
-    root_handoff_active=true
-  else
-    [[ -z "$root_ownership_handoff" ]] ||
-      fail "$cluster has an invalid root ownership-handoff marker"
-    [[ "$root_prune" == "true" ]] ||
-      fail "$cluster must enable automated pruning outside an ownership handoff"
-  fi
 
   mapfile -t application_resources < <(yq -er '.resources[]' "$applications_kustomization")
   (( ${#application_resources[@]} > 0 )) ||
@@ -135,24 +120,11 @@ while IFS= read -r cluster_dir; do
       fi
     done
 
-    ownership_handoff="$(yq -r \
-      '.metadata.annotations."homelab.dev/ownership-handoff" // ""' "$app_file")"
-    if [[ "$root_handoff_active" == true && \
-      "$app" =~ ^(cluster-foundation|argocd-config)$ ]]; then
-      [[ "$ownership_handoff" == "root-to-child" ]] ||
-        fail "$app must carry the root-to-child marker during the hub-a handoff"
-      if yq -r '.spec.syncPolicy.syncOptions[]' "$app_file" |
-        grep -Fx 'FailOnSharedResource=true' >/dev/null; then
-        fail "$app must not reject shared resources during the hub-a handoff"
-      fi
-      ((handoff_child_count += 1))
-    else
-      [[ -z "$ownership_handoff" ]] ||
-        fail "$app has an invalid ownership-handoff exemption"
-      if ! yq -r '.spec.syncPolicy.syncOptions[]' "$app_file" |
-        grep -Fx 'FailOnSharedResource=true' >/dev/null; then
-        fail "$app does not reject shared-resource ownership"
-      fi
+    [[ "$(yq -r '.metadata.annotations."homelab.dev/ownership-handoff" // ""' \
+      "$app_file")" == "" ]] || fail "$app has an ownership-handoff exemption"
+    if ! yq -r '.spec.syncPolicy.syncOptions[]' "$app_file" |
+      grep -Fx 'FailOnSharedResource=true' >/dev/null; then
+      fail "$app does not reject shared-resource ownership"
     fi
     yq -e '.metadata.finalizers == null' "$app_file" >/dev/null ||
       fail "$app must retain the deliberate orphan-on-Application-deletion policy"
@@ -183,9 +155,6 @@ while IFS= read -r cluster_dir; do
 
   (( cluster_namespace_count > 0 )) ||
     fail "$cluster does not render any protected managed Namespaces"
-  if [[ "$root_handoff_active" == true && "$handoff_child_count" != "2" ]]; then
-    fail "$cluster ownership handoff must include cluster-foundation and argocd-config"
-  fi
 
   default_project="$bootstrap_dir/default.appproject.yaml"
   [[ "$(yq -r '.metadata.name' "$default_project")" == "default" ]] ||
