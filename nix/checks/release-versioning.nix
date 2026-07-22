@@ -126,7 +126,7 @@ stdenvNoCC.mkDerivation {
 
     mockSkopeo="$TMPDIR/mock-skopeo"
     cat >"$mockSkopeo" <<'EOF'
-    #!/usr/bin/env bash
+    #!${stdenvNoCC.shell}
     set -euo pipefail
     if [ "$#" -ne 4 ] || [ "$1" != inspect ] || [ "$2" != --format ]; then
       echo "unexpected skopeo invocation" >&2

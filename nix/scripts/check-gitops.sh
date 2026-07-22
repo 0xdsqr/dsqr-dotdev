@@ -199,6 +199,21 @@ for project in dsqr fidara twt platform; do
   fi
 done
 
+yq -e '
+  ([.spec.destinations[] |
+    select(
+      .server == "https://kubernetes.default.svc" and
+      .namespace == "cilium-secrets"
+    )] | length) == 1 and
+  ([.spec.clusterResourceWhitelist[] |
+    select(
+      .group == "" and
+      .kind == "Namespace" and
+      .name == "cilium-secrets"
+    )] | length) == 1
+' gitops/manifests/argocd/base/platform.appproject.yaml >/dev/null ||
+  fail "platform AppProject does not narrowly permit Cilium TLS resources in cilium-secrets"
+
 if rg -n 'CreateNamespace=true|managedNamespaceMetadata|targetRevision: master|values-overrides.yaml' \
   gitops; then
   fail "obsolete GitOps configuration remains"

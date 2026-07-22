@@ -33,6 +33,8 @@ spec:
       namespace: observability
     - server: https://kubernetes.default.svc
       namespace: external-secrets
+    - server: https://kubernetes.default.svc
+      namespace: cilium-secrets
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
