@@ -44,7 +44,7 @@ while IFS= read -r config_file; do
     fi
 
     if ! yq -r '.spec.syncPolicy.syncOptions[]' "$app_file" |
-      grep -Fxq 'FailOnSharedResource=true'; then
+      grep -Fx 'FailOnSharedResource=true' >/dev/null; then
       fail "$app does not reject shared-resource ownership"
     fi
     yq -e '.metadata.finalizers == null' "$app_file" >/dev/null ||
@@ -106,9 +106,9 @@ while IFS= read -r config_file; do
   yq -e '.metadata.name == "bootstrap" and ([.spec.destinations[] | select(.namespace == "argocd")] | length == 1)' \
     "$bootstrap_project" >/dev/null || fail "$cluster bootstrap AppProject is invalid"
   yq -r '.metadata.finalizers[]' "$bootstrap_project" |
-    grep -Fxq 'resources-finalizer.argocd.argoproj.io' ||
+    grep -Fx 'resources-finalizer.argocd.argoproj.io' >/dev/null ||
     fail "$cluster bootstrap AppProject lacks its resource finalizer"
-  if yq -r '.spec.sourceRepos[]' "$bootstrap_project" | grep -Fxq '*'; then
+  if yq -r '.spec.sourceRepos[]' "$bootstrap_project" | grep -Fx '*' >/dev/null; then
     fail "$cluster bootstrap AppProject contains a wildcard source"
   fi
 done < <(find gitops/clusters -mindepth 2 -maxdepth 2 -type f -name config.yaml | sort)
@@ -116,12 +116,12 @@ done < <(find gitops/clusters -mindepth 2 -maxdepth 2 -type f -name config.yaml 
 for project in dsqr fidara twt platform; do
   project_file="gitops/manifests/argocd/base/$project.appproject.yaml"
   yq -r '.metadata.finalizers[]' "$project_file" |
-    grep -Fxq 'resources-finalizer.argocd.argoproj.io' ||
+    grep -Fx 'resources-finalizer.argocd.argoproj.io' >/dev/null ||
     fail "$project AppProject lacks its resource finalizer"
-  if yq -r '.spec.sourceRepos[]' "$project_file" | grep -Fxq '*'; then
+  if yq -r '.spec.sourceRepos[]' "$project_file" | grep -Fx '*' >/dev/null; then
     fail "$project AppProject contains a wildcard source"
   fi
-  if yq -r '.spec.destinations[].namespace' "$project_file" | grep -Fxq '*'; then
+  if yq -r '.spec.destinations[].namespace' "$project_file" | grep -Fx '*' >/dev/null; then
     fail "$project AppProject contains a wildcard destination"
   fi
 done
