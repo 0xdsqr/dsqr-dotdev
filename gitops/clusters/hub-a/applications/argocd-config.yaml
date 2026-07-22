@@ -7,7 +7,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "3"
-    homelab.dev/ownership-handoff: root-to-child
   labels:
     app.kubernetes.io/instance: argocd-config
     app.kubernetes.io/managed-by: argocd
@@ -36,8 +35,7 @@ spec:
         duration: 20s
         factor: 2
         maxDuration: 3m
-    # Migration-only exception: these resources are currently tracked by the root hub-a
-    # Application. Enable FailOnSharedResource immediately after this child adopts them.
     syncOptions:
       - ApplyOutOfSyncOnly=true
+      - FailOnSharedResource=true
       - PruneLast=true

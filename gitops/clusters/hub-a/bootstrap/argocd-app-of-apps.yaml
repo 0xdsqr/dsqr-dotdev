@@ -3,10 +3,6 @@ kind: Application
 metadata:
   name: hub-a
   namespace: argocd
-  annotations:
-    # Temporary cutover guard: the new child Applications must adopt the
-    # existing resources before root pruning is restored.
-    homelab.dev/ownership-handoff: root-to-child
   labels:
     app.kubernetes.io/name: hub-a
     app.kubernetes.io/part-of: dsqr-gitops
@@ -26,10 +22,7 @@ spec:
   syncPolicy:
     automated:
       enabled: true
-      # Keep pruning disabled until cluster-foundation and argocd-config have
-      # adopted their live resources, then remove the handoff annotations and
-      # restore pruning together with FailOnSharedResource.
-      prune: false
+      prune: true
       selfHeal: true
     retry:
       limit: 5
