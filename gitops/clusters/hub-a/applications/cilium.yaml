@@ -7,11 +7,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    homelab.dev/chart: cilium
-    homelab.dev/chart-repository: https://helm.cilium.io/
-    homelab.dev/chart-version: 1.19.1
-    homelab.dev/values-common-file: gitops/values/cilium/common.yaml
-    homelab.dev/values-overlay-file: gitops/values/cilium/hub-a.yaml
   labels:
     app.kubernetes.io/instance: cilium
     app.kubernetes.io/managed-by: argocd

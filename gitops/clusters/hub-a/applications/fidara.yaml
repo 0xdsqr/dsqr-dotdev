@@ -8,9 +8,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: fidara.io
-    homelab.dev/source-path: helm/fidara
-    homelab.dev/values-common-file: gitops/values/fidara/common.yaml
-    homelab.dev/values-overlay-file: gitops/values/fidara/hub-a.yaml
   labels:
     app.kubernetes.io/instance: fidara
     app.kubernetes.io/managed-by: argocd

@@ -106,6 +106,24 @@ test("hub-a owns its cluster-specific private Argo hostname", () => {
   assert.match(hubValues, /hostname: argocd\.hub-a\.home\.arpa/)
 })
 
+test("app-of-apps health waits for child sync before advancing waves", () => {
+  const commonValues = readFileSync(
+    new URL("../gitops/values/argocd/common.yaml", import.meta.url),
+    "utf8",
+  )
+
+  assert.match(commonValues, /obj\.status\.sync == nil or obj\.status\.sync\.status ~= "Synced"/)
+  assert.match(
+    commonValues,
+    /obj\.status\.health ~= nil and obj\.status\.health\.status == "Healthy"/,
+  )
+  assert.match(
+    commonValues,
+    /obj\.status\.health ~= nil and obj\.status\.health\.status == "Degraded"/,
+  )
+  assert.match(commonValues, /hs\.status = "Progressing"/)
+})
+
 test("Argo GitHub webhook secret has one exact Vault path", () => {
   assert.deepEqual(vault.secretPaths.argocdGithubWebhook, {
     path: "homelab/platform/argocd/webhooks/github",

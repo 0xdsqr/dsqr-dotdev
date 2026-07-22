@@ -91,18 +91,19 @@ case "$app" in
     ;;
 esac
 
-cluster_config="gitops/clusters/$cluster/config.yaml"
+cluster_applications="gitops/clusters/$cluster/applications/kustomization.yaml"
 cluster_values="gitops/values/$app/$cluster.yaml"
-if [[ ! -f "$cluster_config" ]]; then
-  echo "Unknown cluster '$cluster': $cluster_config does not exist." >&2
+if [[ ! -f "$cluster_applications" ]]; then
+  echo "Unknown cluster '$cluster': $cluster_applications does not exist." >&2
   exit 1
 fi
 if [[ ! -f "$cluster_values" ]]; then
   echo "Missing cluster promotion values: $cluster_values" >&2
   exit 1
 fi
-if ! APPLICATION="$app" yq -e '.applications[] | select(. == strenv(APPLICATION))' \
-  "$cluster_config" >/dev/null; then
+if ! APPLICATION_RESOURCE="$app.yaml" yq -e \
+  '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' \
+  "$cluster_applications" >/dev/null; then
   echo "Application '$app' is not enabled for cluster '$cluster'." >&2
   exit 1
 fi

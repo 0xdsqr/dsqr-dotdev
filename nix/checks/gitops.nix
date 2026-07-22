@@ -12,6 +12,7 @@ let
     root = ../..;
     fileset = lib.fileset.unions [
       ../../gitops
+      ../../helm
       ../scripts/check-gitops.sh
     ];
   };

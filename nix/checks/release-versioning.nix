@@ -3,6 +3,7 @@
   stdenvNoCC,
   nodejs_24,
   gitopsReleaseImage,
+  yq-go,
 }:
 stdenvNoCC.mkDerivation {
   name = "dsqr-dotdev-release-versioning-check";
@@ -25,16 +26,17 @@ stdenvNoCC.mkDerivation {
           "values-prod.yaml"
         ]
       ) ../../helm)
-      ../../gitops/values/dotdev-web/hub-a.yaml
-      ../../gitops/values/dotdev-studio/hub-a.yaml
-      ../../gitops/values/dotdev-labs/hub-a.yaml
-      ../../gitops/clusters/hub-a/config.yaml
+      (lib.fileset.fileFilter (file: file.name == "kustomization.yaml") ../../gitops/clusters)
+      ../../gitops/values/dotdev-web
+      ../../gitops/values/dotdev-studio
+      ../../gitops/values/dotdev-labs
     ];
   };
 
   nativeBuildInputs = [
     gitopsReleaseImage
     nodejs_24
+    yq-go
   ];
   dontConfigure = true;
   dontBuild = true;
@@ -43,32 +45,53 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     node nix/scripts/check-release-versions.mjs
 
+    testCluster=""
+    while IFS= read -r clusterDir; do
+      cluster="$(basename "$clusterDir")"
+      applications="$clusterDir/applications/kustomization.yaml"
+      values="gitops/values/dotdev-web/$cluster.yaml"
+      if [ -f "$applications" ] && [ -f "$values" ] &&
+        APPLICATION_RESOURCE=dotdev-web.yaml yq -e \
+          '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' \
+          "$applications" >/dev/null; then
+        testCluster="$cluster"
+        testClusterApplications="$applications"
+        testClusterValues="$values"
+        break
+      fi
+    done < <(find gitops/clusters -mindepth 1 -maxdepth 1 -type d | sort)
+    if [ -z "$testCluster" ]; then
+      echo "no declared cluster enables dotdev-web with promotion values" >&2
+      exit 1
+    fi
+
     testRoot="$TMPDIR/release-promotion-test"
     mkdir -p \
       "$testRoot/apps/dotdev" \
       "$testRoot/helm/dotdev-web" \
-      "$testRoot/gitops/clusters/hub-a" \
+      "$testRoot/gitops/clusters/$testCluster/applications" \
       "$testRoot/gitops/values/dotdev-web"
     cp apps/dotdev/package.json "$testRoot/apps/dotdev/package.json"
     cp helm/dotdev-web/Chart.yaml "$testRoot/helm/dotdev-web/Chart.yaml"
-    cp gitops/clusters/hub-a/config.yaml "$testRoot/gitops/clusters/hub-a/config.yaml"
-    cp gitops/values/dotdev-web/hub-a.yaml "$testRoot/gitops/values/dotdev-web/hub-a.yaml"
+    cp "$testClusterApplications" \
+      "$testRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
+    cp "$testClusterValues" "$testRoot/gitops/values/dotdev-web/$testCluster.yaml"
 
     packageVersion="$(node -p 'require(process.argv[1]).version' "$testRoot/apps/dotdev/package.json")"
     (
       cd "$testRoot"
       gitops-release-image \
-        --cluster hub-a \
+        --cluster "$testCluster" \
         --app dotdev-web \
         --version "$packageVersion" \
         --digest sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       grep -Fx '  digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
-        gitops/values/dotdev-web/hub-a.yaml >/dev/null
+        "gitops/values/dotdev-web/$testCluster.yaml" >/dev/null
 
       cp helm/dotdev-web/Chart.yaml "$TMPDIR/chart-before-failure.yaml"
-      cp gitops/values/dotdev-web/hub-a.yaml "$TMPDIR/values-before-failure.yaml"
+      cp "gitops/values/dotdev-web/$testCluster.yaml" "$TMPDIR/values-before-failure.yaml"
       if gitops-release-image \
-        --cluster hub-a \
+        --cluster "$testCluster" \
         --app dotdev-web \
         --version "$packageVersion" \
         --digest latest >/dev/null 2>&1; then
@@ -76,7 +99,8 @@ stdenvNoCC.mkDerivation {
         exit 1
       fi
       cmp "$TMPDIR/chart-before-failure.yaml" helm/dotdev-web/Chart.yaml
-      cmp "$TMPDIR/values-before-failure.yaml" gitops/values/dotdev-web/hub-a.yaml
+      cmp "$TMPDIR/values-before-failure.yaml" \
+        "gitops/values/dotdev-web/$testCluster.yaml"
     )
 
     mkdir -p "$out"

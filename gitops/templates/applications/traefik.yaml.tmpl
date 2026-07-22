@@ -7,11 +7,6 @@ metadata:
   namespace: ${ARGOCD_NAMESPACE}
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    homelab.dev/chart: traefik
-    homelab.dev/chart-repository: https://traefik.github.io/charts
-    homelab.dev/chart-version: 39.0.7
-    homelab.dev/values-common-file: ${VALUES_COMMON_FILE}
-    homelab.dev/values-overlay-file: ${VALUES_OVERLAY_FILE}
   labels:
     app.kubernetes.io/instance: traefik
     app.kubernetes.io/managed-by: argocd

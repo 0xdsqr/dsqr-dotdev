@@ -7,11 +7,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    homelab.dev/chart: metallb
-    homelab.dev/chart-repository: https://metallb.github.io/metallb
-    homelab.dev/chart-version: 0.15.3
-    homelab.dev/values-common-file: gitops/values/metallb/common.yaml
-    homelab.dev/values-overlay-file: gitops/values/metallb/hub-a.yaml
   labels:
     app.kubernetes.io/instance: metallb
     app.kubernetes.io/managed-by: argocd

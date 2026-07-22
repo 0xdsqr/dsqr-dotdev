@@ -7,11 +7,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    homelab.dev/chart: k8s-monitoring
-    homelab.dev/chart-repository: https://grafana.github.io/helm-charts
-    homelab.dev/chart-version: 3.5.3
-    homelab.dev/values-common-file: gitops/values/k8s-monitoring/common.yaml
-    homelab.dev/values-overlay-file: gitops/values/k8s-monitoring/hub-a.yaml
   labels:
     app.kubernetes.io/instance: k8s-monitoring
     app.kubernetes.io/managed-by: argocd

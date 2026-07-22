@@ -8,9 +8,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
     homelab.dev/hostname: studio.dsqr.dev
-    homelab.dev/source-path: helm/dotdev-studio
-    homelab.dev/values-prod-file: helm/dotdev-studio/values-prod.yaml
-    homelab.dev/values-overlay-file: gitops/values/dotdev-studio/hub-a.yaml
   labels:
     app.kubernetes.io/instance: dotdev-studio
     app.kubernetes.io/managed-by: argocd

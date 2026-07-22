@@ -7,7 +7,6 @@ metadata:
   namespace: ${ARGOCD_NAMESPACE}
   annotations:
     argocd.argoproj.io/sync-wave: "3"
-    homelab.dev/source-path: gitops/manifests/metallb/overlays/${CLUSTER_NAME}
   labels:
     app.kubernetes.io/instance: metallb-config
     app.kubernetes.io/managed-by: argocd

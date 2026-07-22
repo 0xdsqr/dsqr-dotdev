@@ -13,6 +13,7 @@ stdenvNoCC.mkDerivation {
       ../../apps/labs/package.json
       ../../apps/studio/package.json
       ../../helm
+      (lib.fileset.fileFilter (file: file.name == "kustomization.yaml") ../../gitops/clusters)
       ../../gitops/values/dotdev-web
       ../../gitops/values/dotdev-studio
       ../../gitops/values/dotdev-labs
@@ -49,7 +50,6 @@ stdenvNoCC.mkDerivation {
       case "$(basename "$chart")" in
         dotdev-web|dotdev-studio|dotdev-labs)
           chartName="$(basename "$chart")"
-          rendered="$TMPDIR/$chartName.yaml"
           defaultRendered="$TMPDIR/$chartName-default.yaml"
 
           case "$chartName" in
@@ -81,11 +81,6 @@ stdenvNoCC.mkDerivation {
           fi
 
           helm template "$chartName" "$chart" --namespace default >"$defaultRendered"
-          helm template "$(basename "$chart")" "$chart" \
-            --namespace default \
-            -f "$chart/values-prod.yaml" \
-            -f "gitops/values/$(basename "$chart")/hub-a.yaml" \
-            >"$rendered"
 
           deployment='select(.kind == "Deployment")'
           defaultImage="$(yq eval "$deployment | .spec.template.spec.containers[0].image" "$defaultRendered")"
@@ -97,82 +92,114 @@ stdenvNoCC.mkDerivation {
               ;;
           esac
 
-          productionImage="$(yq eval "$deployment | .spec.template.spec.containers[0].image" "$rendered")"
-          if ! printf '%s\n' "$productionImage" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
-            echo "$chartName production image must use an immutable sha256 digest, got $productionImage" >&2
+          renderedClusterCount=0
+          while IFS= read -r clusterDir; do
+            clusterName="$(basename "$clusterDir")"
+            clusterApplications="$clusterDir/applications/kustomization.yaml"
+            if [ ! -f "$clusterApplications" ]; then
+              echo "$clusterName is missing $clusterApplications" >&2
+              exit 1
+            fi
+            if ! APPLICATION_RESOURCE="$chartName.yaml" yq -e \
+              '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' \
+              "$clusterApplications" >/dev/null; then
+              continue
+            fi
+
+            clusterValues="gitops/values/$chartName/$clusterName.yaml"
+            if [ ! -f "$clusterValues" ]; then
+              echo "$chartName is enabled for $clusterName but $clusterValues is missing" >&2
+              exit 1
+            fi
+            rendered="$TMPDIR/$chartName-$clusterName.yaml"
+            helm template "$chartName" "$chart" \
+              --namespace default \
+              -f "$chart/values-prod.yaml" \
+              -f "$clusterValues" \
+              >"$rendered"
+            renderedClusterCount="$((renderedClusterCount + 1))"
+
+            productionImage="$(yq eval "$deployment | .spec.template.spec.containers[0].image" "$rendered")"
+            if ! printf '%s\n' "$productionImage" | grep -Eq '@sha256:[0-9a-f]{64}$'; then
+              echo "$chartName production image must use an immutable sha256 digest, got $productionImage" >&2
+              exit 1
+            fi
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].imagePullPolicy" IfNotPresent
+            assertRenderedValue "$rendered" \
+              "$deployment | .metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
+
+            if helm template "$chartName" "$chart" --namespace default \
+              -f "$chart/values-prod.yaml" --set-string image.digest= >/dev/null 2>&1; then
+              echo "$chartName production values must reject a missing digest" >&2
+              exit 1
+            fi
+            if helm template "$chartName" "$chart" --namespace default \
+              --set-string image.tag=latest >/dev/null 2>&1; then
+              echo "$chartName must reject the mutable latest tag" >&2
+              exit 1
+            fi
+
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.automountServiceAccountToken" false
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.enableServiceLinks" false
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.securityContext.runAsNonRoot" true
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.securityContext.runAsUser" 65534
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.securityContext.seccompProfile.type" RuntimeDefault
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation" false
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].securityContext.capabilities.drop[0]" ALL
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem" true
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].securityContext.runAsNonRoot" true
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.containers[0].volumeMounts[] | select(.mountPath == \"/tmp\") | .name" tmp
+            assertRenderedValue "$rendered" \
+              "$deployment | .spec.template.spec.volumes[] | select(.name == \"tmp\") | .emptyDir.sizeLimit" 64Mi
+            assertRenderedValue "$rendered" \
+              "$deployment | (.spec.template.metadata.annotations.\"checksum/config\" | length > 0)" true
+
+            case "$chartName" in
+              dotdev-web)
+                assertRenderedValue "$rendered" \
+                  "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\")) | .secretRef.name" dotdev-web-secrets
+                ;;
+              dotdev-studio)
+                assertRenderedValue "$rendered" \
+                  "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\")) | .secretRef.name" dotdev-studio-secrets
+                ;;
+              dotdev-labs)
+                if yq eval "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\"))" "$rendered" | grep . >/dev/null; then
+                  echo "dotdev-labs must not receive an application secret" >&2
+                  exit 1
+                fi
+                ;;
+            esac
+
+            networkPolicy='select(.kind == "NetworkPolicy")'
+            yq eval "$networkPolicy | .spec.policyTypes[]" "$rendered" | grep -Fx Egress >/dev/null
+            requiredPorts="53 4318"
+            case "$chartName" in
+              dotdev-web|dotdev-studio)
+                requiredPorts="$requiredPorts 443 5432"
+                ;;
+            esac
+            for port in $requiredPorts; do
+              yq eval "$networkPolicy | .spec.egress[].ports[]?.port" "$rendered" | grep -Fx "$port" >/dev/null
+            done
+          done < <(find gitops/clusters -mindepth 1 -maxdepth 1 -type d | sort)
+          if [ "$renderedClusterCount" -eq 0 ]; then
+            echo "$chartName is not enabled in any declared cluster" >&2
             exit 1
           fi
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].imagePullPolicy" IfNotPresent
-          assertRenderedValue "$rendered" \
-            "$deployment | .metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.metadata.labels.\"app.kubernetes.io/version\"" "$packageVersion"
-
-          if helm template "$chartName" "$chart" --namespace default \
-            -f "$chart/values-prod.yaml" --set-string image.digest= >/dev/null 2>&1; then
-            echo "$chartName production values must reject a missing digest" >&2
-            exit 1
-          fi
-          if helm template "$chartName" "$chart" --namespace default \
-            --set-string image.tag=latest >/dev/null 2>&1; then
-            echo "$chartName must reject the mutable latest tag" >&2
-            exit 1
-          fi
-
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.automountServiceAccountToken" false
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.enableServiceLinks" false
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.securityContext.runAsNonRoot" true
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.securityContext.runAsUser" 65534
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.securityContext.seccompProfile.type" RuntimeDefault
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation" false
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].securityContext.capabilities.drop[0]" ALL
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem" true
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].securityContext.runAsNonRoot" true
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.containers[0].volumeMounts[] | select(.mountPath == \"/tmp\") | .name" tmp
-          assertRenderedValue "$rendered" \
-            "$deployment | .spec.template.spec.volumes[] | select(.name == \"tmp\") | .emptyDir.sizeLimit" 64Mi
-          assertRenderedValue "$rendered" \
-            "$deployment | (.spec.template.metadata.annotations.\"checksum/config\" | length > 0)" true
-
-          case "$chartName" in
-            dotdev-web)
-              assertRenderedValue "$rendered" \
-                "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\")) | .secretRef.name" dotdev-web-secrets
-              ;;
-            dotdev-studio)
-              assertRenderedValue "$rendered" \
-                "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\")) | .secretRef.name" dotdev-studio-secrets
-              ;;
-            dotdev-labs)
-              if yq eval "$deployment | .spec.template.spec.containers[0].envFrom[] | select(has(\"secretRef\"))" "$rendered" | grep . >/dev/null; then
-                echo "dotdev-labs must not receive an application secret" >&2
-                exit 1
-              fi
-              ;;
-          esac
-
-          networkPolicy='select(.kind == "NetworkPolicy")'
-          yq eval "$networkPolicy | .spec.policyTypes[]" "$rendered" | grep -Fx Egress >/dev/null
-          requiredPorts="53 4318"
-          case "$chartName" in
-            dotdev-web|dotdev-studio)
-              requiredPorts="$requiredPorts 443 5432"
-              ;;
-          esac
-          for port in $requiredPorts; do
-            yq eval "$networkPolicy | .spec.egress[].ports[]?.port" "$rendered" | grep -Fx "$port" >/dev/null
-          done
           ;;
         *)
           helm template "$(basename "$chart")" "$chart" --namespace default >/dev/null

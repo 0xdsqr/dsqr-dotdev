@@ -10,9 +10,12 @@ usage() {
 Usage:
   gitops-generate-applications [--check] [--repo-root PATH]
 
-Renders the Applications declared in each gitops/clusters/<cluster>/config.yaml
-from gitops/templates/applications/*.yaml.tmpl. All clusters are rendered and
-validated in a staging tree before generated files in the repository change.
+Renders the Applications listed by each
+gitops/clusters/<cluster>/applications/kustomization.yaml from
+gitops/templates/applications/*.yaml.tmpl. Cluster connection and source
+settings are derived from the cluster's bootstrap root Application. All
+clusters are rendered and validated in a staging tree before generated files
+in the repository change.
 
 Options:
   --check      fail when committed generated files differ from a clean render
@@ -71,36 +74,48 @@ render_tree() {
     [[ -d "$cluster_dir" ]] || continue
 
     local cluster
-    local config_file
     local applications_dir
     local applications_kustomization
+    local root_application
     cluster="$(basename "$cluster_dir")"
-    config_file="$cluster_dir/config.yaml"
     applications_dir="$cluster_dir/applications"
     applications_kustomization="$applications_dir/kustomization.yaml"
+    root_application="$cluster_dir/bootstrap/argocd-app-of-apps.yaml"
 
-    if [[ ! -f "$config_file" ]]; then
-      echo "Cluster $cluster is missing config.yaml" >&2
-      return 1
-    fi
     if [[ ! -f "$applications_kustomization" ]]; then
       echo "Cluster $cluster is missing applications/kustomization.yaml" >&2
       return 1
     fi
+    if [[ ! -f "$root_application" ]]; then
+      echo "Cluster $cluster is missing bootstrap/argocd-app-of-apps.yaml" >&2
+      return 1
+    fi
 
-    local configured_name
     local argocd_namespace
     local destination_server
     local values_repo_url
     local values_target_revision
-    configured_name="$(yq -er '.cluster.name' "$config_file")"
-    argocd_namespace="$(yq -er '.argocd.namespace' "$config_file")"
-    destination_server="$(yq -er '.argocd.destinationServer' "$config_file")"
-    values_repo_url="$(yq -er '.source.repoURL' "$config_file")"
-    values_target_revision="$(yq -er '.source.targetRevision' "$config_file")"
+    local root_name
+    local root_destination_namespace
+    local root_source_path
+    root_name="$(yq -er '.metadata.name' "$root_application")"
+    argocd_namespace="$(yq -er '.metadata.namespace' "$root_application")"
+    root_destination_namespace="$(yq -er '.spec.destination.namespace' "$root_application")"
+    destination_server="$(yq -er '.spec.destination.server' "$root_application")"
+    values_repo_url="$(yq -er '.spec.source.repoURL' "$root_application")"
+    values_target_revision="$(yq -er '.spec.source.targetRevision' "$root_application")"
+    root_source_path="$(yq -er '.spec.source.path' "$root_application")"
 
-    if [[ "$configured_name" != "$cluster" ]]; then
-      echo "Cluster directory $cluster disagrees with config name $configured_name" >&2
+    if [[ "$root_name" != "$cluster" ]]; then
+      echo "Cluster directory $cluster disagrees with root Application name $root_name" >&2
+      return 1
+    fi
+    if [[ "$root_destination_namespace" != "$argocd_namespace" ]]; then
+      echo "Cluster $cluster root Application destination namespace must match its metadata namespace" >&2
+      return 1
+    fi
+    if [[ "$root_source_path" != "gitops/clusters/$cluster/applications" ]]; then
+      echo "Cluster $cluster root Application must source gitops/clusters/$cluster/applications" >&2
       return 1
     fi
     if [[ ! "$destination_server" =~ ^https:// ]]; then
@@ -112,7 +127,25 @@ render_tree() {
       return 1
     fi
 
-    mapfile -t cluster_apps < <(yq -er '.applications[]' "$config_file")
+    local -a application_resources=()
+    mapfile -t application_resources < <(yq -er '.resources[]' "$applications_kustomization")
+    if [[ "${#application_resources[@]}" -eq 0 ]]; then
+      echo "Cluster $cluster must declare at least one Application resource" >&2
+      return 1
+    fi
+
+    local resource
+    local app_name
+    local -a cluster_apps=()
+    for resource in "${application_resources[@]}"; do
+      if [[ ! "$resource" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?\.yaml$ ]]; then
+        echo "Cluster $cluster Application collection must contain only local Application YAML files: $resource" >&2
+        return 1
+      fi
+      app_name="${resource%.yaml}"
+      cluster_apps+=("$app_name")
+    done
+
     if [[ "${#cluster_apps[@]}" -eq 0 ]]; then
       echo "Cluster $cluster must declare at least one application" >&2
       return 1
@@ -126,7 +159,6 @@ render_tree() {
       return 1
     fi
 
-    local app_name
     for app_name in "${cluster_apps[@]}"; do
       if [[ ! "$app_name" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
         echo "Cluster $cluster has invalid application name: $app_name" >&2
@@ -134,11 +166,6 @@ render_tree() {
       fi
       if [[ ! -f "$templates_dir/$app_name.yaml.tmpl" ]]; then
         echo "Cluster $cluster is missing template for $app_name" >&2
-        return 1
-      fi
-      if ! RESOURCE="$app_name.yaml" yq -e '.resources[] | select(. == strenv(RESOURCE))' \
-        "$applications_kustomization" >/dev/null; then
-        echo "Cluster $cluster kustomization does not include $app_name.yaml" >&2
         return 1
       fi
     done

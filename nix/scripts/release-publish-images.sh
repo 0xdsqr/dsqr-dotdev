@@ -33,12 +33,14 @@ publish_app() {
   local app="$1"
   local package_file="$2"
   local chart_file="$3"
-  local values_file="$4"
+  local production_values_file="$4"
+  local cluster_values_file="$5"
 
   local previous_version
   local version
   local chart_version
   local app_version
+  local promoted_version
   local digest
   local repository
   local published_digest
@@ -51,11 +53,12 @@ publish_app() {
 
   chart_version="$(yq -r '.version' "$chart_file")"
   app_version="$(yq -r '.appVersion' "$chart_file")"
-  digest="$(yq -r '.image.digest' "$values_file")"
-  repository="$(yq -r '.image.repository' "$values_file")"
+  promoted_version="$(yq -r '.image.version' "$cluster_values_file")"
+  digest="$(yq -r '.image.digest' "$cluster_values_file")"
+  repository="$(yq -r '.image.repository' "$production_values_file")"
 
-  if [[ "$chart_version" != "$version" || "$app_version" != "$version" ]]; then
-    echo "$app package, chart, and app versions must agree at $version." >&2
+  if [[ "$chart_version" != "$version" || "$app_version" != "$version" || "$promoted_version" != "$version" ]]; then
+    echo "$app package, chart, app, and hub-a promotion versions must agree at $version." >&2
     exit 1
   fi
   if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
@@ -89,6 +92,9 @@ publish_app() {
   echo "$repository:$version -> $digest"
 }
 
-publish_app dotdev-web apps/dotdev/package.json helm/dotdev-web/Chart.yaml helm/dotdev-web/values-prod.yaml
-publish_app dotdev-studio apps/studio/package.json helm/dotdev-studio/Chart.yaml helm/dotdev-studio/values-prod.yaml
-publish_app dotdev-labs apps/labs/package.json helm/dotdev-labs/Chart.yaml helm/dotdev-labs/values-prod.yaml
+publish_app dotdev-web apps/dotdev/package.json helm/dotdev-web/Chart.yaml \
+  helm/dotdev-web/values-prod.yaml gitops/values/dotdev-web/hub-a.yaml
+publish_app dotdev-studio apps/studio/package.json helm/dotdev-studio/Chart.yaml \
+  helm/dotdev-studio/values-prod.yaml gitops/values/dotdev-studio/hub-a.yaml
+publish_app dotdev-labs apps/labs/package.json helm/dotdev-labs/Chart.yaml \
+  helm/dotdev-labs/values-prod.yaml gitops/values/dotdev-labs/hub-a.yaml

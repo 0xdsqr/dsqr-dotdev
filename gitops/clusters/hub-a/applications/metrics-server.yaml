@@ -7,11 +7,6 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    homelab.dev/chart: metrics-server
-    homelab.dev/chart-repository: https://kubernetes-sigs.github.io/metrics-server/
-    homelab.dev/chart-version: 3.13.0
-    homelab.dev/values-common-file: gitops/values/metrics-server/common.yaml
-    homelab.dev/values-overlay-file: gitops/values/metrics-server/hub-a.yaml
   labels:
     app.kubernetes.io/instance: metrics-server
     app.kubernetes.io/managed-by: argocd

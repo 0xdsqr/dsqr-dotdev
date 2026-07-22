@@ -8,6 +8,48 @@ const errors = []
 const readJson = async (relativePath) =>
   JSON.parse(await readFile(path.join(root, relativePath), "utf8"))
 
+const applicationResources = (kustomization) => {
+  const resources = new Set()
+  const lines = kustomization.split("\n")
+  const resourcesIndex = lines.findIndex((line) => /^resources:\s*$/.test(line))
+
+  if (resourcesIndex === -1) return resources
+
+  for (const line of lines.slice(resourcesIndex + 1)) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) continue
+    if (/^\S/.test(line)) break
+
+    const resource = line.match(/^\s+-\s+([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.yaml)\s*$/)?.[1]
+    if (resource) resources.add(resource.slice(0, -".yaml".length))
+  }
+
+  return resources
+}
+
+const declaredClusters = async () => {
+  const clusters = new Map()
+  const clustersRoot = path.join(root, "gitops/clusters")
+
+  for (const entry of await readdir(clustersRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+
+    const kustomizationPath = path.join(
+      "gitops/clusters",
+      entry.name,
+      "applications/kustomization.yaml",
+    )
+    try {
+      const kustomization = await readFile(path.join(root, kustomizationPath), "utf8")
+      clusters.set(entry.name, applicationResources(kustomization))
+    } catch {
+      errors.push(`${entry.name} is missing ${kustomizationPath}`)
+    }
+  }
+
+  if (clusters.size === 0) errors.push("no GitOps clusters are declared")
+  return clusters
+}
+
 const packageDirectories = async () => {
   const directories = []
 
@@ -79,6 +121,7 @@ const releaseByApp = new Map([
   ["studio", { chart: "helm/dotdev-studio/Chart.yaml", deployment: "dotdev-studio" }],
   ["labs", { chart: "helm/dotdev-labs/Chart.yaml", deployment: "dotdev-labs" }],
 ])
+const clusters = await declaredClusters()
 
 for (const [app, { chart: chartPath, deployment }] of releaseByApp) {
   const chart = await readFile(path.join(root, chartPath), "utf8")
@@ -105,15 +148,32 @@ for (const [app, { chart: chartPath, deployment }] of releaseByApp) {
     errors.push(`${productionValuesPath} must not contain a cluster-specific digest`)
   }
 
-  const clusterValuesPath = `gitops/values/${deployment}/hub-a.yaml`
-  const clusterValues = await readFile(path.join(root, clusterValuesPath), "utf8")
-  const promotedVersion = clusterValues.match(/^\s*version:\s*["']?([^\s"']+)/m)?.[1]
-  const promotedDigest = clusterValues.match(/^\s*digest:\s*["']?(sha256:[0-9a-f]{64})/m)?.[1]
-  if (promotedVersion !== packageVersion) {
-    errors.push(`${clusterValuesPath} image.version is ${promotedVersion}; expected ${packageVersion}`)
+  const deploymentClusters = [...clusters]
+    .filter(([, applications]) => applications.has(deployment))
+    .map(([cluster]) => cluster)
+    .sort()
+  if (deploymentClusters.length === 0) {
+    errors.push(`${deployment} is not enabled in any declared cluster`)
   }
-  if (!promotedDigest) {
-    errors.push(`${clusterValuesPath} must pin a lowercase sha256 image digest`)
+
+  for (const cluster of deploymentClusters) {
+    const clusterValuesPath = `gitops/values/${deployment}/${cluster}.yaml`
+    let clusterValues
+    try {
+      clusterValues = await readFile(path.join(root, clusterValuesPath), "utf8")
+    } catch {
+      errors.push(`${clusterValuesPath} is missing for enabled application ${deployment}`)
+      continue
+    }
+
+    const promotedVersion = clusterValues.match(/^\s*version:\s*["']?([^\s"']+)/m)?.[1]
+    const promotedDigest = clusterValues.match(/^\s*digest:\s*["']?(sha256:[0-9a-f]{64})/m)?.[1]
+    if (promotedVersion !== packageVersion) {
+      errors.push(`${clusterValuesPath} image.version is ${promotedVersion}; expected ${packageVersion}`)
+    }
+    if (!promotedDigest) {
+      errors.push(`${clusterValuesPath} must pin a lowercase sha256 image digest`)
+    }
   }
 }
 
