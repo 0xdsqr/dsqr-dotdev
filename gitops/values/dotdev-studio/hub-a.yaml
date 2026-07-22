@@ -1,4 +1,4 @@
 # hub-a deployment pin and cluster-specific overrides for dotdev-studio.
 image:
-  version: 0.0.2
-  digest: sha256:5f99c95f0779f80c7292dcf501094a47891540e2a9f12fadf88043535c8bb7b9
+  version: 0.0.3
+  digest: sha256:bf5cf6ced5c0f665682c334678d81cf7d36ff58b6607233a5414be294f7bd007
