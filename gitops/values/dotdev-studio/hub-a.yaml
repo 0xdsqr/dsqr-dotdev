@@ -2,3 +2,7 @@
 image:
   version: 0.0.4
   digest: sha256:3353da01f61ca1a8a1a8266eb4a50a94ae497fe6b1d70ad72c8966d3e850b8e8
+
+additionalTrustedCa:
+  enabled: true
+  configMapName: dsqr-home-root-ca

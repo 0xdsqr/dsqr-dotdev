@@ -50,6 +50,12 @@ tmpDir:
   enabled: true
   sizeLimit: 64Mi
 
+additionalTrustedCa:
+  enabled: false
+  configMapName: ""
+  key: ca.crt
+  mountPath: /etc/dsqr/pki/dsqr-home-root-ca.pem
+
 service:
   type: ClusterIP
   port: 80

@@ -42,6 +42,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.containerPort }}
               protocol: TCP
+          {{- if .Values.additionalTrustedCa.enabled }}
+          env:
+            - name: NODE_EXTRA_CA_CERTS
+              value: {{ .Values.additionalTrustedCa.mountPath | quote }}
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "dotdev-studio.fullname" . }}-config
@@ -57,16 +62,35 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.tmpDir.enabled }}
+          {{- if or .Values.tmpDir.enabled .Values.additionalTrustedCa.enabled }}
           volumeMounts:
+            {{- if .Values.tmpDir.enabled }}
             - name: tmp
               mountPath: /tmp
+            {{- end }}
+            {{- if .Values.additionalTrustedCa.enabled }}
+            - name: additional-trusted-ca
+              mountPath: {{ .Values.additionalTrustedCa.mountPath | quote }}
+              subPath: {{ .Values.additionalTrustedCa.key | quote }}
+              readOnly: true
+            {{- end }}
           {{- end }}
-      {{- if .Values.tmpDir.enabled }}
+      {{- if or .Values.tmpDir.enabled .Values.additionalTrustedCa.enabled }}
       volumes:
+        {{- if .Values.tmpDir.enabled }}
         - name: tmp
           emptyDir:
             sizeLimit: {{ .Values.tmpDir.sizeLimit | quote }}
+        {{- end }}
+        {{- if .Values.additionalTrustedCa.enabled }}
+        - name: additional-trusted-ca
+          configMap:
+            name: {{ required "additionalTrustedCa.configMapName is required when additionalTrustedCa.enabled is true" .Values.additionalTrustedCa.configMapName }}
+            defaultMode: 0444
+            items:
+              - key: {{ .Values.additionalTrustedCa.key | quote }}
+                path: {{ .Values.additionalTrustedCa.key | quote }}
+        {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

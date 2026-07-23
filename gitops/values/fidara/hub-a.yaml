@@ -11,6 +11,13 @@ networkPolicy:
             app.kubernetes.io/instance: fidara
             app.kubernetes.io/name: fidara
             app.kubernetes.io/component: web
+  egress:
+    database:
+      enabled: true
+      port: 5432
+      to:
+        - ipBlock:
+            cidr: 10.10.30.109/32
 
 web:
   env:
@@ -20,6 +27,20 @@ web:
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=fidara
+    NODE_EXTRA_CA_CERTS: /etc/dsqr/pki/dsqr-home-root-ca.pem
+  extraVolumes:
+    - name: dsqr-home-root-ca
+      configMap:
+        name: dsqr-home-root-ca
+        defaultMode: 0444
+        items:
+          - key: ca.crt
+            path: ca.crt
+  extraVolumeMounts:
+    - name: dsqr-home-root-ca
+      mountPath: /etc/dsqr/pki/dsqr-home-root-ca.pem
+      subPath: ca.crt
+      readOnly: true
   networkPolicy:
     extraEgress:
       - to:
@@ -49,6 +70,20 @@ api:
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,k8s.namespace.name=fidara
+    PGSSLROOTCERT: /etc/dsqr/pki/dsqr-home-root-ca.pem
+  extraVolumes:
+    - name: dsqr-home-root-ca
+      configMap:
+        name: dsqr-home-root-ca
+        defaultMode: 0444
+        items:
+          - key: ca.crt
+            path: ca.crt
+  extraVolumeMounts:
+    - name: dsqr-home-root-ca
+      mountPath: /etc/dsqr/pki/dsqr-home-root-ca.pem
+      subPath: ca.crt
+      readOnly: true
   networkPolicy:
     extraEgress:
       - to:

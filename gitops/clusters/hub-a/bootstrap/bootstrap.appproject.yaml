@@ -19,6 +19,12 @@ spec:
   destinations:
     - server: https://kubernetes.default.svc
       namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: dsqr
+    - server: https://kubernetes.default.svc
+      namespace: fidara
+    - server: https://kubernetes.default.svc
+      namespace: twt
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
@@ -42,6 +48,8 @@ spec:
       kind: Namespace
       name: external-secrets
   namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
     - group: argoproj.io
       kind: Application
     - group: argoproj.io

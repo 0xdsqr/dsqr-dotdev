@@ -57,7 +57,7 @@
     "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
     "setup": "npm ci",
     "security:audit": "nix run .#securityAudit --",
-    "test:infra-security": "node --test tests/infra-security.test.ts tests/origin-tls-security.test.ts",
+    "test:infra-security": "node --test tests/infra-security.test.ts tests/origin-tls-security.test.ts tests/postgresql-client-tls.test.ts",
     "test:security": "npm run build:database && npm run build:api && npm run test:security -w dotdev"
   },
   "devDependencies": {

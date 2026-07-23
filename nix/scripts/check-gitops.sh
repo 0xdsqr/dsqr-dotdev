@@ -172,10 +172,16 @@ while IFS= read -r cluster_dir; do
       .metadata.namespace == strenv(ROOT_DESTINATION_NAMESPACE) and
       (.spec.sourceRepos | length) == 1 and
       .spec.sourceRepos[0] == strenv(ROOT_REPO_URL) and
-      (.spec.destinations | length) == 1 and
+      (.spec.destinations | length) >= 1 and
       .spec.destinations[0].server == strenv(ROOT_DESTINATION_SERVER) and
       .spec.destinations[0].namespace == strenv(ROOT_DESTINATION_NAMESPACE)
     ' "$bootstrap_project" >/dev/null || fail "$cluster bootstrap AppProject is invalid"
+  while IFS=$'\t' read -r destination_server destination_namespace; do
+    [[ "$destination_server" == "$root_destination_server" ]] ||
+      fail "$cluster bootstrap AppProject contains an invalid server: $destination_server"
+    [[ -n "$destination_namespace" && "$destination_namespace" != "*" ]] ||
+      fail "$cluster bootstrap AppProject contains an invalid namespace: $destination_namespace"
+  done < <(yq -r '.spec.destinations[] | [.server, .namespace] | @tsv' "$bootstrap_project")
   yq -r '.metadata.finalizers[]' "$bootstrap_project" |
     grep -Fx 'resources-finalizer.argocd.argoproj.io' >/dev/null ||
     fail "$cluster bootstrap AppProject lacks its resource finalizer"
