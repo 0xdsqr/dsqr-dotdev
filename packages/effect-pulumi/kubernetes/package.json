@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "@dsqr-dotdev/effect-pulumi-core": "0.0.1",
-    "@pulumi/kubernetes": "4.30.0",
-    "@pulumi/pulumi": "3.253.0"
+    "@pulumi/kubernetes": "4.33.0",
+    "@pulumi/pulumi": "3.254.0"
   },
   "devDependencies": {
-    "@types/node": "22.19.17",
-    "typescript": "6.0.3"
+    "@types/node": "26.1.1",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=24"

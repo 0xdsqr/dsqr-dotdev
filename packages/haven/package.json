@@ -16,8 +16,8 @@
     "effect": "3.22.0"
   },
   "devDependencies": {
-    "@types/node": "22.19.17",
-    "typescript": "6.0.3"
+    "@types/node": "26.1.1",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=24"

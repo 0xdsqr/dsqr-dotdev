@@ -32,20 +32,20 @@
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1093.0",
+    "@aws-sdk/client-s3": "3.1094.0",
     "@dsqr-dotdev/database": "0.0.1",
     "@dsqr-dotdev/observability": "0.0.1",
-    "@trpc/server": "11.16.0",
-    "better-auth": "1.6.24",
+    "@trpc/server": "11.18.0",
+    "better-auth": "1.6.25",
     "drizzle-orm": "0.45.2",
     "effect": "3.22.0",
     "resend": "6.18.0",
     "superjson": "2.2.6",
-    "zod": "4.3.6"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@dsqr-dotdev/tsconfig": "0.0.1",
-    "@types/node": "22.19.17",
+    "@types/node": "26.1.1",
     "@types/pg": "8.20.0"
   }
 }
