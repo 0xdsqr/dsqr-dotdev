@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { ThemeToggle } from "@dsqr-dotdev/react/components/theme-toggle"
-import { Github } from "lucide-react"
+import { GitHubLogo } from "@dsqr-dotdev/react/components/brand-icons"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "./styles.css"
@@ -14,7 +14,7 @@ function XLogo(props: React.SVGProps<SVGSVGElement>) {
 }
 
 const socialLinks = [
-  ["GitHub", "https://github.com/dsqr-labs", Github],
+  ["GitHub", "https://github.com/dsqr-labs", GitHubLogo],
   ["X", "https://x.com/dsqr_labs", XLogo],
 ] as const
 

@@ -1,4 +1,5 @@
-import { Github, Linkedin, Mail, Rss } from "lucide-react"
+import { GitHubLogo, LinkedInLogo } from "@dsqr-dotdev/react/components/brand-icons"
+import { Mail, Rss } from "lucide-react"
 import { FooterSubscribe } from "@/components/footer-subscribe"
 import { InlineSignIn } from "@/components/inline-sign-in"
 
@@ -24,7 +25,7 @@ function Footer() {
             className="text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
             aria-label="GitHub"
           >
-            <Github className="w-4 h-4" />
+            <GitHubLogo className="w-4 h-4" />
           </a>
           <a
             href="https://linkedin.com/in/davedennis93"
@@ -33,7 +34,7 @@ function Footer() {
             className="text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
             aria-label="LinkedIn"
           >
-            <Linkedin className="w-4 h-4" />
+            <LinkedInLogo className="w-4 h-4" />
           </a>
           <a
             href="mailto:hello@dsqr.dev"

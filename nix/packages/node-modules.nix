@@ -32,7 +32,9 @@ in
     mkdir -p "$out"
     cp package.json package-lock.json "$out/"
     cp -R node_modules "$out/node_modules"
-    find . -mindepth 2 -maxdepth 3 -type d -name node_modules -exec cp -R --parents {} "$out/" \;
+    # npm may nest dependencies under apps/*, packages/*, or
+    # packages/effect-pulumi/* when exact workspace constraints prevent hoisting.
+    find . -mindepth 2 -maxdepth 4 -type d -name node_modules -exec cp -R --parents {} "$out/" \;
     rm -f "$out/node_modules/dotdev"
     rm -f "$out/node_modules/labs"
     rm -f "$out/node_modules/studio"
