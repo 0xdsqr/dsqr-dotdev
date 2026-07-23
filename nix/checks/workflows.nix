@@ -16,6 +16,7 @@ stdenvNoCC.mkDerivation {
   src = lib.fileset.toSource {
     root = ../..;
     fileset = lib.fileset.unions [
+      ../../.grype.yaml
       ../../.github/workflows
       ../../nix/lib/smoke-oci-image.sh
       ../scripts/gitops-cleanup-tracking.sh
@@ -415,8 +416,31 @@ stdenvNoCC.mkDerivation {
       .github/workflows/ci.yml >/dev/null
     grep -F 'commitMode: github-api' .github/workflows/release.yml >/dev/null
     grep -F 'prDraft: create' .github/workflows/release.yml >/dev/null
+    yq -e '.concurrency."cancel-in-progress" == false' \
+      .github/workflows/release.yml >/dev/null
     grep -F 'grype "sbom:$sbom" --fail-on medium' \
       nix/scripts/release-prepare.sh >/dev/null
+    [[ "$(yq '.ignore | length' .grype.yaml)" == 2 ]]
+    yq -e '
+      .ignore[] |
+      select(
+        .vulnerability == "CVE-2024-9410" and
+        .package.name == "ada" and
+        .package.version == "3.4.4" and
+        .package.type == "nix" and
+        .reason != ""
+      )
+    ' .grype.yaml >/dev/null
+    yq -e '
+      .ignore[] |
+      select(
+        .vulnerability == "CVE-2026-58055" and
+        .package.name == "nghttp2" and
+        .package.version == "1.69.0" and
+        .package.type == "nix" and
+        .reason != ""
+      )
+    ' .grype.yaml >/dev/null
     grep -F 'skopeo inspect --format' \
       nix/scripts/release-prepare.sh >/dev/null
     grep -F -- '--predicate-type https://spdx.dev/Document/v2.3' \

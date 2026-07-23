@@ -1,0 +1,18 @@
+ignore:
+  # CVE-2024-9410 affects Ada.cx Sentry, not the ada-url C++ URL parser
+  # packaged by Nix. This is a name-only CPE match.
+  - vulnerability: CVE-2024-9410
+    reason: The Nix package is ada-url/ada, not the affected Ada.cx Sentry product.
+    package:
+      name: ada
+      version: 3.4.4
+      type: nix
+
+  # CVE-2026-58055 is confined to the nghttpx proxy. The application images
+  # build libnghttp2 with application binaries disabled, so nghttpx is absent.
+  - vulnerability: CVE-2026-58055
+    reason: The vulnerable nghttpx proxy is disabled at build time and absent from the image.
+    package:
+      name: nghttp2
+      version: 1.69.0
+      type: nix

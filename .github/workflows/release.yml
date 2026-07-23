@@ -24,7 +24,7 @@ env:
 
 concurrency:
   group: changesets-release-master
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   version:
