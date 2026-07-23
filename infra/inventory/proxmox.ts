@@ -55,7 +55,7 @@ const vms = {
     cloudInitDiskDatastoreId: "local-lvm",
     cloudInitUserDataFileId: "local:snippets/user-data-test.yaml",
     cpuCores: 8,
-    memoryMiB: 16384,
+    memoryMiB: 8192,
     rootDiskSizeGiB: 200,
     tags: tags("compute"),
   },

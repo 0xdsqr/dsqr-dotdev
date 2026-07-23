@@ -39,6 +39,14 @@ certificate_matches_key() {
   [[ "$certificate_public_key" == "$private_public_key" ]]
 }
 
+certificate_is_trusted_for_hostname() {
+  openssl verify \
+    -CAfile "$ca_file" \
+    -untrusted "$1" \
+    -verify_hostname "$common_name" \
+    "$1" >/dev/null
+}
+
 listener_is_healthy() {
   systemctl is-active --quiet pveproxy.service \
     && curl --fail --silent --show-error \
@@ -73,15 +81,17 @@ if [[ -s "$certificate_file" ]] \
   && [[ -s "$request_fingerprint_file" ]] \
   && [[ "$(<"$request_fingerprint_file")" == "$request_fingerprint" ]] \
   && openssl x509 -checkend "$renew_before_seconds" -noout -in "$certificate_file" >/dev/null \
-  && openssl x509 -checkhost "$common_name" -noout -in "$certificate_file" >/dev/null \
+  && certificate_is_trusted_for_hostname "$certificate_file" \
   && certificate_matches_key "$certificate_file" "$key_file"; then
   if listener_is_healthy; then
     echo "Proxmox listener certificate is still valid."
     exit 0
   fi
 
-  echo "The certificate is valid, but the Proxmox listener is unhealthy." >&2
-  exit 1
+  echo "The certificate is valid; reloading the Proxmox listener."
+  systemctl restart pveproxy.service
+  wait_for_listener
+  exit 0
 fi
 
 if [[ ! -r "$environment_file" ]]; then
@@ -95,21 +105,7 @@ source "$environment_file"
 : "${VAULT_SECRET_ID:?VAULT_SECRET_ID is required in $environment_file}"
 
 work_directory="$(mktemp -d "$state_directory/.renew.XXXXXX")"
-token=""
 cleanup() {
-  if [[ -n "$token" ]]; then
-    token_header_file="$work_directory/token-header"
-    if [[ -s "$token_header_file" ]]; then
-      curl --fail --silent --show-error \
-        --cacert "$ca_file" \
-        --connect-timeout 5 \
-        --max-time 10 \
-        --request POST \
-        --header @"$token_header_file" \
-        "$vault_addr/v1/auth/token/revoke-self" >/dev/null || true
-    fi
-  fi
-
   rm -rf "$work_directory"
 }
 trap cleanup EXIT
@@ -166,10 +162,10 @@ cat "$work_directory/certificate.pem" "$work_directory/issuing-ca.pem" \
 
 chmod 0600 "$work_directory/key.pem"
 chmod 0644 "$work_directory/fullchain.pem"
-openssl x509 -checkhost "$common_name" -noout -in "$work_directory/certificate.pem"
 openssl verify \
   -CAfile "$ca_file" \
   -untrusted "$work_directory/issuing-ca.pem" \
+  -verify_hostname "$common_name" \
   "$work_directory/certificate.pem"
 
 if ! certificate_matches_key "$work_directory/certificate.pem" "$work_directory/key.pem"; then
@@ -203,7 +199,10 @@ install -o root -g root -m 0600 \
   "$work_directory/request.sha256" \
   "$request_fingerprint_file"
 
-openssl x509 -checkhost "$common_name" -noout -in "$certificate_file"
+if ! certificate_is_trusted_for_hostname "$certificate_file"; then
+  echo "Installed Proxmox certificate is not trusted for $common_name." >&2
+  exit 1
+fi
 if ! certificate_matches_key "$certificate_file" "$key_file"; then
   echo "Installed Proxmox certificate does not match its private key." >&2
   exit 1
