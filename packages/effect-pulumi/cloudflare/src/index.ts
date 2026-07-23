@@ -110,7 +110,10 @@ export function cloudflareZoneSecuritySettings(policy: CloudflareZoneSecurityPol
 }
 
 function resourceName(hostname: string) {
-  return hostname.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  return hostname
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-/, "")
+    .replace(/-$/, "")
 }
 
 function requireZoneIdEffect(

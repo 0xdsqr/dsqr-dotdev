@@ -67,7 +67,12 @@ export const normalizeOtlpTraceEndpoint = (endpoint: string | null | undefined) 
     return trimmed
   }
 
-  return `${trimmed.replace(/\/+$/, "")}/v1/traces`
+  let endpointLength = trimmed.length
+  while (endpointLength > 0 && trimmed.charCodeAt(endpointLength - 1) === 47) {
+    endpointLength -= 1
+  }
+
+  return `${trimmed.slice(0, endpointLength)}/v1/traces`
 }
 
 export const createOtelLayer = (config: OtelLayerConfig): Layer.Layer<never> => {
@@ -102,9 +107,11 @@ export const createOtelLayerFromEnv = (defaultServiceName: ServiceName) =>
   createOtelLayer({
     serviceName: process.env.OTEL_SERVICE_NAME?.trim() || defaultServiceName,
     endpoint:
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-    environment: process.env.ENVIRONMENT ?? process.env.NODE_ENV,
-    resourceAttributes: process.env.OTEL_RESOURCE_ATTRIBUTES,
-    serviceVersion: process.env.SERVICE_VERSION ?? process.env.SENTRY_RELEASE,
-    headers: process.env.OTEL_EXPORTER_OTLP_HEADERS,
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ??
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT ??
+      null,
+    environment: process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? null,
+    resourceAttributes: process.env.OTEL_RESOURCE_ATTRIBUTES ?? null,
+    serviceVersion: process.env.SERVICE_VERSION ?? process.env.SENTRY_RELEASE ?? null,
+    headers: process.env.OTEL_EXPORTER_OTLP_HEADERS ?? null,
   })

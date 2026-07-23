@@ -11,6 +11,7 @@ import {
   loadProxmoxConnectionConfigEffect,
   validateProxmoxTransportEffect,
 } from "../packages/effect-pulumi/proxmox/src/config.ts"
+import { normalizeOtlpTraceEndpoint } from "../packages/observability/src/effect-otel.ts"
 import {
   hardenedTailnetKeyDefaults,
   tailnetPolicySafetyDefaults,
@@ -167,6 +168,21 @@ test("Cloudflare zones enforce HTTPS, verified origins, modern TLS, and HSTS", (
       },
     })
   }
+})
+
+test("OTLP trace endpoints normalize trailing separators in linear time", () => {
+  assert.equal(
+    normalizeOtlpTraceEndpoint("https://otel.example.test////"),
+    "https://otel.example.test/v1/traces",
+  )
+  assert.equal(
+    normalizeOtlpTraceEndpoint("https://otel.example.test/v1/traces"),
+    "https://otel.example.test/v1/traces",
+  )
+  assert.equal(
+    normalizeOtlpTraceEndpoint(`https://otel.example.test${"/".repeat(100_000)}`),
+    "https://otel.example.test/v1/traces",
+  )
 })
 
 test("Tailscale machine enrollment and grants are least-privilege by default", () => {
