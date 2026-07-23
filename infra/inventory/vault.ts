@@ -267,6 +267,22 @@ const pkiIssuers = {
       tokenBoundCidrs: ["127.0.0.1/32", "::1/128", "10.10.30.107/32"],
     },
   },
+  postgresKnoxListener: {
+    backend: "pki_int",
+    roleName: "postgres-knox-listener",
+    policyName: "homelab-pki-postgres-knox-listener",
+    allowedDomains: ["postgres.service.home.arpa"],
+    allowWildcardCertificates: false,
+    generateLease: false,
+    ttlHours: 720,
+    maxTtlHours: 720,
+    appRole: {
+      ...renewableAppRoleDefaults,
+      roleName: "postgres-knox-listener-renewer",
+      secretIdBoundCidrs: ["10.10.30.109/32"],
+      tokenBoundCidrs: ["10.10.30.109/32"],
+    },
+  },
   proxmoxListener: {
     backend: "pki_int",
     roleName: "proxmox-dell-r730xd-listener",

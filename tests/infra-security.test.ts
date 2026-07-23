@@ -260,6 +260,15 @@ test("Vault PKI issuers are exact, least-privilege, and do not persist SecretIDs
   assert.deepEqual(vault.pkiIssuers.proxmoxListener.allowedDomains, [
     "proxmox.dell-r730xd.home.arpa",
   ])
+  assert.deepEqual(vault.pkiIssuers.postgresKnoxListener.allowedDomains, [
+    "postgres.service.home.arpa",
+  ])
+  assert.deepEqual(vault.pkiIssuers.postgresKnoxListener.appRole.secretIdBoundCidrs, [
+    "10.10.30.109/32",
+  ])
+  assert.deepEqual(vault.pkiIssuers.postgresKnoxListener.appRole.tokenBoundCidrs, [
+    "10.10.30.109/32",
+  ])
   assert.ok(!("appRole" in vault.pkiIssuers.hubATraefikOrigin))
 
   const wildcardDomain = Effect.runSync(
