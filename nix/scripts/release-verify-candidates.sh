@@ -33,6 +33,8 @@ cluster="${RELEASE_CLUSTER:-hub-a}"
 registry="${RELEASE_REGISTRY:-ghcr.io}"
 owner="${RELEASE_REGISTRY_OWNER:-${GITHUB_REPOSITORY_OWNER:-}}"
 skopeo_bin="${RELEASE_SKOPEO_BIN:-skopeo}"
+attestation_repository="${RELEASE_ATTESTATION_REPOSITORY:-${GITHUB_REPOSITORY:-}}"
+attestation_verify_bin="${RELEASE_ATTESTATION_VERIFY_BIN:-gh}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -138,6 +140,8 @@ verify_app() {
   local package_file="$2"
   local chart_file="$3"
   local production_values_file="$4"
+  local chart_directory
+  local promotion_directory="gitops/values/$app"
   local cluster_values_file="gitops/values/$app/$cluster.yaml"
   local cluster_applications="gitops/clusters/$cluster/applications/kustomization.yaml"
   local previous_version
@@ -151,10 +155,18 @@ verify_app() {
   local version_tag
   local candidate
   local candidate_digest
+  local signer_workflow
 
   previous_version="$(version_at "$base_sha" "$package_file")"
   version="$(version_at "$head_sha" "$package_file")"
   if [[ "$previous_version" == "$version" ]]; then
+    chart_directory="$(dirname "$chart_file")"
+    if ! git diff --quiet "$base_sha" "$head_sha" -- \
+      "$chart_directory" \
+      "$promotion_directory"; then
+      echo "$app release-managed chart or promotion values changed without a package version bump." >&2
+      exit 1
+    fi
     return 0
   fi
 
@@ -205,8 +217,30 @@ verify_app() {
     exit 1
   fi
 
+  if [[ -n "$attestation_repository" ]]; then
+    signer_workflow="$attestation_repository/.github/workflows/release.yml"
+    "$attestation_verify_bin" attestation verify \
+      "oci://$repository@$candidate_digest" \
+      --bundle-from-oci \
+      --repo "$attestation_repository" \
+      --signer-workflow "$signer_workflow" \
+      --source-digest "$base_sha" >/dev/null
+    "$attestation_verify_bin" attestation verify \
+      "oci://$repository@$candidate_digest" \
+      --bundle-from-oci \
+      --repo "$attestation_repository" \
+      --signer-workflow "$signer_workflow" \
+      --source-digest "$base_sha" \
+      --predicate-type https://spdx.dev/Document/v2.3 >/dev/null
+  elif [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    echo "GITHUB_REPOSITORY or RELEASE_ATTESTATION_REPOSITORY is required in CI." >&2
+    exit 1
+  else
+    echo "Skipping signed attestation verification outside CI; no repository identity was supplied."
+  fi
+
   verified_count=$((verified_count + 1))
-  echo "$cluster/$app $version verified at $candidate_digest from $base_sha"
+  echo "$cluster/$app $version candidate, provenance, and SBOM verified at $candidate_digest from $base_sha"
 }
 
 verify_app dotdev-web apps/dotdev/package.json helm/dotdev-web/Chart.yaml \
@@ -217,8 +251,8 @@ verify_app dotdev-labs apps/labs/package.json helm/dotdev-labs/Chart.yaml \
   helm/dotdev-labs/values-prod.yaml
 
 if [[ "$verified_count" == "0" ]]; then
-  echo "No application versions changed between $base_sha and $head_sha." >&2
-  exit 1
+  echo "No application versions changed between $base_sha and $head_sha; unchanged application chart and promotion surfaces are valid."
+  exit 0
 fi
 
 echo "Verified $verified_count trusted release candidate(s)."

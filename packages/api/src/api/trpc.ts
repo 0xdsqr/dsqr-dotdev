@@ -4,6 +4,7 @@ import { Duration } from "effect"
 import superjson from "superjson"
 import { ZodError, z } from "zod/v4"
 import type { Auth } from "../auth"
+import { getAuthoritativeAccessFailure } from "../auth/user-status"
 import { Effect, runApiEffect } from "../runtime"
 import { logger } from "./lib/logger"
 
@@ -87,74 +88,82 @@ const timingMiddleware = t.middleware(async ({ next, path, ctx }) => {
 
 export const publicProcedure = t.procedure.use(timingMiddleware)
 
-export const protectedProcedure = t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" })
-  }
-  return next({
-    ctx: {
-      session: { ...ctx.session, user: ctx.session.user },
-    },
-  })
-})
-
-function normalizeRole(role: string | string[] | null | undefined) {
-  if (Array.isArray(role)) {
-    return role[0]?.trim()?.toLowerCase() ?? null
-  }
-
-  return role?.trim()?.toLowerCase() ?? null
-}
-
 type SessionUser = {
   id?: string | null
   email?: string | null
+  emailVerified?: boolean | null
   role?: string | string[] | null
+  banned?: boolean | null
+  banExpires?: Date | null
 }
 
-async function resolveAdminSessionUser(currentUser: SessionUser | null | undefined) {
-  if (!currentUser) {
-    return null
+export function authorizeAuthoritativeUser<CurrentUser extends SessionUser>(
+  currentUser: CurrentUser | null | undefined,
+  requiredRole: "user" | "admin",
+): CurrentUser {
+  const failure = getAuthoritativeAccessFailure(currentUser, requiredRole)
+
+  switch (failure) {
+    case "missing-user":
+      throw new TRPCError({ code: "UNAUTHORIZED" })
+    case "unverified-email":
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "A verified email address is required.",
+      })
+    case "active-ban":
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "This account has been suspended.",
+      })
+    case "insufficient-role":
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Admin access required",
+      })
   }
 
-  // The admin plugin already attaches role to the session, so this is the common
-  // path and avoids hitting the database on every admin request.
-  if (normalizeRole(currentUser.role) === "admin") {
-    return currentUser
-  }
-
-  // Single id-based fallback for sessions issued before role was populated.
-  if (currentUser.id) {
-    const dbUser =
-      (await database.query.user.findFirst({
-        where: (fields, operators) => operators.eq(fields.id, currentUser.id!),
-      })) ?? null
-
-    if (normalizeRole(dbUser?.role) === "admin") {
-      return dbUser
-    }
-  }
-
-  return null
+  return currentUser!
 }
+
+async function getAuthoritativeUser(databaseClient: typeof database, userId: string) {
+  return (
+    (await databaseClient.query.user.findFirst({
+      where: (fields, operators) => operators.eq(fields.id, userId),
+    })) ?? null
+  )
+}
+
+export const protectedProcedure = t.procedure.use(timingMiddleware).use(async ({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
+
+  const currentUser = authorizeAuthoritativeUser(
+    await getAuthoritativeUser(ctx.database, ctx.session.user.id),
+    "user",
+  )
+
+  return next({
+    ctx: {
+      session: { ...ctx.session, user: { ...ctx.session.user, ...currentUser } },
+    },
+  })
+})
 
 export const adminProcedure = t.procedure.use(timingMiddleware).use(async ({ ctx, next }) => {
   if (!ctx.session?.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" })
   }
 
-  const adminUser = await resolveAdminSessionUser(ctx.session.user)
-
-  if (!adminUser) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Admin access required",
-    })
-  }
+  const currentUser = authorizeAuthoritativeUser(
+    await getAuthoritativeUser(ctx.database, ctx.session.user.id),
+    "admin",
+  )
 
   return next({
     ctx: {
-      session: { ...ctx.session, user: { ...ctx.session.user, role: "admin" } },
+      session: { ...ctx.session, user: { ...ctx.session.user, ...currentUser } },
     },
   })
 })

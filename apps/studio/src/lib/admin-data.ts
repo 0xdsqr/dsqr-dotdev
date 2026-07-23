@@ -4,13 +4,10 @@ import { postCommentsView, posts, subscribers } from "@dsqr-dotdev/database/sche
 import { createServerFn } from "@tanstack/react-start"
 import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { getAdminSessionUser } from "./admin-access"
+import { requireAuthoritativeStudioAdmin } from "./admin-authorization"
 
 export const getAdminBootstrap = createServerFn({ method: "GET" }).handler(async () => {
-  const adminUser = await getAdminSessionUser()
-
-  if (!adminUser) {
-    throw new Error("UNAUTHORIZED")
-  }
+  const adminUser = requireAuthoritativeStudioAdmin(await getAdminSessionUser())
 
   const [allPosts, allUsers, allSubscribers] = await Promise.all([
     database

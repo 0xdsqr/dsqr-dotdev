@@ -51,8 +51,7 @@ export default defineConfig({
     external: ["pg", "pg-native"],
   },
   server: {
-    host: "0.0.0.0",
+    host: process.env.DEV_HOST?.trim() || "127.0.0.1",
     port: 3020,
-    allowedHosts: true,
   },
 })

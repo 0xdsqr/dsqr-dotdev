@@ -1,10 +1,16 @@
 import { database } from "@dsqr-dotdev/database/client"
+import { user } from "@dsqr-dotdev/database/schema"
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { admin, emailOTP, jwt, organization } from "better-auth/plugins"
+import { APIError } from "better-auth/api"
+import { admin, emailOTP } from "better-auth/plugins"
+import { eq } from "drizzle-orm"
 import { Resend } from "resend"
 import { logger } from "../api/lib/logger"
+import { hasActiveBan, hasExpiredBan } from "./user-status"
+
+export { getAuthoritativeAccessFailure } from "./user-status"
 
 // Lazy initialization of Resend - only created when needed
 let resend: Resend | null = null
@@ -33,58 +39,38 @@ function getResend(): Resend {
   return resend
 }
 
-function getCrossSubdomainCookieDomain(baseUrl: string): string | null {
-  const explicitDomain = process.env.AUTH_COOKIE_DOMAIN?.trim()
-  if (explicitDomain) {
-    return explicitDomain
-  }
-
-  try {
-    const hostname = new URL(baseUrl).hostname
-
-    if (hostname === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
-      return null
-    }
-
-    if (hostname.endsWith(".dsqr.dev")) {
-      return "dsqr.dev"
-    }
-
-    const parts = hostname.split(".").filter(Boolean)
-    if (parts.length >= 2) {
-      return parts.slice(-2).join(".")
-    }
-  } catch {
-    return null
-  }
-
-  return null
-}
+export const AUTH_COOKIE_PREFIXES = {
+  public: "dsqr-public-auth",
+  admin: "dsqr-studio-auth",
+} as const
 
 export function createAuthSurfacePlugins(surface: "public" | "admin"): BetterAuthPlugin[] {
-  return surface === "admin" ? [admin(), organization()] : []
+  return surface === "admin" ? [admin()] : []
 }
 
-export function initAuth(options: {
+type AuthOptions = {
   baseUrl: string
   secret: string | undefined
   surface: "public" | "admin"
   extraPlugins?: BetterAuthPlugin[]
+  trustedProxies?: string[]
   trustedOrigins?: string[]
-}): ReturnType<typeof betterAuth> {
-  logger.info("Initializing auth configuration", {
-    baseUrl: options.baseUrl,
-    hasAuthSecret: Boolean(options.secret),
-    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
-    hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
-  })
+}
 
-  const config: BetterAuthOptions = {
+export function createAuthOptions(options: AuthOptions): BetterAuthOptions {
+  const trustedProxies =
+    options.trustedProxies ??
+    process.env.AUTH_TRUSTED_PROXIES?.split(",")
+      .map((value) => value.trim())
+      .filter(Boolean) ??
+    []
+
+  return {
     database: drizzleAdapter(database, { provider: "pg" }),
     baseURL: options.baseUrl,
     secret: options.secret,
 
-    trustedOrigins: options.trustedOrigins ?? ["http://localhost:3021", "https://studio.dsqr.dev"],
+    trustedOrigins: options.trustedOrigins ?? [options.baseUrl],
 
     // Throttle auth endpoints (OTP requests, sign-in attempts) to blunt
     // brute-force and email-bombing. Disabled in dev to avoid local friction.
@@ -95,22 +81,58 @@ export function initAuth(options: {
     },
 
     advanced: {
-      crossSubDomainCookies: {
-        enabled: true,
-        ...(getCrossSubdomainCookieDomain(options.baseUrl)
-          ? { domain: getCrossSubdomainCookieDomain(options.baseUrl)! }
-          : {}),
+      cookiePrefix: AUTH_COOKIE_PREFIXES[options.surface],
+      ...(trustedProxies.length > 0
+        ? {
+            ipAddress: {
+              trustedProxies,
+            },
+          }
+        : {}),
+    },
+
+    databaseHooks: {
+      session: {
+        create: {
+          async before(session) {
+            const currentUser =
+              (await database.query.user.findFirst({
+                where: (fields, operators) => operators.eq(fields.id, session.userId),
+              })) ?? null
+
+            if (!currentUser) {
+              throw APIError.from("FORBIDDEN", {
+                code: "ACCOUNT_UNAVAILABLE",
+                message: "This account is unavailable.",
+              })
+            }
+
+            if (hasActiveBan(currentUser)) {
+              throw APIError.from("FORBIDDEN", {
+                code: "BANNED_USER",
+                message: "This account has been suspended.",
+              })
+            }
+
+            if (hasExpiredBan(currentUser)) {
+              await database
+                .update(user)
+                .set({
+                  banned: false,
+                  banReason: null,
+                  banExpires: null,
+                })
+                .where(eq(user.id, currentUser.id))
+            }
+          },
+        },
       },
     },
 
-    emailAndPassword: {
-      enabled: true,
-    },
-
     plugins: [
-      jwt(),
       ...createAuthSurfacePlugins(options.surface),
       emailOTP({
+        storeOTP: "hashed",
         async sendVerificationOTP({ email, otp }) {
           const client = getResend()
           logger.info("Auth OTP requested", {
@@ -161,8 +183,6 @@ export function initAuth(options: {
 
           logger.info("Auth OTP email sent", {
             email: maskEmail(email),
-            emailId: result.data?.id ?? null,
-            response: result.data ? JSON.stringify(result.data) : null,
           })
         },
       }),
@@ -170,8 +190,18 @@ export function initAuth(options: {
       ...(options.extraPlugins ?? []),
     ],
   }
+}
 
-  return betterAuth(config)
+export function initAuth(options: AuthOptions): ReturnType<typeof betterAuth> {
+  logger.info("Initializing auth configuration", {
+    baseUrl: options.baseUrl,
+    hasAuthSecret: Boolean(options.secret),
+    trustedOrigins: options.trustedOrigins ?? [options.baseUrl],
+    hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
+    surface: options.surface,
+  })
+
+  return betterAuth(createAuthOptions(options))
 }
 
 type InternalAuth = ReturnType<typeof betterAuth>

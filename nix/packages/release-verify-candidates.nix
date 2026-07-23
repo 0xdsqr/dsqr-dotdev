@@ -4,6 +4,7 @@ pkgs.writeShellApplication {
 
   runtimeInputs = [
     pkgs.coreutils
+    pkgs.gh
     pkgs.git
     pkgs.jq
     pkgs.skopeo

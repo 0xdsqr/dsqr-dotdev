@@ -64,7 +64,7 @@ service:
 
 env:
   BASE_URL: https://studio.dsqr.dev
-  TRUSTED_ORIGINS: https://studio.dsqr.dev,https://dsqr.dev
+  TRUSTED_ORIGINS: https://studio.dsqr.dev
   S3_BUCKET: dsqr-dotdev
   S3_ENDPOINT: s3.dsqr.dev
   S3_USE_SSL: "true"
@@ -95,14 +95,36 @@ networkPolicy:
           podSelector:
             matchLabels:
               k8s-app: kube-dns
-    # Kubernetes NetworkPolicy cannot select DNS names. Restrict external
-    # destinations by the ports required for HTTPS, PostgreSQL, and OTLP.
+    # Keep public HTTPS available while denying private-network lateral movement.
     extra:
-      - ports:
+      - to:
+          - ipBlock:
+              cidr: 0.0.0.0/0
+              except:
+                - 10.0.0.0/8
+                - 100.64.0.0/10
+                - 127.0.0.0/8
+                - 169.254.0.0/16
+                - 172.16.0.0/12
+                - 192.168.0.0/16
+        ports:
           - protocol: TCP
             port: 443
+      - to:
+          - ipBlock:
+              cidr: 10.10.30.109/32
+        ports:
           - protocol: TCP
             port: 5432
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/instance: k8s-monitoring-alloy-receiver
+                app.kubernetes.io/name: alloy-receiver
+        ports:
           - protocol: TCP
             port: 4318
 

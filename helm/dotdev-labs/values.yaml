@@ -64,7 +64,7 @@ service:
 
 env:
   BASE_URL: https://labs.dsqr.dev
-  TRUSTED_ORIGINS: https://labs.dsqr.dev,https://dsqr.dev
+  TRUSTED_ORIGINS: https://labs.dsqr.dev
   OTEL_SERVICE_NAME: dotdev-labs
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
@@ -91,7 +91,15 @@ networkPolicy:
     # Labs only exports telemetry; add narrowly scoped ports here when future
     # server-side integrations require them.
     extra:
-      - ports:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/instance: k8s-monitoring-alloy-receiver
+                app.kubernetes.io/name: alloy-receiver
+        ports:
           - protocol: TCP
             port: 4318
 

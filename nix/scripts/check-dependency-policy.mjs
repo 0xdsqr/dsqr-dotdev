@@ -72,19 +72,47 @@ const allowedDeprecated = new Map([
   ["node_modules/@esbuild-kit/esm-loader", "2.6.5"],
 ])
 
+const allowedInstallScripts = new Map([
+  ["node_modules/@pulumi/kubernetes", "4.30.0"],
+  ["node_modules/esbuild", "0.28.1"],
+  ["node_modules/fsevents", "2.3.3"],
+  ["node_modules/msgpackr-extract", "3.0.4"],
+  ["node_modules/protobufjs", "7.6.5"],
+])
+
 for (const [path, entry] of Object.entries(lock.packages ?? {})) {
   if (path.endsWith("node_modules/esbuild") && entry.version !== "0.28.1") {
     fail(`package-lock.json: ${path} resolved unexpected esbuild ${entry.version}`)
   }
 
+  if (entry.resolved !== undefined && entry.link !== true) {
+    if (!entry.resolved.startsWith("https://registry.npmjs.org/")) {
+      fail(`package-lock.json: ${path} resolved from unapproved source ${entry.resolved}`)
+    }
+    if (typeof entry.integrity !== "string" || !/^sha512-[A-Za-z0-9+/]+={0,2}$/.test(entry.integrity)) {
+      fail(`package-lock.json: ${path} must have sha512 integrity`)
+    }
+  }
+
   if (entry.deprecated !== undefined && allowedDeprecated.get(path) !== entry.version) {
     fail(`package-lock.json: unapproved deprecated package ${path}@${entry.version}`)
+  }
+
+  if (entry.hasInstallScript === true && allowedInstallScripts.get(path) !== entry.version) {
+    fail(`package-lock.json: unapproved install script ${path}@${entry.version}`)
   }
 }
 
 for (const [path, expectedVersion] of allowedDeprecated) {
   if (lock.packages?.[path]?.version !== expectedVersion) {
     fail(`package-lock.json: deprecated-package exception ${path}@${expectedVersion} is stale`)
+  }
+}
+
+for (const [path, expectedVersion] of allowedInstallScripts) {
+  const entry = lock.packages?.[path]
+  if (entry?.version !== expectedVersion || entry.hasInstallScript !== true) {
+    fail(`package-lock.json: install-script exception ${path}@${expectedVersion} is stale`)
   }
 }
 

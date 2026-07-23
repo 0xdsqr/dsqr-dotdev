@@ -12,7 +12,7 @@ imagePullSecrets:
   - name: ghcr-creds
 env:
   BASE_URL: https://labs.dsqr.dev
-  TRUSTED_ORIGINS: https://labs.dsqr.dev,https://dsqr.dev
+  TRUSTED_ORIGINS: https://labs.dsqr.dev
   OTEL_SERVICE_NAME: dotdev-labs
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318/v1/traces
@@ -30,6 +30,9 @@ networkPolicy:
 ingress:
   enabled: true
   className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
   hosts:
     - host: labs.dsqr.dev
       paths:

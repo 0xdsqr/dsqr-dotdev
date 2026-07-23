@@ -56,6 +56,8 @@ spec:
       kind: AppProject
     - group: external-secrets.io
       kind: ExternalSecret
+    - group: networking.k8s.io
+      kind: NetworkPolicy
     - group: traefik.io
       kind: IngressRoute
     - group: traefik.io

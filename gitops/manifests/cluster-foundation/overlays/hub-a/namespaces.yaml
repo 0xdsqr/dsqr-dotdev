@@ -11,7 +11,12 @@ metadata:
     homelab.dev/owner: dsqr
     homelab.dev/tier: apps
     homelab.dev/ghcr-pull: "true"
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
 ---
 apiVersion: v1
 kind: Namespace
@@ -26,7 +31,12 @@ metadata:
     homelab.dev/owner: fidara
     homelab.dev/tier: apps
     homelab.dev/ghcr-pull: "true"
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
 ---
 apiVersion: v1
 kind: Namespace
@@ -41,7 +51,12 @@ metadata:
     homelab.dev/owner: twt
     homelab.dev/tier: apps
     homelab.dev/ghcr-pull: "true"
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
 ---
 apiVersion: v1
 kind: Namespace

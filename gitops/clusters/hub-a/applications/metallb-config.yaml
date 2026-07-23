@@ -15,7 +15,7 @@ metadata:
     homelab.dev/owner: platform
     homelab.dev/tier: platform-addon
 spec:
-  project: platform
+  project: platform-metallb-config
   source:
     repoURL: https://github.com/0xdsqr/dsqr-dotdev.git
     targetRevision: refs/heads/master

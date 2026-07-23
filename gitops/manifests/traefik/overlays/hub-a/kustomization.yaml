@@ -4,5 +4,3 @@ kind: Kustomization
 resources:
   - dsqr-home-root-ca.configmap.yaml
   - origin-issuer.serviceaccount.yaml
-  - origin.vaultdynamicsecret.yaml
-  - origin.externalsecret.yaml

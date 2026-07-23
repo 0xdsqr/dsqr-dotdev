@@ -35,6 +35,11 @@ publish_chart() {
   local previous_version
   local version
   local package_dir
+  local package_archive
+  local remote_dir
+  local remote_archive
+  local package_contents
+  local remote_contents
 
   previous_version="$(chart_version_at "$base_revision" "$chart_file")"
   version="$(chart_version_at "$head_revision" "$chart_file")"
@@ -45,8 +50,34 @@ publish_chart() {
     -f "helm/$chart/values-prod.yaml" \
     --set-string image.digest="$validation_digest" >/dev/null
 
+  package_dir="$(mktemp -d)"
+  package_archive="$package_dir/$chart-$version.tgz"
+  helm package "helm/$chart" --destination "$package_dir" >/dev/null
+
   if helm show chart "oci://$registry/$repository_path/charts/$chart" --version "$version" >/dev/null 2>&1; then
-    echo "$chart $version is already published."
+    remote_dir="$(mktemp -d)"
+    helm pull "oci://$registry/$repository_path/charts/$chart" \
+      --version "$version" \
+      --destination "$remote_dir" >/dev/null
+    remote_archive="$remote_dir/$chart-$version.tgz"
+    package_contents="$package_dir/contents"
+    remote_contents="$remote_dir/contents"
+    mkdir -p "$package_contents" "$remote_contents"
+
+    tar --extract --gzip --file "$package_archive" --directory "$package_contents"
+    tar --extract --gzip --file "$remote_archive" --directory "$remote_contents"
+
+    if ! diff --recursive --no-dereference --brief \
+      "$package_contents" "$remote_contents" >/dev/null; then
+      echo "Refusing to trust $chart $version: the published chart content does not match the local chart." >&2
+      diff --recursive --no-dereference --brief \
+        "$package_contents" "$remote_contents" >&2 || true
+      rm -rf "$package_dir" "$remote_dir"
+      exit 1
+    fi
+    rm -rf "$package_dir" "$remote_dir"
+
+    echo "$chart $version is already published with matching content."
     return 0
   fi
 
@@ -54,9 +85,7 @@ publish_chart() {
     echo "$chart $version is missing from the registry; publishing the current version."
   fi
 
-  package_dir="$(mktemp -d)"
-  helm package "helm/$chart" --destination "$package_dir" >/dev/null
-  helm push "$package_dir/$chart-$version.tgz" "oci://$registry/$repository_path/charts"
+  helm push "$package_archive" "oci://$registry/$repository_path/charts"
   rm -rf "$package_dir"
 }
 

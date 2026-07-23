@@ -1,10 +1,6 @@
 const DEFAULT_APP_PORT = "3020"
-const DEFAULT_TRUSTED_ORIGINS = [
-  "http://localhost:3020",
-  "http://localhost:3021",
-  "https://dsqr.dev",
-  "https://studio.dsqr.dev",
-]
+const PRODUCTION_BASE_URL = "https://dsqr.dev"
+const DEVELOPMENT_TRUSTED_ORIGINS = ["http://localhost:3020", "http://127.0.0.1:3020"]
 
 function trimTrailingSlash(url: string) {
   return url.endsWith("/") ? url.slice(0, -1) : url
@@ -22,9 +18,8 @@ export function getPublicBaseUrl() {
   const baseUrl =
     process.env.DOTDEV_BASE_URL ||
     process.env.BETTER_AUTH_URL ||
-    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : undefined) ||
     process.env.BASE_URL ||
-    getDefaultLocalBaseUrl()
+    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : PRODUCTION_BASE_URL)
 
   return trimTrailingSlash(baseUrl)
 }
@@ -35,5 +30,7 @@ export function getTrustedOrigins() {
     .map((origin) => origin.trim())
     .filter(Boolean)
 
-  return Array.from(new Set([getPublicBaseUrl(), ...DEFAULT_TRUSTED_ORIGINS, ...configuredOrigins]))
+  const defaultOrigins = isDevelopmentRuntime() ? DEVELOPMENT_TRUSTED_ORIGINS : []
+
+  return Array.from(new Set([getPublicBaseUrl(), ...defaultOrigins, ...configuredOrigins]))
 }

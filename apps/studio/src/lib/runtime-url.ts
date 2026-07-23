@@ -1,11 +1,8 @@
 const DEFAULT_APP_PORT = "3021"
 const DEFAULT_DOTDEV_PORT = "3020"
-const DEFAULT_TRUSTED_ORIGINS = [
-  "http://localhost:3020",
-  "http://localhost:3021",
-  "https://dsqr.dev",
-  "https://studio.dsqr.dev",
-]
+const PRODUCTION_BASE_URL = "https://studio.dsqr.dev"
+const PRODUCTION_DOTDEV_BASE_URL = "https://dsqr.dev"
+const DEVELOPMENT_TRUSTED_ORIGINS = ["http://localhost:3021", "http://127.0.0.1:3021"]
 
 function trimTrailingSlash(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url
@@ -27,9 +24,8 @@ export function getPublicBaseUrl() {
   const baseUrl =
     process.env.STUDIO_BASE_URL ||
     process.env.BETTER_AUTH_URL ||
-    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : undefined) ||
     process.env.BASE_URL ||
-    getDefaultLocalBaseUrl()
+    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : PRODUCTION_BASE_URL)
 
   return trimTrailingSlash(baseUrl)
 }
@@ -37,10 +33,9 @@ export function getPublicBaseUrl() {
 export function getInternalApiBaseUrl() {
   const baseUrl =
     process.env.INTERNAL_API_BASE_URL ||
-    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : undefined) ||
     process.env.STUDIO_BASE_URL ||
     process.env.BASE_URL ||
-    getDefaultLocalBaseUrl()
+    (isDevelopmentRuntime() ? getDefaultLocalBaseUrl() : PRODUCTION_BASE_URL)
 
   return trimTrailingSlash(baseUrl)
 }
@@ -51,14 +46,16 @@ export function getTrustedOrigins() {
     .map((origin) => origin.trim())
     .filter(Boolean)
 
-  return Array.from(new Set([getPublicBaseUrl(), ...DEFAULT_TRUSTED_ORIGINS, ...configuredOrigins]))
+  const defaultOrigins = isDevelopmentRuntime() ? DEVELOPMENT_TRUSTED_ORIGINS : []
+
+  return Array.from(new Set([getPublicBaseUrl(), ...defaultOrigins, ...configuredOrigins]))
 }
 
 export function getDotdevBaseUrl() {
   const baseUrl =
     process.env.DOTDEV_BASE_URL ||
     (isDevelopmentRuntime() ? getDefaultDotdevLocalBaseUrl() : undefined) ||
-    "https://dsqr.dev"
+    PRODUCTION_DOTDEV_BASE_URL
 
   return trimTrailingSlash(baseUrl)
 }

@@ -19,6 +19,7 @@ export const cloudflareEdge = createCloudflareEdge({
   tunnelSecret: pulumi.secret(cloudflareConfig.tunnelSecret),
   zoneIds,
   zones: haven.cloudflare.zones,
+  zoneSecurity: haven.cloudflare.zoneSecurity,
   tunnel: haven.cloudflare.tunnel,
   dnsRecords: [
     {

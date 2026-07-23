@@ -63,14 +63,14 @@ test("hub-a Traefik declarations pin the VIP and materialize the exact Vault cer
   )
   const generator = readFileSync(
     new URL(
-      "../gitops/manifests/traefik/overlays/hub-a/origin.vaultdynamicsecret.yaml",
+      "../gitops/manifests/external-secrets-config/base/hub-a-traefik-origin.vaultdynamicsecret.yaml",
       import.meta.url,
     ),
     "utf8",
   )
   const externalSecret = readFileSync(
     new URL(
-      "../gitops/manifests/traefik/overlays/hub-a/origin.externalsecret.yaml",
+      "../gitops/manifests/external-secrets-config/base/hub-a-traefik-origin.externalsecret.yaml",
       import.meta.url,
     ),
     "utf8",

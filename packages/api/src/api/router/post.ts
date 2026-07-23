@@ -9,6 +9,11 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server"
 import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { z } from "zod/v4"
+import {
+  adminPostContentInput,
+  adminPostContentSchema,
+  adminPostImageInput,
+} from "../lib/post-admin-input"
 import { getPostContent, uploadPostContent, uploadPostImage } from "../lib/s3"
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc"
 
@@ -337,13 +342,22 @@ export const publicPostRouter = {
 } satisfies TRPCRouterRecord
 
 export const adminPostRouter = {
-  create: adminProcedure.input(createPostSchema).mutation(async ({ ctx, input }) => {
-    const [post] = await ctx.database.insert(posts).values(input).returning()
-    return post
-  }),
+  create: adminProcedure
+    .input(createPostSchema.extend({ content: adminPostContentSchema.optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const [post] = await ctx.database.insert(posts).values(input).returning()
+      return post
+    }),
 
   update: adminProcedure
-    .input(z.object({ id: z.string().uuid(), data: updatePostSchema }).strict())
+    .input(
+      z
+        .object({
+          id: z.string().uuid(),
+          data: updatePostSchema.extend({ content: adminPostContentSchema.optional() }),
+        })
+        .strict(),
+    )
     .mutation(async ({ ctx, input }) => {
       const cleanData = Object.fromEntries(
         Object.entries(input.data).filter(([_, value]) => value !== undefined),
@@ -420,45 +434,23 @@ export const adminPostRouter = {
     return resolveStoredPostContent(post)
   }),
 
-  saveContent: adminProcedure
-    .input(
-      z
-        .object({
-          id: z.string().uuid(),
-          slug: z.string(),
-          content: z.string(),
-        })
-        .strict(),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const filePath = await uploadPostContent(input.slug, input.content)
+  saveContent: adminProcedure.input(adminPostContentInput).mutation(async ({ ctx, input }) => {
+    const filePath = await uploadPostContent(input.slug, input.content)
 
-      const [post] = await ctx.database
-        .update(posts)
-        .set({
-          filePath,
-          updatedAt: new Date(),
-        })
-        .where(eq(posts.id, input.id))
-        .returning()
+    const [post] = await ctx.database
+      .update(posts)
+      .set({
+        filePath,
+        updatedAt: new Date(),
+      })
+      .where(eq(posts.id, input.id))
+      .returning()
 
-      return { success: true, filePath, post }
-    }),
+    return { success: true, filePath, post }
+  }),
 
-  uploadImage: adminProcedure
-    .input(
-      z
-        .object({
-          slug: z.string(),
-          fileName: z.string(),
-          fileType: z.string(),
-          fileData: z.string(),
-        })
-        .strict(),
-    )
-    .mutation(async ({ input }) => {
-      const buffer = Buffer.from(input.fileData, "base64")
-      const imagePath = await uploadPostImage(input.slug, buffer, input.fileName, input.fileType)
-      return { success: true, url: imagePath }
-    }),
+  uploadImage: adminProcedure.input(adminPostImageInput).mutation(async ({ input }) => {
+    const imagePath = await uploadPostImage(input.slug, input.file, input.fileName, input.fileType)
+    return { success: true, url: imagePath }
+  }),
 } satisfies TRPCRouterRecord

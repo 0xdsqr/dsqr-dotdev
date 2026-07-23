@@ -3,7 +3,10 @@ import { test } from "node:test"
 
 import { Effect } from "effect"
 
-import { validateCloudflareIngressRuleEffect } from "../packages/effect-pulumi/cloudflare/src/index.ts"
+import {
+  cloudflareZoneSecuritySettings,
+  validateCloudflareIngressRuleEffect,
+} from "../packages/effect-pulumi/cloudflare/src/index.ts"
 import {
   loadProxmoxConnectionConfigEffect,
   validateProxmoxTransportEffect,
@@ -127,6 +130,45 @@ test("Cloudflare ingress verifies HTTPS origins and documents temporary HTTP exc
   assert.match(unverifiedHttps.message, /cannot disable TLS verification/)
 })
 
+test("Cloudflare zones enforce HTTPS, verified origins, modern TLS, and HSTS", () => {
+  for (const policy of Object.values(cloudflare.zoneSecurity)) {
+    assert.deepEqual(cloudflareZoneSecuritySettings(policy), {
+      alwaysUseHttps: {
+        settingId: "always_use_https",
+        value: "on",
+      },
+      automaticHttpsRewrites: {
+        settingId: "automatic_https_rewrites",
+        value: "on",
+      },
+      minimumTlsVersion: {
+        settingId: "min_tls_version",
+        value: "1.2",
+      },
+      tls13: {
+        settingId: "tls_1_3",
+        value: "on",
+      },
+      strictOriginTls: {
+        settingId: "ssl",
+        value: "strict",
+      },
+      strictTransportSecurity: {
+        settingId: "security_header",
+        value: {
+          strictTransportSecurity: {
+            enabled: true,
+            includeSubdomains: false,
+            maxAge: 300,
+            nosniff: true,
+            preload: false,
+          },
+        },
+      },
+    })
+  }
+})
+
 test("Tailscale machine enrollment and grants are least-privilege by default", () => {
   assert.deepEqual(hardenedTailnetKeyDefaults, {
     reusable: false,
@@ -216,6 +258,8 @@ test("hub-a External Secrets auth is exact and least-privilege after migration",
   ])
 
   assert.equal("legacyExternalSecrets" in vault.policies, false)
+  assert.equal("dotdevLabs" in vault.secretPaths, false)
+  assert.equal("dotdevLabs" in vault.policies.externalSecrets, false)
 
   const wildcardBinding = Effect.runSync(
     Effect.flip(

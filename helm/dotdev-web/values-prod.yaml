@@ -11,6 +11,7 @@ image:
 imagePullSecrets:
   - name: ghcr-creds
 env:
+  AUTH_TRUSTED_PROXIES: 10.0.0.0/16
   BASE_URL: https://dsqr.dev
   TRUSTED_ORIGINS: https://dsqr.dev
   S3_BUCKET: dsqr-dotdev
@@ -36,6 +37,9 @@ networkPolicy:
 ingress:
   enabled: true
   className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
   hosts:
     - host: dsqr.dev
       paths:

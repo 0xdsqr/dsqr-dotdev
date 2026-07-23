@@ -16,7 +16,7 @@ metadata:
     homelab.dev/owner: platform
     homelab.dev/tier: platform-addon
 spec:
-  project: platform
+  project: platform-kube-state-metrics
   sources:
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-state-metrics

@@ -12,7 +12,9 @@ on:
 
 permissions:
   actions: write
+  attestations: write
   contents: write
+  id-token: write
   packages: write
   pull-requests: write
 
@@ -40,7 +42,7 @@ jobs:
 
     steps:
       - name: Check out master
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: master
           fetch-depth: 0
@@ -62,11 +64,11 @@ jobs:
 
       - name: Install Nix
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Log in to GitHub Container Registry
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -86,8 +88,146 @@ jobs:
           version: nix run .#releasePrepare --
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_CANDIDATE_PLAN: ${{ runner.temp }}/release-candidates.json
           RELEASE_REGISTRY_OWNER: ${{ github.repository_owner }}
+          RELEASE_SBOM_DIRECTORY: ${{ runner.temp }}/release-sboms
           RELEASE_SOURCE_REVISION: ${{ env.TARGET_SHA }}
+
+      - name: Resolve candidate attestation subjects
+        id: candidates
+        if: >-
+          ${{
+            steps.revision.outputs.current == 'true' &&
+            steps.changesets.outputs.pullRequestNumber != ''
+          }}
+        shell: bash
+        env:
+          RELEASE_CANDIDATE_PLAN: ${{ runner.temp }}/release-candidates.json
+        run: |
+          set -euo pipefail
+          jq -e '
+            type == "array" and
+            all(.[];
+              (.app | type == "string") and
+              (.repository | test("^ghcr\\.io/[a-z0-9-]+/[a-z0-9-]+$")) and
+              (.digest | test("^sha256:[0-9a-f]{64}$")) and
+              (.sbom | type == "string")
+            )
+          ' "$RELEASE_CANDIDATE_PLAN" >/dev/null
+
+          emit_candidate() {
+            local app="$1"
+            local output_prefix="$2"
+            local count
+            local candidate
+
+            count="$(jq --arg app "$app" '[.[] | select(.app == $app)] | length' "$RELEASE_CANDIDATE_PLAN")"
+            if [[ "$count" == "0" ]]; then
+              echo "${output_prefix}_present=false" >>"$GITHUB_OUTPUT"
+              return 0
+            fi
+            if [[ "$count" != "1" ]]; then
+              echo "Expected exactly one candidate for $app, found $count." >&2
+              exit 1
+            fi
+
+            candidate="$(jq -c --arg app "$app" '.[] | select(.app == $app)' "$RELEASE_CANDIDATE_PLAN")"
+            {
+              echo "${output_prefix}_present=true"
+              echo "${output_prefix}_repository=$(jq -r '.repository' <<<"$candidate")"
+              echo "${output_prefix}_digest=$(jq -r '.digest' <<<"$candidate")"
+              echo "${output_prefix}_sbom=$(jq -r '.sbom' <<<"$candidate")"
+            } >>"$GITHUB_OUTPUT"
+          }
+
+          emit_candidate dotdev-web web
+          emit_candidate dotdev-studio studio
+          emit_candidate dotdev-labs labs
+
+      - name: Attest dotdev-web provenance
+        if: ${{ steps.candidates.outputs.web_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.web_repository }}
+          subject-digest: ${{ steps.candidates.outputs.web_digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest dotdev-web SBOM
+        if: ${{ steps.candidates.outputs.web_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.web_repository }}
+          subject-digest: ${{ steps.candidates.outputs.web_digest }}
+          sbom-path: ${{ steps.candidates.outputs.web_sbom }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest dotdev-studio provenance
+        if: ${{ steps.candidates.outputs.studio_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.studio_repository }}
+          subject-digest: ${{ steps.candidates.outputs.studio_digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest dotdev-studio SBOM
+        if: ${{ steps.candidates.outputs.studio_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.studio_repository }}
+          subject-digest: ${{ steps.candidates.outputs.studio_digest }}
+          sbom-path: ${{ steps.candidates.outputs.studio_sbom }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest dotdev-labs provenance
+        if: ${{ steps.candidates.outputs.labs_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.labs_repository }}
+          subject-digest: ${{ steps.candidates.outputs.labs_digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest dotdev-labs SBOM
+        if: ${{ steps.candidates.outputs.labs_present == 'true' }}
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-name: ${{ steps.candidates.outputs.labs_repository }}
+          subject-digest: ${{ steps.candidates.outputs.labs_digest }}
+          sbom-path: ${{ steps.candidates.outputs.labs_sbom }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Verify signed candidate attestations
+        if: >-
+          ${{
+            steps.revision.outputs.current == 'true' &&
+            steps.changesets.outputs.pullRequestNumber != ''
+          }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_CANDIDATE_PLAN: ${{ runner.temp }}/release-candidates.json
+        run: |
+          set -euo pipefail
+          signer_workflow="$GITHUB_REPOSITORY/.github/workflows/release.yml"
+          while IFS=$'\t' read -r repository digest; do
+            subject="oci://$repository@$digest"
+            gh attestation verify "$subject" \
+              --bundle-from-oci \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$signer_workflow" \
+              --source-digest "$TARGET_SHA" >/dev/null
+            gh attestation verify "$subject" \
+              --bundle-from-oci \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$signer_workflow" \
+              --source-digest "$TARGET_SHA" \
+              --predicate-type https://spdx.dev/Document/v2.3 >/dev/null
+          done < <(jq -r '.[] | [.repository, .digest] | @tsv' "$RELEASE_CANDIDATE_PLAN")
 
       - name: Run checks for the release pull request
         if: >-

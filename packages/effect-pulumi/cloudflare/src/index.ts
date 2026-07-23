@@ -44,11 +44,20 @@ export type CloudflareAccessApplication = {
   readonly sessionDuration?: string
 }
 
+export type CloudflareZoneSecurityPolicy = {
+  readonly strictTransportSecurity: {
+    readonly includeSubdomains: boolean
+    readonly maxAge: number
+    readonly preload: boolean
+  }
+}
+
 export type CloudflareEdgeArgs = {
   accountId: string
   tunnelSecret: pulumi.Input<string>
   zoneIds: Readonly<Record<string, string>>
   zones: Readonly<Record<string, string>>
+  zoneSecurity: Readonly<Record<string, CloudflareZoneSecurityPolicy>>
   tunnel: {
     name: string
     defaultService: string
@@ -61,6 +70,43 @@ export type CloudflareEdgeArgs = {
   r2Buckets?: ReadonlyArray<CloudflareR2Bucket>
   accessApplications?: ReadonlyArray<CloudflareAccessApplication>
   ingressRules: ReadonlyArray<CloudflareIngressRule>
+}
+
+export function cloudflareZoneSecuritySettings(policy: CloudflareZoneSecurityPolicy) {
+  return {
+    alwaysUseHttps: {
+      settingId: "always_use_https",
+      value: "on",
+    },
+    automaticHttpsRewrites: {
+      settingId: "automatic_https_rewrites",
+      value: "on",
+    },
+    minimumTlsVersion: {
+      settingId: "min_tls_version",
+      value: "1.2",
+    },
+    tls13: {
+      settingId: "tls_1_3",
+      value: "on",
+    },
+    strictOriginTls: {
+      settingId: "ssl",
+      value: "strict",
+    },
+    strictTransportSecurity: {
+      settingId: "security_header",
+      value: {
+        strictTransportSecurity: {
+          enabled: true,
+          includeSubdomains: policy.strictTransportSecurity.includeSubdomains,
+          maxAge: policy.strictTransportSecurity.maxAge,
+          nosniff: true,
+          preload: policy.strictTransportSecurity.preload,
+        },
+      },
+    },
+  } as const
 }
 
 function resourceName(hostname: string) {
@@ -221,6 +267,13 @@ export function createCloudflareEdgeEffect(args: CloudflareEdgeArgs) {
           `Cloudflare Access application "${application.name}" needs at least one allowed email.`,
         ).pipe(Effect.map(() => application)),
     )
+    const zoneSecurityPolicies = yield* Effect.forEach(Object.keys(args.zoneIds), (zone) =>
+      requireResourceConfigEffect(
+        args.zoneSecurity[zone] !== undefined,
+        `zone-security:${zone}`,
+        `Cloudflare zone "${zone}" needs an explicit HSTS rollout policy.`,
+      ).pipe(Effect.map(() => [zone, args.zoneSecurity[zone]!] as const)),
+    )
 
     const tunnel = new cloudflare.ZeroTrustTunnelCloudflared("gateway", {
       accountId: args.accountId,
@@ -281,6 +334,28 @@ export function createCloudflareEdgeEffect(args: CloudflareEdgeArgs) {
         })
 
         return [`${record.type}:${record.name}`, dnsRecord]
+      }),
+    )
+
+    const zoneSecurity = Object.fromEntries(
+      zoneSecurityPolicies.map(([zone, policy]) => {
+        const zoneId = args.zoneIds[zone]!
+        const settings = Object.fromEntries(
+          Object.entries(cloudflareZoneSecuritySettings(policy)).map(([name, setting]) => {
+            const zoneSetting = new cloudflare.ZoneSetting(
+              resourceName(`${zone}-${setting.settingId}`),
+              {
+                zoneId,
+                settingId: setting.settingId,
+                value: setting.value,
+              },
+            )
+
+            return [name, zoneSetting.value]
+          }),
+        )
+
+        return [zone, settings]
       }),
     )
 
@@ -367,6 +442,7 @@ export function createCloudflareEdgeEffect(args: CloudflareEdgeArgs) {
         ...(args.dnsRecords ?? []).map((record) => record.name),
       ],
       directDnsRecords,
+      zoneSecurity,
       r2Buckets,
       accessApplications,
       tunnelCname,

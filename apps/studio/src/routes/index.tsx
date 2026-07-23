@@ -84,6 +84,14 @@ type AdminPost = AdminRouterOutputs["post"]["adminAll"][number]
 type AdminUser = AdminRouterOutputs["auth"]["adminUsers"][number]
 type AdminSubscriber = AdminRouterOutputs["email"]["adminSubscribers"][number]
 
+const supportedPostImageTypes = ["image/gif", "image/jpeg", "image/png", "image/webp"] as const
+const maxPostImageBytes = 5 * 1024 * 1024
+type SupportedPostImageType = (typeof supportedPostImageTypes)[number]
+
+function isSupportedPostImageType(fileType: string): fileType is SupportedPostImageType {
+  return supportedPostImageTypes.some((supportedType) => supportedType === fileType)
+}
+
 type PostEditorState = {
   title: string
   slug: string
@@ -324,6 +332,14 @@ function StudioPage() {
 
   const uploadHeroMutation = useMutation({
     mutationFn: async ({ post, file }: { post: AdminPost; file: File }) => {
+      if (!isSupportedPostImageType(file.type)) {
+        throw new Error("Choose a GIF, JPEG, PNG, or WebP image.")
+      }
+
+      if (file.size > maxPostImageBytes) {
+        throw new Error("Choose an image no larger than 5 MiB.")
+      }
+
       const fileData = await readFileAsBase64(file)
       return trpcClient.post.uploadImage.mutate({
         slug: slugify(editorState.slug || post.slug || post.title),

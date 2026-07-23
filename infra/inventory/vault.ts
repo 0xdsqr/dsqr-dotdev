@@ -26,11 +26,6 @@ const secretPaths = {
     description: "Reserved runtime secret path for studio.dsqr.dev.",
     fields: ["AUTH_SECRET", "DATABASE_URL", "RESEND_API_KEY", "S3_ACCESS_KEY", "S3_SECRET_KEY"],
   },
-  dotdevLabs: {
-    path: "homelab/apps/dsqr/dotdev-labs",
-    description: "Reserved runtime secret path for labs.dsqr.dev.",
-    fields: ["AUTH_SECRET", "DATABASE_URL", "RESEND_API_KEY", "S3_ACCESS_KEY", "S3_SECRET_KEY"],
-  },
   fidaraApi: {
     path: "homelab/apps/fidara/api",
     description: "Runtime secrets for the Fidara API.",
@@ -186,10 +181,6 @@ const externalSecretsPolicies = {
   dotdevStudio: {
     name: "hub-a-external-secrets-dotdev-studio",
     readPaths: [secretPaths.dotdevStudio.path],
-  },
-  dotdevLabs: {
-    name: "hub-a-external-secrets-dotdev-labs",
-    readPaths: [secretPaths.dotdevLabs.path],
   },
   fidaraApi: {
     name: "hub-a-external-secrets-fidara-api",

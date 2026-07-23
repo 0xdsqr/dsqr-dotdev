@@ -14,13 +14,11 @@ export default defineConfig({
   },
   plugins: [viteReact(), tailwindcss()],
   server: {
-    host: "0.0.0.0",
+    host: process.env.DEV_HOST?.trim() || "127.0.0.1",
     port: 3022,
-    allowedHosts: true,
   },
   preview: {
-    host: "0.0.0.0",
+    host: process.env.DEV_HOST?.trim() || "127.0.0.1",
     port: 3022,
-    allowedHosts: true,
   },
 })

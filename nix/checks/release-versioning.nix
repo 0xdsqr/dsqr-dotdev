@@ -112,17 +112,25 @@ stdenvNoCC.mkDerivation {
       "$candidateRoot/apps/dotdev" \
       "$candidateRoot/apps/studio" \
       "$candidateRoot/apps/labs" \
+      "$candidateRoot/packages/api" \
       "$candidateRoot/helm/dotdev-web" \
+      "$candidateRoot/helm/dotdev-studio" \
       "$candidateRoot/gitops/clusters/$testCluster/applications" \
-      "$candidateRoot/gitops/values/dotdev-web"
+      "$candidateRoot/gitops/values/dotdev-web" \
+      "$candidateRoot/gitops/values/dotdev-studio"
     cp apps/dotdev/package.json "$candidateRoot/apps/dotdev/package.json"
     cp apps/studio/package.json "$candidateRoot/apps/studio/package.json"
     cp apps/labs/package.json "$candidateRoot/apps/labs/package.json"
+    cp packages/api/package.json "$candidateRoot/packages/api/package.json"
     cp helm/dotdev-web/Chart.yaml "$candidateRoot/helm/dotdev-web/Chart.yaml"
     cp helm/dotdev-web/values-prod.yaml "$candidateRoot/helm/dotdev-web/values-prod.yaml"
+    cp helm/dotdev-studio/Chart.yaml "$candidateRoot/helm/dotdev-studio/Chart.yaml"
+    cp helm/dotdev-studio/values-prod.yaml "$candidateRoot/helm/dotdev-studio/values-prod.yaml"
     cp "$testClusterApplications" \
       "$candidateRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
     cp "$testClusterValues" "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
+    cp "gitops/values/dotdev-studio/$testCluster.yaml" \
+      "$candidateRoot/gitops/values/dotdev-studio/$testCluster.yaml"
     yq -i '.version = "9.9.8"' "$candidateRoot/apps/dotdev/package.json"
     yq -i '.version = "9.9.8" | .appVersion = "9.9.8"' \
       "$candidateRoot/helm/dotdev-web/Chart.yaml"
@@ -157,6 +165,41 @@ stdenvNoCC.mkDerivation {
       git commit -m base >/dev/null
       baseSha="$(git rev-parse HEAD)"
 
+      yq -i '.version = "9.9.9"' packages/api/package.json
+      git add packages/api/package.json
+      git commit -m package-only-release >/dev/null
+      packageOnlyHead="$(git rev-parse HEAD)"
+
+      packageOnlyOutput="$(
+        release-verify-candidates \
+          --base-revision "$baseSha" \
+          --head-revision "$packageOnlyHead" \
+          --cluster "$testCluster" \
+          --owner 0xdsqr
+      )"
+      grep -F \
+        'No application versions changed between' \
+        <<<"$packageOnlyOutput" >/dev/null
+      grep -F \
+        'unchanged application chart and promotion surfaces are valid.' \
+        <<<"$packageOnlyOutput" >/dev/null
+
+      printf '%s\n' '# package-only release chart tamper' \
+        >>helm/dotdev-studio/values-prod.yaml
+      git add helm/dotdev-studio/values-prod.yaml
+      git commit -m package-only-chart-tamper >/dev/null
+      packageOnlyTamperedHead="$(git rev-parse HEAD)"
+
+      if release-verify-candidates \
+        --base-revision "$baseSha" \
+        --head-revision "$packageOnlyTamperedHead" \
+        --cluster "$testCluster" \
+        --owner 0xdsqr >/dev/null 2>&1; then
+        echo "candidate verification accepted managed chart changes in a package-only release" >&2
+        exit 1
+      fi
+
+      git checkout --detach "$baseSha" >/dev/null
       yq -i '.version = "9.9.9"' apps/dotdev/package.json
       yq -i '.version = "9.9.9" | .appVersion = "9.9.9"' helm/dotdev-web/Chart.yaml
       yq -i '
@@ -176,6 +219,26 @@ stdenvNoCC.mkDerivation {
           --cluster "$testCluster" \
           --owner 0xdsqr >/dev/null
 
+      yq -i \
+        '.image.digest = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"' \
+        "gitops/values/dotdev-studio/$testCluster.yaml"
+      git add .
+      git commit -m unchanged-app-tamper >/dev/null
+      unchangedAppTamperedHead="$(git rev-parse HEAD)"
+
+      if MOCK_BASE_SHA="$baseSha" \
+        MOCK_CANDIDATE_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+        RELEASE_SKOPEO_BIN="$mockSkopeo" \
+        release-verify-candidates \
+          --base-revision "$baseSha" \
+          --head-revision "$unchangedAppTamperedHead" \
+          --cluster "$testCluster" \
+          --owner 0xdsqr >/dev/null 2>&1; then
+        echo "candidate verification accepted a promotion change for an unchanged app" >&2
+        exit 1
+      fi
+
+      git checkout "$releaseHead" -- "gitops/values/dotdev-studio/$testCluster.yaml"
       yq -i \
         '.image.digest = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"' \
         "gitops/values/dotdev-web/$testCluster.yaml"

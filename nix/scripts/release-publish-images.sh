@@ -47,9 +47,6 @@ publish_app() {
 
   previous_version="$(version_at "$base_revision" "$package_file")"
   version="$(version_at "$head_revision" "$package_file")"
-  if [[ "$previous_version" == "$version" ]]; then
-    return 0
-  fi
 
   chart_version="$(yq -r '.version' "$chart_file")"
   app_version="$(yq -r '.appVersion' "$chart_file")"
@@ -77,6 +74,10 @@ publish_app() {
     fi
     echo "$repository:$version already resolves to $digest"
     return 0
+  fi
+
+  if [[ "$previous_version" == "$version" ]]; then
+    echo "$repository:$version is missing from the registry; publishing the current version."
   fi
 
   skopeo copy --all --preserve-digests \

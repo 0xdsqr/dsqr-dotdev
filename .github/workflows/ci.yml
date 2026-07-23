@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -98,12 +98,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
       - name: Run base checks
         run: |
           nix build \
@@ -127,15 +127,41 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Reject moderate, high, and critical advisories
         run: nix run .#securityAudit
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          build-mode: none
+          languages: javascript-typescript
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          category: /language:javascript-typescript
 
   changeset-status:
     name: Changeset status
@@ -149,13 +175,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Validate pending release intent
         run: nix run .#changeset -- status --since "${{ github.event.pull_request.base.sha }}"
@@ -182,7 +208,7 @@ jobs:
 
     steps:
       - name: Check out release candidate
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -208,10 +234,10 @@ jobs:
           echo "Release base revision: $base"
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -219,6 +245,7 @@ jobs:
 
       - name: Verify immutable release candidates
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_BASE_REVISION: ${{ steps.release-base.outputs.sha }}
           RELEASE_REGISTRY_OWNER: ${{ github.repository_owner }}
         run: >-
@@ -238,12 +265,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Run workspace typecheck
         run: nix build .#checks.x86_64-linux.typecheck
@@ -259,12 +286,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Run dotdev typecheck
         run: nix build .#checks.x86_64-linux.typecheck
@@ -280,12 +307,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Run studio typecheck
         run: nix build .#checks.x86_64-linux.typecheck
@@ -301,12 +328,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
 
       - name: Run labs typecheck
         run: nix build .#checks.x86_64-linux.typecheck
@@ -322,12 +349,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
       - name: Build dotdev image
         run: nix build .#dotdevImage --out-link result-dotdev
       - name: Smoke-test hardened dotdev container
@@ -346,12 +373,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
       - name: Build studio image
         run: nix build .#studioImage --out-link result-studio
       - name: Smoke-test hardened studio container
@@ -370,12 +397,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@c70cb8ae92d68c66953db28a26a63db1665bc837 # v3
+        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
       - name: Build labs image
         run: nix build .#labsImage --out-link result-labs
       - name: Smoke-test hardened labs container
@@ -391,6 +418,8 @@ jobs:
     needs:
       - detect-changes
       - base-checks
+      - dependency-security
+      - codeql
       - changeset-status
       - release-candidate-provenance
       - typecheck-shared

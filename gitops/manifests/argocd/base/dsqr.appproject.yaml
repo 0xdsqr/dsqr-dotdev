@@ -29,8 +29,6 @@ spec:
       kind: Deployment
     - group: autoscaling
       kind: HorizontalPodAutoscaler
-    - group: external-secrets.io
-      kind: ExternalSecret
     - group: networking.k8s.io
       kind: Ingress
     - group: networking.k8s.io

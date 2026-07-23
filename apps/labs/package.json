@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --host 0.0.0.0 --port 3022",
+    "dev": "vite dev --port 3022",
     "build": "vite build && nitro build",
     "start": "PORT=${PORT:-3022} node .output/server/index.mjs",
     "typecheck": "tsgo --noEmit",

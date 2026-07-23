@@ -17,7 +17,6 @@ destinations:
     url: 10.10.30.102:4317
     tls:
       insecure: true
-      insecureSkipVerify: true
     metrics:
       enabled: false
     logs:
