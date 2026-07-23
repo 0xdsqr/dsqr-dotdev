@@ -68,19 +68,19 @@ test("all hub-a Node workloads load the additional trust anchor", () => {
       "utf8",
     )
 
-    assert.doesNotMatch(values, /DATABASE_SSL:/)
-    assert.doesNotMatch(values, /DATABASE_SSL_REJECT_UNAUTHORIZED:/)
+    assert.match(values, /DATABASE_SSL: require/)
+    assert.match(values, /DATABASE_SSL_REJECT_UNAUTHORIZED: "true"/)
   }
 })
 
-test("Fidara trusts the home CA and permits both PostgreSQL hosts during cutover", () => {
+test("Fidara verifies PostgreSQL through Knox and the exact home CA", () => {
   const values = readFileSync(
     new URL("../gitops/values/fidara/hub-a.yaml", import.meta.url),
     "utf8",
   )
 
   assert.match(values, /cidr: 10\.10\.30\.109\/32/)
-  assert.match(values, /cidr: 10\.10\.30\.107\/32/)
+  assert.doesNotMatch(values, /10\.10\.30\.107/)
   assert.ok(values.includes(`NODE_EXTRA_CA_CERTS: ${rootCaMountPath}`))
   assert.ok(values.includes(`PGSSLROOTCERT: ${rootCaMountPath}`))
   assert.equal((values.match(/name: dsqr-home-root-ca/g) ?? []).length, 6)

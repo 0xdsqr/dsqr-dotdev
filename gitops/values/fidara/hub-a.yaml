@@ -16,9 +16,6 @@ networkPolicy:
       enabled: true
       port: 5432
       to:
-        # Transitional source primary; remove immediately after Knox promotion.
-        - ipBlock:
-            cidr: 10.10.30.107/32
         - ipBlock:
             cidr: 10.10.30.109/32
 
