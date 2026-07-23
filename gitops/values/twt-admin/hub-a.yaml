@@ -3,10 +3,6 @@
 # Leave empty when hub-a uses the external chart values unchanged.
 existingSecret: twt-admin-secrets
 
-env:
-  DATABASE_SSL: require
-  DATABASE_SSL_REJECT_UNAUTHORIZED: "true"
-
 additionalTrustedCa:
   enabled: true
   configMapName: dsqr-home-root-ca
