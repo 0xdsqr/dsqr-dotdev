@@ -7,7 +7,7 @@
     "dev": "vite dev --port 3022",
     "build": "vite build && nitro build",
     "start": "PORT=${PORT:-3022} node .output/server/index.mjs",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {

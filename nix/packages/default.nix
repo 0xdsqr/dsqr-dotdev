@@ -38,19 +38,49 @@ let
     };
   });
 
-  nodejs-slim = pkgs.nodejs-slim_24.override {
-    callPackage =
-      path: args:
-      pkgs.callPackage path (
-        args
-        // {
-          inherit nghttp2 sqlite;
-        }
-      );
+  rewrittenNodejsSlim = pkgs.replaceDependencies {
+    drv = pkgs.nodejs-slim_24;
+    replacements = [
+      {
+        oldDependency = pkgs.sqlite.bin;
+        newDependency = sqlite.bin;
+      }
+      {
+        oldDependency = pkgs.sqlite.dev;
+        newDependency = sqlite.dev;
+      }
+      {
+        oldDependency = pkgs.sqlite.out;
+        newDependency = sqlite.out;
+      }
+      {
+        oldDependency = pkgs.nghttp2;
+        newDependency = nghttp2;
+      }
+      {
+        oldDependency = pkgs.nghttp2.dev;
+        newDependency = nghttp2.dev;
+      }
+      {
+        oldDependency = pkgs.nghttp2.lib;
+        newDependency = nghttp2.lib;
+      }
+    ];
   };
 
+  nodejs-slim =
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      rewrittenNodejsSlim.overrideAttrs (old: {
+        buildCommand = old.buildCommand + ''
+          source ${pkgs.darwin.signingUtils}
+          sign "$out/bin/node"
+        '';
+      })
+    else
+      rewrittenNodejsSlim;
+
   runtime = {
-    nodejs_24 = pkgs.nodejs_24.override { inherit nodejs-slim; };
+    nodejs_24 = pkgs.nodejs_24;
     nodejs-slim_24 = nodejs-slim;
   };
 

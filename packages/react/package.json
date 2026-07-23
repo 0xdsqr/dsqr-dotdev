@@ -14,7 +14,7 @@
     "./lib/*": "./src/lib/*.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {

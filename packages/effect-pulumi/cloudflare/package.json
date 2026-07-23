@@ -16,9 +16,6 @@
     "@pulumi/cloudflare": "6.18.0",
     "@pulumi/pulumi": "3.254.0"
   },
-  "devDependencies": {
-    "typescript": "6.0.3"
-  },
   "engines": {
     "node": ">=24"
   }

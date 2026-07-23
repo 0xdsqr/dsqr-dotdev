@@ -51,7 +51,7 @@
     "lint": "oxlint . --deny-warnings",
     "lint:fix": "oxlint --fix .",
     "typecheck:infra": "npm run typecheck -w @dsqr-dotdev/infra-model && npm run typecheck -w @dsqr-dotdev/haven && npm run typecheck -w @dsqr-dotdev/effect-pulumi-core && npm run typecheck -w @dsqr-dotdev/effect-pulumi-proxmox && npm run typecheck -w @dsqr-dotdev/effect-pulumi-cloudflare && npm run typecheck -w @dsqr-dotdev/effect-pulumi-kubernetes && npm run typecheck -w @dsqr-dotdev/effect-pulumi-tailscale && npm run typecheck -w @dsqr-dotdev/effect-pulumi-hetzner && npm run typecheck -w @dsqr-dotdev/effect-pulumi-vault && tsc --noEmit -p tsconfig.infra.json",
-    "typecheck:infra:native": "tsgo --noEmit -p packages/infra-model/tsconfig.json && tsgo --noEmit -p packages/haven/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/core/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/proxmox/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/cloudflare/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/kubernetes/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/tailscale/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/hetzner/tsconfig.json && tsgo --noEmit -p packages/effect-pulumi/vault/tsconfig.json && tsgo --noEmit -p tsconfig.infra.json",
+    "typecheck:infra:native": "tsc --noEmit -p packages/infra-model/tsconfig.json && tsc --noEmit -p packages/haven/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/core/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/proxmox/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/cloudflare/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/kubernetes/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/tailscale/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/hetzner/tsconfig.json && tsc --noEmit -p packages/effect-pulumi/vault/tsconfig.json && tsc --noEmit -p tsconfig.infra.json",
     "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/observability && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio && npm run typecheck -w labs && npm run typecheck:infra",
     "typecheck:tsc": "npm run build:database && npm run build:api && npm run typecheck:tsc --workspaces --if-present",
     "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
@@ -62,17 +62,18 @@
   },
   "devDependencies": {
     "@changesets/cli": "2.31.1",
+    "@pulumi/pulumi": "3.254.0",
     "@types/node": "24.13.3",
-    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "esbuild": "0.28.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "overrides": {
-    "esbuild": "$esbuild"
+    "esbuild": "$esbuild",
+    "typescript": "$typescript"
   },
   "engines": {
-    "node": "24.14.1",
-    "npm": "11.11.0"
+    "node": "24.18.0",
+    "npm": "11.16.0"
   },
-  "packageManager": "npm@11.11.0"
+  "packageManager": "npm@11.16.0"
 }

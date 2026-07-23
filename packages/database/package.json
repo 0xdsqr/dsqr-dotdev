@@ -25,7 +25,7 @@
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",
     "generate": "drizzle-kit generate",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {

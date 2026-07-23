@@ -51,11 +51,17 @@ for (const packageFile of packageFiles) {
 }
 
 const rootManifest = readJson(join(root, "package.json"))
-if (rootManifest.packageManager !== "npm@11.11.0") {
-  fail("package.json: packageManager must pin npm@11.11.0")
+if (rootManifest.packageManager !== "npm@11.16.0") {
+  fail("package.json: packageManager must pin npm@11.16.0")
 }
-if (rootManifest.engines?.node !== "24.14.1" || rootManifest.engines?.npm !== "11.11.0") {
+if (rootManifest.engines?.node !== "24.18.0" || rootManifest.engines?.npm !== "11.16.0") {
   fail("package.json: Node and npm engines must match the pinned Nix toolchain")
+}
+if (rootManifest.devDependencies?.typescript !== "7.0.2") {
+  fail("package.json: the stable native TypeScript compiler must remain pinned to 7.0.2")
+}
+if (rootManifest.overrides?.typescript !== "$typescript") {
+  fail("package.json: every transitive TypeScript compiler must resolve through the root pin")
 }
 if (rootManifest.devDependencies?.esbuild !== "0.28.1") {
   fail("package.json: the patched esbuild constraint must remain pinned to 0.28.1")

@@ -15,9 +15,6 @@
     "@pulumi/pulumi": "3.254.0",
     "@pulumi/tailscale": "0.29.0"
   },
-  "devDependencies": {
-    "typescript": "6.0.3"
-  },
   "engines": {
     "node": ">=24"
   }
