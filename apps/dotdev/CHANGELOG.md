@@ -1,5 +1,11 @@
 # dotdev
 
+## 0.0.6
+
+### Patch Changes
+
+- d876c94: Remove client-only development tooling from the production server bundle and verify rendered routes in runtime smoke tests.
+
 ## 0.0.5
 
 ### Patch Changes
