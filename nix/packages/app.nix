@@ -6,11 +6,16 @@
   appName,
   nodeModules,
   port,
+  preBuildCommands ? "",
   runtimeDependencies ? [ ],
+  sourcePaths,
 }:
 let
   appPackage = builtins.fromJSON (builtins.readFile ../../apps/${appName}/package.json);
-  src = import ../lib/source.nix { inherit lib; };
+  src = import ../lib/workspace-source.nix {
+    inherit lib;
+    paths = sourcePaths;
+  };
   workspaceLinks = import ../lib/workspace-links.nix;
   defaultPort = toString port;
 in
@@ -30,7 +35,7 @@ stdenvNoCC.mkDerivation {
     mkdir -p "$HOME"
 
     cp -R ${nodeModules}/. .
-    find . -type d -name node_modules -exec chmod -R u+w {} +
+    find . -type d -path '*/node_modules*' -exec chmod u+w {} +
 
     ${workspaceLinks.linkWorkspacePackages}
 
@@ -42,8 +47,7 @@ stdenvNoCC.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
-    npm run build:database
-    npm run build:api
+    ${preBuildCommands}
     pushd "apps/${appName}" >/dev/null
     npm run build
     popd >/dev/null

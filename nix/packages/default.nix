@@ -92,6 +92,8 @@ let
     inherit nodeModules;
   };
 
+  ciPlan = pkgs.callPackage ./ci-plan.nix { };
+
   dotdev = pkgs.callPackage ./dotdev.nix ({ inherit nodeModules; } // runtime);
 
   labs = pkgs.callPackage ./labs.nix ({ inherit nodeModules; } // runtime);
@@ -125,6 +127,7 @@ in
 {
   inherit
     changeset
+    ciPlan
     dotdev
     gitopsCleanupTracking
     gitopsGenerateApplications

@@ -15,5 +15,18 @@ import ./app.nix ({
     ;
   appName = "studio";
   port = 3021;
+  preBuildCommands = ''
+    npm run build:database
+    npm run build:api
+  '';
   runtimeDependencies = [ "pg" ];
+  sourcePaths = [
+    ../../package.json
+    ../../apps/studio
+    ../../packages/api
+    ../../packages/database
+    ../../packages/observability
+    ../../packages/react
+    ../../packages/typescript-config
+  ];
 })

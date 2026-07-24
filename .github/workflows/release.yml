@@ -62,9 +62,9 @@ jobs:
           fi
           echo "current=true" >> "$GITHUB_OUTPUT"
 
-      - name: Install Nix
+      - name: Set up Nix
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+        uses: ./.github/actions/setup-nix
 
       - name: Log in to GitHub Container Registry
         if: ${{ steps.revision.outputs.current == 'true' }}
@@ -241,7 +241,10 @@ jobs:
         run: |
           set -euo pipefail
           head_ref="$(gh pr view "$PULL_REQUEST_NUMBER" --json headRefName --jq '.headRefName')"
-          gh workflow run ci.yml --ref "$head_ref"
+          gh workflow run ci.yml \
+            --ref "$head_ref" \
+            --field "base_sha=$TARGET_SHA" \
+            --field "release_candidate=true"
 
       - name: Summarize the release decision
         if: ${{ always() }}

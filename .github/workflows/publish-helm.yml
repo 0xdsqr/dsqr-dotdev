@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
   packages: write
 
 env:
@@ -59,9 +60,9 @@ jobs:
           fi
           echo "current=true" >> "$GITHUB_OUTPUT"
 
-      - name: Install Nix
+      - name: Set up Nix
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+        uses: ./.github/actions/setup-nix
 
       - name: Publish immutable SemVer charts
         if: ${{ steps.revision.outputs.current == 'true' }}

@@ -17,6 +17,7 @@ stdenvNoCC.mkDerivation {
     root = ../..;
     fileset = lib.fileset.unions [
       ../../.grype.yaml
+      ../../.github/actions
       ../../.github/workflows
       ../../nix/lib/smoke-oci-image.sh
       ../scripts/gitops-cleanup-tracking.sh
@@ -456,6 +457,30 @@ stdenvNoCC.mkDerivation {
       .github/workflows/ci.yml >/dev/null
     grep -F 'github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3' \
       .github/workflows/ci.yml >/dev/null
+    grep -F 'DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8' \
+      .github/actions/setup-nix/action.yml >/dev/null
+    grep -F 'DeterminateSystems/flakehub-cache-action@77c6bddd7d747943530aaa578c57f233ee5d920e # v3.21.8' \
+      .github/actions/setup-nix/action.yml >/dev/null
+    yq -e '.runs.steps[1].with."use-gha-cache" == "enabled"' \
+      .github/actions/setup-nix/action.yml >/dev/null
+    yq -e '.permissions."id-token" == "write"' \
+      .github/workflows/ci.yml >/dev/null
+    yq -e '.concurrency."cancel-in-progress" != false' \
+      .github/workflows/ci.yml >/dev/null
+    yq -e '
+      .jobs."base-checks".steps[] |
+      select(.name == "Run static and infrastructure checks") |
+      ((.run | contains("image-runtime")) or (.run | contains("runtime-smoke"))) | not
+    ' .github/workflows/ci.yml >/dev/null
+    yq -e '.jobs."build-app".strategy.matrix != null' \
+      .github/workflows/ci.yml >/dev/null
+    yq -e '.jobs | has("build-dotdev") | not' \
+      .github/workflows/ci.yml >/dev/null
+    yq -e '.jobs | has("typecheck-dotdev") | not' \
+      .github/workflows/ci.yml >/dev/null
+    grep -F 'nix run .#ciPlan' .github/workflows/ci.yml >/dev/null
+    grep -F -- '--field "base_sha=$TARGET_SHA"' .github/workflows/release.yml >/dev/null
+    grep -F -- '--field "release_candidate=true"' .github/workflows/release.yml >/dev/null
     yq -e '.jobs.required.needs | contains(["dependency-security", "codeql"])' \
       .github/workflows/ci.yml >/dev/null
     grep -F 'commitMode: github-api' .github/workflows/release.yml >/dev/null

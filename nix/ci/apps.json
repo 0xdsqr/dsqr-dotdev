@@ -1,0 +1,29 @@
+[
+  {
+    "app": "dotdev",
+    "workspace": "apps/dotdev",
+    "package": "dotdev",
+    "image": "dotdevImage",
+    "imageName": "dotdev-web",
+    "port": 3020,
+    "smokePath": "/about"
+  },
+  {
+    "app": "labs",
+    "workspace": "apps/labs",
+    "package": "labs",
+    "image": "labsImage",
+    "imageName": "dotdev-labs",
+    "port": 3022,
+    "smokePath": "/"
+  },
+  {
+    "app": "studio",
+    "workspace": "apps/studio",
+    "package": "studio",
+    "image": "studioImage",
+    "imageName": "dotdev-studio",
+    "port": 3021,
+    "smokePath": "/"
+  }
+]

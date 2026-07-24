@@ -7,23 +7,41 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Optional base revision used by the affected-app planner
+        required: false
+        type: string
+      release_candidate:
+        description: Validate a generated Changesets release candidate
+        default: false
+        required: false
+        type: boolean
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
-  detect-changes:
-    name: Detect app changes
+  plan:
+    name: Plan checks
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
-      dotdev: ${{ steps.apps.outputs.dotdev }}
-      studio: ${{ steps.apps.outputs.studio }}
-      labs: ${{ steps.apps.outputs.labs }}
-      shared: ${{ steps.apps.outputs.shared }}
+      any: ${{ steps.plan.outputs.any }}
+      gitops: ${{ steps.plan.outputs.gitops }}
+      helm: ${{ steps.plan.outputs.helm }}
+      infra: ${{ steps.plan.outputs.infra }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      release_only: ${{ steps.plan.outputs.release_only }}
+      workspace_typecheck: ${{ steps.plan.outputs.workspace_typecheck }}
 
     steps:
       - name: Check out repository
@@ -32,69 +50,94 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Detect affected apps
-        id: apps
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Resolve comparison base
+        id: base
         shell: bash
+        env:
+          DISPATCH_BASE_SHA: ${{ inputs.base_sha }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
 
-          dotdev=false
-          studio=false
-          labs=false
-          shared=false
-
-          mark_all() {
-            dotdev=true
-            studio=true
-            labs=true
-          }
-
-          event_name="${{ github.event_name }}"
-          if [[ "$event_name" == "workflow_dispatch" || "$event_name" == "merge_group" ]]; then
-            shared=true
-            mark_all
-          else
-            if [[ "$event_name" == "pull_request" ]]; then
-              base="${{ github.event.pull_request.base.sha }}"
-            else
-              base="${{ github.event.before }}"
+          case "$GITHUB_EVENT_NAME" in
+            pull_request)
+              base="$PULL_REQUEST_BASE_SHA"
+              ;;
+            merge_group)
+              base="$MERGE_GROUP_BASE_SHA"
+              ;;
+            push)
+              base="$EVENT_BEFORE"
               if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
                 base="$(git rev-parse HEAD^)"
               fi
-            fi
+              ;;
+            workflow_dispatch)
+              if [[ -n "$DISPATCH_BASE_SHA" ]]; then
+                base="$DISPATCH_BASE_SHA"
+              else
+                git fetch --no-tags origin master:refs/remotes/origin/master
+                if [[ "$GITHUB_REF" == "refs/heads/master" ]]; then
+                  base="$(git rev-parse HEAD^)"
+                else
+                  base="$(git merge-base HEAD refs/remotes/origin/master)"
+                fi
+              fi
+              ;;
+            *)
+              echo "Unsupported event: $GITHUB_EVENT_NAME" >&2
+              exit 1
+              ;;
+          esac
 
-            while IFS= read -r path; do
-              [[ -z "$path" ]] && continue
-
-              case "$path" in
-                apps/dotdev/**|nix/packages/dotdev.nix)
-                  dotdev=true
-                  ;;
-                apps/studio/**|nix/packages/studio.nix)
-                  studio=true
-                  ;;
-                apps/labs/**|nix/packages/labs.nix)
-                  labs=true
-                  ;;
-                .github/workflows/ci.yml|flake.lock|flake.nix|package-lock.json|package.json|nix/hashes.nix|nix/overlay.nix|nix/lib/**|nix/packages/app.nix|nix/packages/default.nix|nix/packages/images.nix|nix/packages/node-modules.nix|packages/**)
-                  shared=true
-                  mark_all
-                  ;;
-              esac
-            done < <(git diff --name-only "$base" HEAD)
+          if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "$base"
           fi
+          git cat-file -e "$base^{commit}"
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
 
+      - name: Compute affected app matrix
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          nix run .#ciPlan -- \
+            --base "${{ steps.base.outputs.sha }}" \
+            --head HEAD \
+            --github-output "$GITHUB_OUTPUT" \
+            --json |
+            tee "$RUNNER_TEMP/ci-plan.json"
+
+      - name: Summarize plan
+        if: ${{ always() }}
+        shell: bash
+        run: |
           {
-            echo "dotdev=$dotdev"
-            echo "studio=$studio"
-            echo "labs=$labs"
-            echo "shared=$shared"
-          } | tee -a "$GITHUB_OUTPUT"
+            echo "## CI plan"
+            echo
+            echo "- Base: \`${{ steps.base.outputs.sha }}\`"
+            echo "- Head: \`$GITHUB_SHA\`"
+            echo "- Release-only: \`${{ steps.plan.outputs.release_only }}\`"
+            echo "- Workspace typecheck: \`${{ steps.plan.outputs.workspace_typecheck }}\`"
+            echo
+            if [[ -f "$RUNNER_TEMP/ci-plan.json" ]]; then
+              echo '```json'
+              cat "$RUNNER_TEMP/ci-plan.json"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  base-checks:
-    name: Base checks
+  dependencies:
+    name: Prepare dependency closure
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
+    needs:
+      - plan
 
     steps:
       - name: Check out repository
@@ -102,19 +145,53 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-      - name: Run base checks
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Realize dependency closure
+        run: nix build .#nodeModules --no-link --print-build-logs
+
+      - name: Record cache backend
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo "## Dependency closure"
+            echo
+            echo "The shared FlakeHub cache is configured with GitHub Actions cache fallback."
+            echo
+            echo '```'
+            nix config show | grep -E '^(substituters|trusted-public-keys)' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  base-checks:
+    name: Base checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs:
+      - plan
+      - dependencies
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Run static and infrastructure checks
         run: |
           nix build \
             .#checks.x86_64-linux.format \
+            .#checks.x86_64-linux.ci-plan \
             .#checks.x86_64-linux.dependency-policy \
             .#checks.x86_64-linux.lint \
             .#checks.x86_64-linux.helm \
             .#checks.x86_64-linux.gitops \
-            .#checks.x86_64-linux.image-runtime \
             .#checks.x86_64-linux.infra-smoke \
-            .#checks.x86_64-linux.runtime-smoke \
             .#checks.x86_64-linux.release-versioning \
             .#checks.x86_64-linux.security-boundaries \
             .#checks.x86_64-linux.typecheck-infra-native \
@@ -124,6 +201,8 @@ jobs:
     name: Dependency security
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    needs:
+      - dependencies
 
     steps:
       - name: Check out repository
@@ -131,8 +210,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
 
       - name: Reject moderate, high, and critical advisories
         run: nix run .#securityAudit
@@ -167,6 +246,8 @@ jobs:
     name: Changeset status
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    needs:
+      - dependencies
     if: >-
       ${{
         github.event_name == 'pull_request' &&
@@ -180,8 +261,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
 
       - name: Validate pending release intent
         run: nix run .#changeset -- status --since "${{ github.event.pull_request.base.sha }}"
@@ -199,11 +280,13 @@ jobs:
         ) ||
         (
           github.event_name == 'workflow_dispatch' &&
-          github.ref == 'refs/heads/changeset-release/master'
+          github.ref == 'refs/heads/changeset-release/master' &&
+          inputs.release_candidate
         )
       }}
     permissions:
       contents: read
+      id-token: write
       packages: read
 
     steps:
@@ -217,24 +300,27 @@ jobs:
         id: release-base
         shell: bash
         env:
+          DISPATCH_BASE_SHA: ${{ inputs.base_sha }}
           PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             base="$PULL_REQUEST_BASE_SHA"
-            if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-              git fetch --no-tags origin "$base"
-            fi
           else
-            git fetch --no-tags origin master:refs/remotes/origin/master
-            base="$(git merge-base HEAD origin/master)"
+            base="$DISPATCH_BASE_SHA"
+          fi
+          if [[ -z "$base" ]]; then
+            echo "Release candidate validation requires an explicit base revision." >&2
+            exit 1
+          fi
+          if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "$base"
           fi
           git cat-file -e "$base^{commit}"
           echo "sha=$base" >> "$GITHUB_OUTPUT"
-          echo "Release base revision: $base"
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
@@ -253,15 +339,14 @@ jobs:
           "github:$GITHUB_REPOSITORY/$RELEASE_BASE_REVISION#releaseVerifyCandidates"
           --
 
-  typecheck-shared:
+  typecheck-workspace:
     name: Typecheck workspace
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
     needs:
-      - detect-changes
-      - base-checks
-      - dependency-security
-    if: ${{ needs.detect-changes.outputs.shared == 'true' }}
+      - plan
+      - dependencies
+    if: ${{ needs.plan.outputs.workspace_typecheck == 'true' }}
 
     steps:
       - name: Check out repository
@@ -269,20 +354,23 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
 
       - name: Run workspace typecheck
         run: nix build .#checks.x86_64-linux.typecheck
 
-  typecheck-dotdev:
-    name: Typecheck dotdev-web
+  build-app:
+    name: Build ${{ matrix.imageName }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 40
     needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.dotdev == 'true' }}
+      - plan
+      - dependencies
+    if: ${{ needs.plan.outputs.any == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
 
     steps:
       - name: Check out repository
@@ -290,125 +378,40 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
 
-      - name: Run dotdev typecheck
-        run: nix build .#checks.x86_64-linux.typecheck
-
-  typecheck-studio:
-    name: Typecheck dotdev-studio
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.studio == 'true' }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-
-      - name: Run studio typecheck
-        run: nix build .#checks.x86_64-linux.typecheck
-
-  typecheck-labs:
-    name: Typecheck dotdev-labs
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.shared != 'true' && needs.detect-changes.outputs.labs == 'true' }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-
-      - name: Run labs typecheck
-        run: nix build .#checks.x86_64-linux.typecheck
-
-  build-dotdev:
-    name: Build dotdev-web image
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.dotdev == 'true' }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-      - name: Build dotdev image
-        run: nix build .#dotdevImage --out-link result-dotdev
-      - name: Smoke-test hardened dotdev container
+      - name: Build app checks and image
+        shell: bash
         run: |
-          docker load < result-dotdev
-          bash nix/lib/smoke-oci-image.sh dotdev-web:latest 3020 /about
+          set -euo pipefail
+          nix build \
+            ".#checks.x86_64-linux.runtime-smoke-${{ matrix.app }}" \
+            ".#checks.x86_64-linux.image-runtime-${{ matrix.app }}" \
+            --no-link \
+            --print-build-logs
+          nix build ".#${{ matrix.image }}" --out-link result-image
 
-  build-studio:
-    name: Build dotdev-studio image
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.studio == 'true' }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-      - name: Build studio image
-        run: nix build .#studioImage --out-link result-studio
-      - name: Smoke-test hardened studio container
+      - name: Smoke-test exact OCI image
+        shell: bash
         run: |
-          docker load < result-studio
-          bash nix/lib/smoke-oci-image.sh dotdev-studio:latest 3021
+          set -euo pipefail
+          docker load < result-image
+          bash nix/lib/smoke-oci-image.sh \
+            "${{ matrix.imageName }}:latest" \
+            "${{ matrix.port }}" \
+            "${{ matrix.smokePath }}"
 
-  build-labs:
-    name: Build dotdev-labs image
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    needs:
-      - detect-changes
-      - base-checks
-    if: ${{ needs.detect-changes.outputs.labs == 'true' }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@d96678350ffd6a456235832eb11e1c491589b7bb # v3.21.8
-      - name: Build labs image
-        run: nix build .#labsImage --out-link result-labs
-      - name: Smoke-test hardened labs container
+      - name: Summarize app build
+        if: ${{ always() }}
+        shell: bash
         run: |
-          docker load < result-labs
-          bash nix/lib/smoke-oci-image.sh dotdev-labs:latest 3022
+          {
+            echo "## ${{ matrix.imageName }}"
+            echo
+            echo "- Planner reason: \`${{ matrix.reasons }}\`"
+            echo "- Image: \`${{ matrix.image }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   required:
     name: Required checks
@@ -416,19 +419,15 @@ jobs:
     timeout-minutes: 5
     if: ${{ always() }}
     needs:
-      - detect-changes
+      - plan
+      - dependencies
       - base-checks
       - dependency-security
       - codeql
       - changeset-status
       - release-candidate-provenance
-      - typecheck-shared
-      - typecheck-dotdev
-      - typecheck-studio
-      - typecheck-labs
-      - build-dotdev
-      - build-studio
-      - build-labs
+      - typecheck-workspace
+      - build-app
 
     steps:
       - name: Require every applicable check

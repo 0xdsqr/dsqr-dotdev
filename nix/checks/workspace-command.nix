@@ -28,7 +28,7 @@ stdenvNoCC.mkDerivation {
     mkdir -p "$HOME"
 
     cp -R ${nodeModules}/. .
-    find . -type d -name node_modules -exec chmod -R u+w {} +
+    find . -type d -path '*/node_modules*' -exec chmod u+w {} +
 
     ${workspaceLinks.linkWorkspacePackages}
 

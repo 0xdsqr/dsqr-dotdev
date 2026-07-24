@@ -15,4 +15,13 @@ import ./app.nix ({
     ;
   appName = "labs";
   port = 3022;
+  sourcePaths = [
+    ../../package.json
+    ../../apps/labs
+    ../../packages/api
+    ../../packages/database
+    ../../packages/observability
+    ../../packages/react
+    ../../packages/typescript-config
+  ];
 })
