@@ -1,5 +1,12 @@
 # @dsqr-dotdev/react
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [a106581]
+  - @dsqr-dotdev/api@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes

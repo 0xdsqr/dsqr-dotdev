@@ -1,5 +1,14 @@
 # labs
 
+## 0.0.5
+
+### Patch Changes
+
+- a106581: Harden authentication, authorization, administrative post uploads, trusted origins, and
+  local development server defaults. Refresh compatible runtime and build dependencies,
+  including the Vite 8 and React DayPicker 10 migrations.
+  - @dsqr-dotdev/react@0.0.2
+
 ## 0.0.4
 
 ### Patch Changes
