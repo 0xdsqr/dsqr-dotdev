@@ -117,6 +117,16 @@ while IFS= read -r cluster_dir; do
         ' - <<<"$rendered_manifests")"
         [[ -z "$invalid_namespaces" ]] ||
           fail "$app renders unprotected managed Namespaces: $invalid_namespaces"
+
+        if [[ "$app" == "cluster-foundation" ]]; then
+          foundation_argocd_resource_count="$(yq eval-all -r '
+            [.] |
+            map(select(.apiVersion == "argoproj.io/v1alpha1")) |
+            length
+          ' - <<<"$rendered_manifests")"
+          (( foundation_argocd_resource_count == 0 )) ||
+            fail "$app must not render Argo CD resources owned by argocd-config"
+        fi
       fi
     done
 

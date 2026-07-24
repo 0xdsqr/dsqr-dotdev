@@ -5,7 +5,6 @@ resources:
   - namespaces.yaml
   - app-default-deny.networkpolicies.yaml
   - internal-ca.configmaps.yaml
-  - ../../../argocd/base
 
 labels:
   - pairs:
