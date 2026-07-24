@@ -84,6 +84,10 @@ let
     nodejs-slim_24 = nodejs-slim;
   };
 
+  registriesConf = pkgs.writeText "containers-registries.conf" ''
+    unqualified-search-registries = []
+  '';
+
   changeset = pkgs.callPackage ./changeset.nix {
     inherit nodeModules;
   };
@@ -103,14 +107,18 @@ let
   gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix { };
 
   releasePrepare = pkgs.callPackage ./release-prepare.nix {
-    inherit changeset gitopsReleaseImage;
+    inherit changeset gitopsReleaseImage registriesConf;
   };
 
   releasePublishCharts = pkgs.callPackage ./release-publish-charts.nix { };
 
-  releasePublishImages = pkgs.callPackage ./release-publish-images.nix { };
+  releasePublishImages = pkgs.callPackage ./release-publish-images.nix {
+    inherit registriesConf;
+  };
 
-  releaseVerifyCandidates = pkgs.callPackage ./release-verify-candidates.nix { };
+  releaseVerifyCandidates = pkgs.callPackage ./release-verify-candidates.nix {
+    inherit registriesConf;
+  };
 
   securityAudit = pkgs.callPackage ./security-audit.nix { };
 in

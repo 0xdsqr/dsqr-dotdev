@@ -247,6 +247,27 @@ stdenvNoCC.mkDerivation {
         ${stdenvNoCC.shell} "$publishScript"
     )
 
+    [[ ! -s "$publishLog" ]]
+
+    (
+      cd "$publishRepo"
+      sed -i 's/0\.0\.3/0.0.4/g' helm/*/Chart.yaml
+      git add .
+      git commit -m release >/dev/null
+      releaseHead="$(git rev-parse HEAD)"
+
+      PATH="$publishMockBin:$PATH" \
+        MOCK_HELM_LOG="$publishLog" \
+        MOCK_HELM_ARCHIVE_LOG="$publishArchiveLog" \
+        MOCK_CHART_EXISTS=0 \
+        RELEASE_HEAD_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead^" \
+        RELEASE_REGISTRY=ghcr.io \
+        HELM_REGISTRY_REPOSITORY_PATH=0xdsqr/dsqr-dotdev \
+        REGISTRY_PASSWORD= \
+        ${stdenvNoCC.shell} "$publishScript"
+    )
+
     for chart in dotdev-web dotdev-studio dotdev-labs; do
       grep -Fqx \
         "lint helm/$chart -f helm/$chart/values-prod.yaml --set-string image.digest=$validationDigest" \
@@ -268,7 +289,7 @@ stdenvNoCC.mkDerivation {
         MOCK_CHART_EXISTS=1 \
         MOCK_CHART_MATCH=1 \
         RELEASE_HEAD_REVISION="$releaseHead" \
-        RELEASE_BASE_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead^" \
         RELEASE_REGISTRY=ghcr.io \
         HELM_REGISTRY_REPOSITORY_PATH=0xdsqr/dsqr-dotdev \
         REGISTRY_PASSWORD= \
@@ -300,7 +321,7 @@ stdenvNoCC.mkDerivation {
         MOCK_CHART_EXISTS=1 \
         MOCK_CHART_MATCH=0 \
         RELEASE_HEAD_REVISION="$releaseHead" \
-        RELEASE_BASE_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead^" \
         RELEASE_REGISTRY=ghcr.io \
         HELM_REGISTRY_REPOSITORY_PATH=0xdsqr/dsqr-dotdev \
         REGISTRY_PASSWORD= \
@@ -397,10 +418,33 @@ stdenvNoCC.mkDerivation {
         REGISTRY_PASSWORD= \
         ${stdenvNoCC.shell} "$imagePublishScript"
     )
+    [[ ! -s "$imagePublishLog" ]]
+
+    (
+      cd "$imagePublishRepo"
+      sed -i 's/0\.0\.3/0.0.4/g' \
+        apps/*/package.json \
+        helm/*/Chart.yaml \
+        gitops/values/*/hub-a.yaml
+      git add .
+      git commit -m release >/dev/null
+      releaseHead="$(git rev-parse HEAD)"
+
+      PATH="$imagePublishMockBin:$PATH" \
+        MOCK_IMAGE_DIGEST="$validationDigest" \
+        MOCK_SKOPEO_LOG="$imagePublishLog" \
+        MOCK_SKOPEO_STATE="$imagePublishState" \
+        RELEASE_HEAD_REVISION="$releaseHead" \
+        RELEASE_BASE_REVISION="$releaseHead^" \
+        RELEASE_REGISTRY=ghcr.io \
+        RELEASE_REGISTRY_OWNER=0xdsqr \
+        REGISTRY_PASSWORD= \
+        ${stdenvNoCC.shell} "$imagePublishScript"
+    )
     [[ "$(grep -c '^copy ' "$imagePublishLog")" == 3 ]]
     for app in dotdev-web dotdev-studio dotdev-labs; do
       grep -Fqx \
-        "copy --all --preserve-digests docker://ghcr.io/0xdsqr/$app@$validationDigest docker://ghcr.io/0xdsqr/$app:0.0.3" \
+        "copy --all --preserve-digests docker://ghcr.io/0xdsqr/$app@$validationDigest docker://ghcr.io/0xdsqr/$app:0.0.4" \
         "$imagePublishLog"
     done
 

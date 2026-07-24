@@ -1,6 +1,8 @@
-{ pkgs }:
+{ pkgs, registriesConf }:
 pkgs.writeShellApplication {
   name = "release-verify-candidates";
+
+  runtimeEnv.CONTAINERS_REGISTRIES_CONF = registriesConf;
 
   runtimeInputs = [
     pkgs.coreutils

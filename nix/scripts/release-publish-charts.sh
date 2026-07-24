@@ -13,7 +13,12 @@ if [[ -z "$repository_path" ]]; then
   exit 2
 fi
 
-if [[ -n "${REGISTRY_PASSWORD:-}" ]]; then
+registry_login_complete=false
+
+login_registry() {
+  if [[ "$registry_login_complete" == true || -z "${REGISTRY_PASSWORD:-}" ]]; then
+    return 0
+  fi
   if [[ -z "${REGISTRY_USERNAME:-}" ]]; then
     echo "REGISTRY_USERNAME is required when REGISTRY_PASSWORD is set." >&2
     exit 2
@@ -21,7 +26,8 @@ if [[ -n "${REGISTRY_PASSWORD:-}" ]]; then
   printf '%s' "$REGISTRY_PASSWORD" | helm registry login "$registry" \
     --username "$REGISTRY_USERNAME" \
     --password-stdin >/dev/null
-fi
+  registry_login_complete=true
+}
 
 chart_version_at() {
   local revision="$1"
@@ -43,6 +49,11 @@ publish_chart() {
 
   previous_version="$(chart_version_at "$base_revision" "$chart_file")"
   version="$(chart_version_at "$head_revision" "$chart_file")"
+  if [[ "$previous_version" == "$version" ]]; then
+    echo "$chart remains at $version; skipping publication."
+    return 0
+  fi
+
   helm lint "helm/$chart" \
     -f "helm/$chart/values-prod.yaml" \
     --set-string image.digest="$validation_digest"
@@ -54,6 +65,7 @@ publish_chart() {
   package_archive="$package_dir/$chart-$version.tgz"
   helm package "helm/$chart" --destination "$package_dir" >/dev/null
 
+  login_registry
   if helm show chart "oci://$registry/$repository_path/charts/$chart" --version "$version" >/dev/null 2>&1; then
     remote_dir="$(mktemp -d)"
     helm pull "oci://$registry/$repository_path/charts/$chart" \
@@ -79,10 +91,6 @@ publish_chart() {
 
     echo "$chart $version is already published with matching content."
     return 0
-  fi
-
-  if [[ "$previous_version" == "$version" ]]; then
-    echo "$chart $version is missing from the registry; publishing the current version."
   fi
 
   helm push "$package_archive" "oci://$registry/$repository_path/charts"

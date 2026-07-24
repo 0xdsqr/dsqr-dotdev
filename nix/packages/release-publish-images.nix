@@ -1,6 +1,8 @@
-{ pkgs }:
+{ pkgs, registriesConf }:
 pkgs.writeShellApplication {
   name = "release-publish-images";
+
+  runtimeEnv.CONTAINERS_REGISTRIES_CONF = registriesConf;
 
   runtimeInputs = [
     pkgs.git

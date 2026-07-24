@@ -12,7 +12,12 @@ if [[ -z "$owner" ]]; then
   exit 2
 fi
 
-if [[ -n "${REGISTRY_PASSWORD:-}" ]]; then
+registry_login_complete=false
+
+login_registry() {
+  if [[ "$registry_login_complete" == true || -z "${REGISTRY_PASSWORD:-}" ]]; then
+    return 0
+  fi
   if [[ -z "${REGISTRY_USERNAME:-}" ]]; then
     echo "REGISTRY_USERNAME is required when REGISTRY_PASSWORD is set." >&2
     exit 2
@@ -21,7 +26,8 @@ if [[ -n "${REGISTRY_PASSWORD:-}" ]]; then
     --username "$REGISTRY_USERNAME" \
     --password-stdin \
     "$registry" >/dev/null
-fi
+  registry_login_complete=true
+}
 
 version_at() {
   local revision="$1"
@@ -47,6 +53,10 @@ publish_app() {
 
   previous_version="$(version_at "$base_revision" "$package_file")"
   version="$(version_at "$head_revision" "$package_file")"
+  if [[ "$previous_version" == "$version" ]]; then
+    echo "$app remains at $version; skipping publication."
+    return 0
+  fi
 
   chart_version="$(yq -r '.version' "$chart_file")"
   app_version="$(yq -r '.appVersion' "$chart_file")"
@@ -67,6 +77,7 @@ publish_app() {
     exit 1
   fi
 
+  login_registry
   if published_digest="$(skopeo inspect --format '{{.Digest}}' "docker://$repository:$version" 2>/dev/null)"; then
     if [[ "$published_digest" != "$digest" ]]; then
       echo "Refusing to replace $repository:$version ($published_digest) with $digest." >&2
@@ -74,10 +85,6 @@ publish_app() {
     fi
     echo "$repository:$version already resolves to $digest"
     return 0
-  fi
-
-  if [[ "$previous_version" == "$version" ]]; then
-    echo "$repository:$version is missing from the registry; publishing the current version."
   fi
 
   skopeo copy --all --preserve-digests \

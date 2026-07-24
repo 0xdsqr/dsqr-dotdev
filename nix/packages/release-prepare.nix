@@ -2,9 +2,12 @@
   pkgs,
   changeset,
   gitopsReleaseImage,
+  registriesConf,
 }:
 pkgs.writeShellApplication {
   name = "release-prepare";
+
+  runtimeEnv.CONTAINERS_REGISTRIES_CONF = registriesConf;
 
   runtimeInputs = [
     changeset
