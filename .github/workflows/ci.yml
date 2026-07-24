@@ -360,7 +360,7 @@ jobs:
       - name: Smoke-test hardened dotdev container
         run: |
           docker load < result-dotdev
-          bash nix/lib/smoke-oci-image.sh dotdev-web:latest 3020
+          bash nix/lib/smoke-oci-image.sh dotdev-web:latest 3020 /about
 
   build-studio:
     name: Build dotdev-studio image

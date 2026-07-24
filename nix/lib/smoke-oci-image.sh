@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "$#" -ne 2 ]]; then
-  echo "usage: smoke-oci-image.sh <image> <port>" >&2
+if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
+  echo "usage: smoke-oci-image.sh <image> <port> [path]" >&2
   exit 2
 fi
 
 image="$1"
 port="$2"
+path="${3:-/}"
 container=""
 
 # Invoked indirectly by the EXIT trap below.
@@ -37,7 +38,13 @@ container="$(
 )"
 
 for _ in {1..30}; do
-  if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
+  if curl \
+    --fail \
+    --max-time 5 \
+    --output /dev/null \
+    --silent \
+    --show-error \
+    "http://127.0.0.1:$port$path"; then
     exit 0
   fi
 
@@ -51,5 +58,5 @@ for _ in {1..30}; do
 done
 
 docker logs "$container" >&2
-echo "$image did not open port $port" >&2
+echo "$image did not serve a successful response from $path on port $port" >&2
 exit 1

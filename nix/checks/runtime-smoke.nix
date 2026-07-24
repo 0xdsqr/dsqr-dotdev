@@ -1,4 +1,5 @@
 {
+  curl,
   dotdev,
   labs,
   runCommand,
@@ -9,6 +10,7 @@ runCommand "dsqr-dotdev-runtime-smoke-check" { } ''
     app="$1"
     name="$2"
     port="$3"
+    path="$4"
     log="$TMPDIR/$name.log"
     home="$TMPDIR/$name-home"
     mkdir -p "$home"
@@ -27,7 +29,13 @@ runCommand "dsqr-dotdev-runtime-smoke-check" { } ''
     pid="$!"
 
     for _ in $(seq 1 30); do
-      if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
+      if ${curl}/bin/curl \
+        --fail \
+        --max-time 5 \
+        --output /dev/null \
+        --silent \
+        --show-error \
+        "http://127.0.0.1:$port$path"; then
         kill "$pid"
         wait "$pid" || true
         return 0
@@ -46,13 +54,13 @@ runCommand "dsqr-dotdev-runtime-smoke-check" { } ''
     cat "$log" >&2
     kill "$pid" 2>/dev/null || true
     wait "$pid" || true
-    echo "$name did not open port $port" >&2
+    echo "$name did not serve a successful response from $path on port $port" >&2
     return 1
   }
 
-  smokeApp ${dotdev} dotdev 3020
-  smokeApp ${studio} studio 3021
-  smokeApp ${labs} labs 3022
+  smokeApp ${dotdev} dotdev 3020 /about
+  smokeApp ${studio} studio 3021 /
+  smokeApp ${labs} labs 3022 /
 
   mkdir -p "$out"
   touch "$out/runtime-smoke-check"
