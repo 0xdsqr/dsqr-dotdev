@@ -274,6 +274,23 @@ platform_projects=(
   platform-traefik
 )
 
+expected_argocd_projects="$(
+  {
+    printf '%s\n' dsqr fidara secrets twt
+    printf '%s\n' "${platform_projects[@]}"
+  } | sort
+)"
+while IFS= read -r argocd_overlay; do
+  rendered_argocd_projects="$(
+    kubectl kustomize "$argocd_overlay" |
+      yq eval-all -r \
+        '[.] | map(select(.kind == "AppProject")) | .[].metadata.name' - |
+      sort
+  )"
+  [[ "$rendered_argocd_projects" == "$expected_argocd_projects" ]] ||
+    fail "$argocd_overlay does not render the complete least-privilege AppProject set"
+done < <(find gitops/manifests/argocd/overlays -mindepth 1 -maxdepth 1 -type d | sort)
+
 [[ ! -e gitops/manifests/argocd/base/platform.appproject.yaml ]] ||
   fail "the broad platform AppProject must remain removed"
 
