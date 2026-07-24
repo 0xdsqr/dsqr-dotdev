@@ -9,5 +9,3 @@ runs:
 
     - name: Enable shared Nix cache
       uses: DeterminateSystems/flakehub-cache-action@77c6bddd7d747943530aaa578c57f233ee5d920e # v3.21.8
-      with:
-        use-gha-cache: enabled

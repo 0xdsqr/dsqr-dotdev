@@ -461,7 +461,7 @@ stdenvNoCC.mkDerivation {
       .github/actions/setup-nix/action.yml >/dev/null
     grep -F 'DeterminateSystems/flakehub-cache-action@77c6bddd7d747943530aaa578c57f233ee5d920e # v3.21.8' \
       .github/actions/setup-nix/action.yml >/dev/null
-    yq -e '.runs.steps[1].with."use-gha-cache" == "enabled"' \
+    yq -e '.runs.steps[1] | has("with") | not' \
       .github/actions/setup-nix/action.yml >/dev/null
     yq -e '.permissions."id-token" == "write"' \
       .github/workflows/ci.yml >/dev/null
