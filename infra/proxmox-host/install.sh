@@ -40,7 +40,6 @@ done
 
 for file in \
   "$root_ca_source" \
-  "$environment_source" \
   "$script_directory/install-vault-certificate.sh" \
   "$script_directory/proxmox-vault-agent.service" \
   "$script_directory/vault-agent.hcl"; do
@@ -52,8 +51,17 @@ done
 
 openssl x509 -in "$root_ca_source" -noout >/dev/null
 
-readonly role_id="$(sed -n 's/^VAULT_ROLE_ID=//p' "$environment_source")"
-readonly secret_id="$(sed -n 's/^VAULT_SECRET_ID=//p' "$environment_source")"
+if [[ -f "$environment_source" ]]; then
+  readonly role_id="$(sed -n 's/^VAULT_ROLE_ID=//p' "$environment_source")"
+  readonly secret_id="$(sed -n 's/^VAULT_SECRET_ID=//p' "$environment_source")"
+elif [[ -s "$configuration_directory/role-id" ]] \
+  && [[ -s "$configuration_directory/secret-id" ]]; then
+  readonly role_id="$(<"$configuration_directory/role-id")"
+  readonly secret_id="$(<"$configuration_directory/secret-id")"
+else
+  echo "Missing AppRole environment file and installed Vault Agent credentials." >&2
+  exit 1
+fi
 
 if [[ -z "$role_id" || -z "$secret_id" ]]; then
   echo "The AppRole environment file must define VAULT_ROLE_ID and VAULT_SECRET_ID." >&2
