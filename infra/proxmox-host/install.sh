@@ -150,7 +150,8 @@ if [[ -s "$certificate_bundle" ]] \
 fi
 
 systemctl daemon-reload
-systemctl enable --now proxmox-vault-agent.service
+systemctl enable proxmox-vault-agent.service
+systemctl restart proxmox-vault-agent.service
 
 for _ in {1..30}; do
   if systemctl is-active --quiet proxmox-vault-agent.service \

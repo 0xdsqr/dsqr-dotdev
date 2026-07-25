@@ -17,7 +17,8 @@ test("Proxmox uses Vault Agent for exact, verified PKI rotation", () => {
   assert.match(installer, /readonly vault_version="2\.0\.3"/)
   assert.match(installer, /readonly vault_archive_sha256="[a-f0-9]{64}"/)
   assert.match(installer, /sha256sum --check --status/)
-  assert.match(installer, /systemctl enable --now proxmox-vault-agent\.service/)
+  assert.match(installer, /systemctl enable proxmox-vault-agent\.service/)
+  assert.match(installer, /systemctl restart proxmox-vault-agent\.service/)
   assert.match(installer, /systemctl disable --now proxmox-vault-certificate\.timer/)
   assert.match(installer, /installed_fingerprint_file/)
 
