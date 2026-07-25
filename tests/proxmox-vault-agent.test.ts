@@ -24,7 +24,7 @@ test("Proxmox uses Vault Agent for exact, verified PKI rotation", () => {
   assert.match(agent, /ca_cert = "\/etc\/ssl\/certs\/ca-certificates\.crt"/)
   assert.match(agent, /remove_secret_id_file_after_reading = false/)
   assert.match(agent, /lease_renewal_threshold = 0\.75/)
-  assert.match(agent, /pkiCert "pki_int\/issue\/proxmox-dell-r730xd-listener"/)
+  assert.match(agent, /pkiCert \\"pki_int\/issue\/proxmox-dell-r730xd-listener\\"/)
   assert.match(agent, /common_name=proxmox\.dell-r730xd\.home\.arpa/)
   assert.doesNotMatch(agent, /\bsink\s*{/)
   assert.doesNotMatch(agent, /tls_skip_verify|VAULT_TOKEN/)

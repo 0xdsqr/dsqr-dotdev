@@ -23,11 +23,7 @@ template_config {
 }
 
 template {
-  contents = <<-EOT
-{{- with pkiCert "pki_int/issue/proxmox-dell-r730xd-listener" "common_name=proxmox.dell-r730xd.home.arpa" "ttl=720h" -}}
-{{ .Cert }}{{ .CA }}{{ .Key }}
-{{- end -}}
-EOT
+  contents = "{{- with pkiCert \"pki_int/issue/proxmox-dell-r730xd-listener\" \"common_name=proxmox.dell-r730xd.home.arpa\" \"ttl=720h\" -}}\n{{ .Cert }}{{ .CA }}{{ .Key }}\n{{- end -}}\n"
 
   destination         = "/var/lib/vault-agent-proxmox/certificate-bundle.pem"
   create_dest_dirs    = false
