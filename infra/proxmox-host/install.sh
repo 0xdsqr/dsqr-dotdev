@@ -108,6 +108,7 @@ if ! cmp --silent \
 fi
 update-ca-certificates
 
+install -d -o root -g root -m 0755 /usr/local/libexec
 install -d -o root -g root -m 0700 "$configuration_directory" "$state_directory"
 printf '%s\n' "$role_id" >"$configuration_directory/role-id"
 printf '%s\n' "$secret_id" >"$configuration_directory/secret-id"
