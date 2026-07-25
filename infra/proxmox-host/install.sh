@@ -30,7 +30,7 @@ readonly request_fingerprint="$({
   sha256sum "$script_directory/vault-agent.hcl"
 } | sha256sum | cut -d ' ' -f 1)"
 
-for command in curl openssl python3 sha256sum systemctl; do
+for command in cmp curl openssl python3 sha256sum systemctl; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "Required command is missing: $command" >&2
     exit 1
@@ -99,9 +99,13 @@ fi
 
 /usr/local/bin/vault version | grep -F "Vault v${vault_version}" >/dev/null
 
-install -o root -g root -m 0644 \
+if ! cmp --silent \
   "$root_ca_source" \
-  /usr/local/share/ca-certificates/dsqr-home-root-ca.crt
+  /usr/local/share/ca-certificates/dsqr-home-root-ca.crt; then
+  install -o root -g root -m 0644 \
+    "$root_ca_source" \
+    /usr/local/share/ca-certificates/dsqr-home-root-ca.crt
+fi
 update-ca-certificates
 
 install -d -o root -g root -m 0700 "$configuration_directory" "$state_directory"
