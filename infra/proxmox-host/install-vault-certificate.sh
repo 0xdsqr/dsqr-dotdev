@@ -7,6 +7,7 @@ readonly common_name="proxmox.dell-r730xd.home.arpa"
 readonly ca_file="/etc/ssl/certs/ca-certificates.crt"
 readonly state_directory="/var/lib/vault-agent-proxmox"
 readonly backup_directory="${state_directory}/bootstrap-backup"
+readonly installed_fingerprint_file="${state_directory}/installed.sha256"
 readonly certificate_file="/etc/pve/local/pveproxy-ssl.pem"
 readonly key_file="/etc/pve/local/pveproxy-ssl.key"
 
@@ -17,7 +18,7 @@ fi
 
 readonly bundle_file="$1"
 
-for command in curl flock openssl pvenode systemctl; do
+for command in curl cut flock openssl pvenode sha256sum systemctl; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "Required command is missing: $command" >&2
     exit 1
@@ -80,12 +81,20 @@ if [[ "$certificate_public_key" != "$private_public_key" ]]; then
   exit 1
 fi
 
+mark_installed() {
+  sha256sum "$bundle_file" | cut -d ' ' -f 1 >"$work_directory/installed.sha256"
+  install -o root -g root -m 0600 \
+    "$work_directory/installed.sha256" \
+    "$installed_fingerprint_file"
+}
+
 if [[ -s "$certificate_file" ]] \
   && [[ "$(
     openssl x509 -in "$certificate_file" -noout -fingerprint -sha256
   )" == "$(
     openssl x509 -in "$work_directory/leaf.pem" -noout -fingerprint -sha256
   )" ]]; then
+  mark_installed
   exit 0
 fi
 
@@ -122,6 +131,7 @@ for _ in {1..30}; do
       --resolve "$common_name:8006:127.0.0.1" \
       --output /dev/null \
       "https://$common_name:8006/"; then
+    mark_installed
     exit 0
   fi
   sleep 2

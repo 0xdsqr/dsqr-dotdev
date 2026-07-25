@@ -25,6 +25,7 @@ readonly configuration_directory="/etc/vault-agent-proxmox"
 readonly state_directory="/var/lib/vault-agent-proxmox"
 readonly request_fingerprint_file="${state_directory}/request.sha256"
 readonly certificate_bundle="${state_directory}/certificate-bundle.pem"
+readonly installed_fingerprint_file="${state_directory}/installed.sha256"
 readonly request_fingerprint="$({
   printf '%s\0' "$vault_version"
   sha256sum "$script_directory/vault-agent.hcl"
@@ -126,11 +127,19 @@ install -o root -g root -m 0644 \
 
 if [[ ! -s "$request_fingerprint_file" ]] \
   || [[ "$(<"$request_fingerprint_file")" != "$request_fingerprint" ]]; then
-  rm -f "$certificate_bundle"
+  rm -f "$certificate_bundle" "$installed_fingerprint_file"
 fi
 
 printf '%s\n' "$request_fingerprint" >"$request_fingerprint_file"
 chmod 0600 "$request_fingerprint_file"
+
+if [[ -s "$certificate_bundle" ]] \
+  && {
+    [[ ! -s "$installed_fingerprint_file" ]] \
+      || [[ "$(<"$installed_fingerprint_file")" != "$(sha256sum "$certificate_bundle" | cut -d ' ' -f 1)" ]]
+  }; then
+  rm -f "$certificate_bundle" "$installed_fingerprint_file"
+fi
 
 systemctl daemon-reload
 systemctl enable --now proxmox-vault-agent.service
@@ -138,6 +147,8 @@ systemctl enable --now proxmox-vault-agent.service
 for _ in {1..30}; do
   if systemctl is-active --quiet proxmox-vault-agent.service \
     && [[ -s "$certificate_bundle" ]] \
+    && [[ -s "$installed_fingerprint_file" ]] \
+    && [[ "$(<"$installed_fingerprint_file")" == "$(sha256sum "$certificate_bundle" | cut -d ' ' -f 1)" ]] \
     && systemctl is-active --quiet pveproxy.service; then
     break
   fi
@@ -146,6 +157,8 @@ done
 
 systemctl is-active --quiet proxmox-vault-agent.service
 systemctl is-active --quiet pveproxy.service
+[[ -s "$installed_fingerprint_file" ]]
+[[ "$(<"$installed_fingerprint_file")" == "$(sha256sum "$certificate_bundle" | cut -d ' ' -f 1)" ]]
 curl \
   --fail \
   --silent \

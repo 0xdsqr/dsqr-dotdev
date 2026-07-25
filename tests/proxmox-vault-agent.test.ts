@@ -19,6 +19,7 @@ test("Proxmox uses Vault Agent for exact, verified PKI rotation", () => {
   assert.match(installer, /sha256sum --check --status/)
   assert.match(installer, /systemctl enable --now proxmox-vault-agent\.service/)
   assert.match(installer, /systemctl disable --now proxmox-vault-certificate\.timer/)
+  assert.match(installer, /installed_fingerprint_file/)
 
   assert.match(agent, /type = "approle"/)
   assert.match(agent, /ca_cert = "\/etc\/ssl\/certs\/ca-certificates\.crt"/)
@@ -32,10 +33,12 @@ test("Proxmox uses Vault Agent for exact, verified PKI rotation", () => {
   assert.match(certificateInstaller, /openssl verify/)
   assert.match(certificateInstaller, /-verify_hostname "\$common_name"/)
   assert.match(certificateInstaller, /pvenode cert set/)
+  assert.match(certificateInstaller, /mark_installed/)
   assert.match(certificateInstaller, /systemctl is-active --quiet pveproxy\.service/)
 
   assert.match(service, /NoNewPrivileges=true/)
   assert.match(service, /ProtectSystem=full/)
+  assert.match(service, /ReadWritePaths=\/etc\/pve\/nodes\/pve/)
   assert.match(service, /RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX/)
 
   for (const script of ["install.sh", "install-vault-certificate.sh"]) {
