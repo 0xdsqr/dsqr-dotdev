@@ -297,6 +297,7 @@ const pkiIssuers = {
     allowedDomains: [
       "argocd.hub-a.home.arpa",
       "exo.home.arpa",
+      "exo.service.home.arpa",
       "grafana.home.arpa",
       "prometheus.home.arpa",
       "rustfs.home.arpa",
