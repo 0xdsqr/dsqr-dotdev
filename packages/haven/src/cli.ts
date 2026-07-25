@@ -179,7 +179,7 @@ function pulumiProjectYaml(stack: StackSpec) {
     "  name: nodejs",
     "  options:",
     "    packagemanager: npm",
-    "    typescript: true",
+    "    typescript: false",
     `main: ${relativePath(projectDirectory, programPath)}`,
     "",
   ].join("\n")
