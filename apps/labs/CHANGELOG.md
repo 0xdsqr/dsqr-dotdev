@@ -1,5 +1,11 @@
 # labs
 
+## 0.0.6
+
+### Patch Changes
+
+- 5b015cc: Tighten the public site copy, navigation, and shared footer identity.
+
 ## 0.0.5
 
 ### Patch Changes
