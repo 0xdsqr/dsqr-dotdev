@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@dsqr-dotdev/effect-pulumi-core": "0.0.1",
-    "@pulumi/hcloud": "1.39.1",
+    "@pulumi/hcloud": "1.40.0",
     "@pulumi/pulumi": "3.254.0"
   },
   "engines": {

@@ -63,7 +63,7 @@
   "devDependencies": {
     "@changesets/cli": "2.31.1",
     "@pulumi/pulumi": "3.254.0",
-    "@types/node": "24.13.3",
+    "@types/node": "26.1.1",
     "esbuild": "0.28.1",
     "typescript": "7.0.2"
   },
