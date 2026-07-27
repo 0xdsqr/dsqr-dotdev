@@ -13,15 +13,14 @@ Options:
                               RELEASE_BASE_REF (origin/master).
   --head-revision <revision>  Release pull request revision. Defaults to
                               RELEASE_HEAD_REVISION or HEAD.
-  --cluster <cluster>         GitOps promotion cluster (default: hub-a).
   --registry <registry>       Container registry (default: ghcr.io).
   --owner <owner>             Registry owner. Defaults to
                               RELEASE_REGISTRY_OWNER or
                               GITHUB_REPOSITORY_OWNER.
 
 For every application version changed between the base and head revisions,
-the verifier requires the package, chart, and GitOps promotion versions to
-agree. It then proves that the promoted digest is the digest of the trusted
+the verifier requires the package, chart, and production image versions to
+agree. It then proves that the production digest is the digest of the trusted
 candidate image produced from the base revision.
 EOF
 }
@@ -29,7 +28,6 @@ EOF
 base_revision="${RELEASE_BASE_REVISION:-}"
 base_ref="${RELEASE_BASE_REF:-origin/master}"
 head_revision="${RELEASE_HEAD_REVISION:-HEAD}"
-cluster="${RELEASE_CLUSTER:-hub-a}"
 registry="${RELEASE_REGISTRY:-ghcr.io}"
 owner="${RELEASE_REGISTRY_OWNER:-${GITHUB_REPOSITORY_OWNER:-}}"
 skopeo_bin="${RELEASE_SKOPEO_BIN:-skopeo}"
@@ -44,10 +42,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --head-revision)
       head_revision="${2:-}"
-      shift 2
-      ;;
-    --cluster)
-      cluster="${2:-}"
       shift 2
       ;;
     --registry)
@@ -70,10 +64,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ ! "$cluster" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
-  echo "Cluster '$cluster' is not a valid DNS label." >&2
-  exit 2
-fi
 if [[ ! "$registry" =~ ^[a-z0-9.-]+(:[0-9]+)?$ ]]; then
   echo "Registry '$registry' is not a valid registry host." >&2
   exit 2
@@ -141,9 +131,6 @@ verify_app() {
   local chart_file="$3"
   local production_values_file="$4"
   local chart_directory
-  local promotion_directory="gitops/values/$app"
-  local cluster_values_file="gitops/values/$app/$cluster.yaml"
-  local cluster_applications="gitops/clusters/$cluster/applications/kustomization.yaml"
   local previous_version
   local version
   local chart_version
@@ -163,8 +150,8 @@ verify_app() {
     chart_directory="$(dirname "$chart_file")"
     if ! git diff --quiet "$base_sha" "$head_sha" -- \
       "$chart_directory" \
-      "$promotion_directory"; then
-      echo "$app release-managed chart or promotion values changed without a package version bump." >&2
+      "$production_values_file"; then
+      echo "$app release-managed chart or production values changed without a package version bump." >&2
       exit 1
     fi
     return 0
@@ -175,22 +162,15 @@ verify_app() {
     exit 1
   fi
 
-  if ! git show "$head_sha:$cluster_applications" |
-    APPLICATION_RESOURCE="$app.yaml" yq -e \
-      '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' >/dev/null; then
-    echo "Application '$app' is not enabled for cluster '$cluster' at $head_sha." >&2
-    exit 1
-  fi
-
   chart_version="$(yaml_at "$head_sha" "$chart_file" '.version')"
   app_version="$(yaml_at "$head_sha" "$chart_file" '.appVersion')"
-  promoted_version="$(yaml_at "$head_sha" "$cluster_values_file" '.image.version')"
-  promoted_digest="$(yaml_at "$head_sha" "$cluster_values_file" '.image.digest')"
+  promoted_version="$(yaml_at "$head_sha" "$production_values_file" '.image.version')"
+  promoted_digest="$(yaml_at "$head_sha" "$production_values_file" '.image.digest')"
   repository="$(yaml_at "$head_sha" "$production_values_file" '.image.repository')"
   expected_repository="$registry/$owner/$app"
 
   if [[ "$chart_version" != "$version" || "$app_version" != "$version" || "$promoted_version" != "$version" ]]; then
-    echo "$app package, chart, app, and $cluster promotion versions must agree at $version." >&2
+    echo "$app package, chart, app, and production image versions must agree at $version." >&2
     exit 1
   fi
   if [[ ! "$promoted_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
@@ -240,7 +220,7 @@ verify_app() {
   fi
 
   verified_count=$((verified_count + 1))
-  echo "$cluster/$app $version candidate, provenance, and SBOM verified at $candidate_digest from $base_sha"
+  echo "$app $version candidate, provenance, and SBOM verified at $candidate_digest from $base_sha"
 }
 
 verify_app dotdev-web apps/dotdev/package.json helm/dotdev-web/Chart.yaml \

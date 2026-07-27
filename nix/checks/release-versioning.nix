@@ -1,10 +1,10 @@
 {
-  lib,
-  stdenvNoCC,
   git,
+  lib,
   nodejs_24,
-  gitopsReleaseImage,
+  releaseStampImage,
   releaseVerifyCandidates,
+  stdenvNoCC,
   yq-go,
 }:
 stdenvNoCC.mkDerivation {
@@ -28,17 +28,13 @@ stdenvNoCC.mkDerivation {
           "values-prod.yaml"
         ]
       ) ../../helm)
-      (lib.fileset.fileFilter (file: file.name == "kustomization.yaml") ../../gitops/clusters)
-      ../../gitops/values/dotdev-web
-      ../../gitops/values/dotdev-studio
-      ../../gitops/values/dotdev-labs
     ];
   };
 
   nativeBuildInputs = [
     git
-    gitopsReleaseImage
     nodejs_24
+    releaseStampImage
     releaseVerifyCandidates
     yq-go
   ];
@@ -49,62 +45,34 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     node nix/scripts/check-release-versions.mjs
 
-    testCluster=""
-    while IFS= read -r clusterDir; do
-      cluster="$(basename "$clusterDir")"
-      applications="$clusterDir/applications/kustomization.yaml"
-      values="gitops/values/dotdev-web/$cluster.yaml"
-      if [ -f "$applications" ] && [ -f "$values" ] &&
-        APPLICATION_RESOURCE=dotdev-web.yaml yq -e \
-          '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' \
-          "$applications" >/dev/null; then
-        testCluster="$cluster"
-        testClusterApplications="$applications"
-        testClusterValues="$values"
-        break
-      fi
-    done < <(find gitops/clusters -mindepth 1 -maxdepth 1 -type d | sort)
-    if [ -z "$testCluster" ]; then
-      echo "no declared cluster enables dotdev-web with promotion values" >&2
-      exit 1
-    fi
+    stampRoot="$TMPDIR/release-stamp-test"
+    mkdir -p "$stampRoot/apps/dotdev" "$stampRoot/helm/dotdev-web"
+    cp apps/dotdev/package.json "$stampRoot/apps/dotdev/package.json"
+    cp helm/dotdev-web/Chart.yaml "$stampRoot/helm/dotdev-web/Chart.yaml"
+    cp helm/dotdev-web/values-prod.yaml "$stampRoot/helm/dotdev-web/values-prod.yaml"
 
-    testRoot="$TMPDIR/release-promotion-test"
-    mkdir -p \
-      "$testRoot/apps/dotdev" \
-      "$testRoot/helm/dotdev-web" \
-      "$testRoot/gitops/clusters/$testCluster/applications" \
-      "$testRoot/gitops/values/dotdev-web"
-    cp apps/dotdev/package.json "$testRoot/apps/dotdev/package.json"
-    cp helm/dotdev-web/Chart.yaml "$testRoot/helm/dotdev-web/Chart.yaml"
-    cp "$testClusterApplications" \
-      "$testRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
-    cp "$testClusterValues" "$testRoot/gitops/values/dotdev-web/$testCluster.yaml"
-
-    packageVersion="$(node -p 'require(process.argv[1]).version' "$testRoot/apps/dotdev/package.json")"
+    packageVersion="$(node -p 'require(process.argv[1]).version' "$stampRoot/apps/dotdev/package.json")"
     (
-      cd "$testRoot"
-      gitops-release-image \
-        --cluster "$testCluster" \
+      cd "$stampRoot"
+      release-stamp-image \
         --app dotdev-web \
         --version "$packageVersion" \
         --digest sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-      grep -Fx '  digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
-        "gitops/values/dotdev-web/$testCluster.yaml" >/dev/null
+      test "$(yq -r '.image.version' helm/dotdev-web/values-prod.yaml)" = "$packageVersion"
+      test "$(yq -r '.image.digest' helm/dotdev-web/values-prod.yaml)" = \
+        sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
       cp helm/dotdev-web/Chart.yaml "$TMPDIR/chart-before-failure.yaml"
-      cp "gitops/values/dotdev-web/$testCluster.yaml" "$TMPDIR/values-before-failure.yaml"
-      if gitops-release-image \
-        --cluster "$testCluster" \
+      cp helm/dotdev-web/values-prod.yaml "$TMPDIR/values-before-failure.yaml"
+      if release-stamp-image \
         --app dotdev-web \
         --version "$packageVersion" \
         --digest latest >/dev/null 2>&1; then
-        echo "release promotion accepted a mutable digest" >&2
+        echo "release stamping accepted a mutable digest" >&2
         exit 1
       fi
       cmp "$TMPDIR/chart-before-failure.yaml" helm/dotdev-web/Chart.yaml
-      cmp "$TMPDIR/values-before-failure.yaml" \
-        "gitops/values/dotdev-web/$testCluster.yaml"
+      cmp "$TMPDIR/values-before-failure.yaml" helm/dotdev-web/values-prod.yaml
     )
 
     candidateRoot="$TMPDIR/release-candidate-test"
@@ -112,32 +80,16 @@ stdenvNoCC.mkDerivation {
       "$candidateRoot/apps/dotdev" \
       "$candidateRoot/apps/studio" \
       "$candidateRoot/apps/labs" \
-      "$candidateRoot/packages/api" \
       "$candidateRoot/helm/dotdev-web" \
       "$candidateRoot/helm/dotdev-studio" \
-      "$candidateRoot/gitops/clusters/$testCluster/applications" \
-      "$candidateRoot/gitops/values/dotdev-web" \
-      "$candidateRoot/gitops/values/dotdev-studio"
+      "$candidateRoot/helm/dotdev-labs"
     cp apps/dotdev/package.json "$candidateRoot/apps/dotdev/package.json"
     cp apps/studio/package.json "$candidateRoot/apps/studio/package.json"
     cp apps/labs/package.json "$candidateRoot/apps/labs/package.json"
-    cp packages/api/package.json "$candidateRoot/packages/api/package.json"
-    cp helm/dotdev-web/Chart.yaml "$candidateRoot/helm/dotdev-web/Chart.yaml"
-    cp helm/dotdev-web/values-prod.yaml "$candidateRoot/helm/dotdev-web/values-prod.yaml"
-    cp helm/dotdev-studio/Chart.yaml "$candidateRoot/helm/dotdev-studio/Chart.yaml"
-    cp helm/dotdev-studio/values-prod.yaml "$candidateRoot/helm/dotdev-studio/values-prod.yaml"
-    cp "$testClusterApplications" \
-      "$candidateRoot/gitops/clusters/$testCluster/applications/kustomization.yaml"
-    cp "$testClusterValues" "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
-    cp "gitops/values/dotdev-studio/$testCluster.yaml" \
-      "$candidateRoot/gitops/values/dotdev-studio/$testCluster.yaml"
-    yq -i '.version = "9.9.8"' "$candidateRoot/apps/dotdev/package.json"
-    yq -i '.version = "9.9.8" | .appVersion = "9.9.8"' \
-      "$candidateRoot/helm/dotdev-web/Chart.yaml"
-    yq -i '
-      .image.version = "9.9.8" |
-      .image.digest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    ' "$candidateRoot/gitops/values/dotdev-web/$testCluster.yaml"
+    for chart in dotdev-web dotdev-studio dotdev-labs; do
+      cp "helm/$chart/Chart.yaml" "$candidateRoot/helm/$chart/Chart.yaml"
+      cp "helm/$chart/values-prod.yaml" "$candidateRoot/helm/$chart/values-prod.yaml"
+    done
 
     mockSkopeo="$TMPDIR/mock-skopeo"
     cat >"$mockSkopeo" <<'EOF'
@@ -165,47 +117,20 @@ stdenvNoCC.mkDerivation {
       git commit -m base >/dev/null
       baseSha="$(git rev-parse HEAD)"
 
-      yq -i '.version = "9.9.9"' packages/api/package.json
-      git add packages/api/package.json
-      git commit -m package-only-release >/dev/null
-      packageOnlyHead="$(git rev-parse HEAD)"
-
-      packageOnlyOutput="$(
+      unchangedOutput="$(
         release-verify-candidates \
           --base-revision "$baseSha" \
-          --head-revision "$packageOnlyHead" \
-          --cluster "$testCluster" \
+          --head-revision "$baseSha" \
           --owner 0xdsqr
       )"
-      grep -F \
-        'No application versions changed between' \
-        <<<"$packageOnlyOutput" >/dev/null
-      grep -F \
-        'unchanged application chart and promotion surfaces are valid.' \
-        <<<"$packageOnlyOutput" >/dev/null
+      grep -F 'No application versions changed between' <<<"$unchangedOutput" >/dev/null
 
-      printf '%s\n' '# package-only release chart tamper' \
-        >>helm/dotdev-studio/values-prod.yaml
-      git add helm/dotdev-studio/values-prod.yaml
-      git commit -m package-only-chart-tamper >/dev/null
-      packageOnlyTamperedHead="$(git rev-parse HEAD)"
-
-      if release-verify-candidates \
-        --base-revision "$baseSha" \
-        --head-revision "$packageOnlyTamperedHead" \
-        --cluster "$testCluster" \
-        --owner 0xdsqr >/dev/null 2>&1; then
-        echo "candidate verification accepted managed chart changes in a package-only release" >&2
-        exit 1
-      fi
-
-      git checkout --detach "$baseSha" >/dev/null
       yq -i '.version = "9.9.9"' apps/dotdev/package.json
       yq -i '.version = "9.9.9" | .appVersion = "9.9.9"' helm/dotdev-web/Chart.yaml
       yq -i '
         .image.version = "9.9.9" |
         .image.digest = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-      ' "gitops/values/dotdev-web/$testCluster.yaml"
+      ' helm/dotdev-web/values-prod.yaml
       git add .
       git commit -m release >/dev/null
       releaseHead="$(git rev-parse HEAD)"
@@ -216,32 +141,11 @@ stdenvNoCC.mkDerivation {
         release-verify-candidates \
           --base-revision "$baseSha" \
           --head-revision "$releaseHead" \
-          --cluster "$testCluster" \
           --owner 0xdsqr >/dev/null
 
       yq -i \
         '.image.digest = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"' \
-        "gitops/values/dotdev-studio/$testCluster.yaml"
-      git add .
-      git commit -m unchanged-app-tamper >/dev/null
-      unchangedAppTamperedHead="$(git rev-parse HEAD)"
-
-      if MOCK_BASE_SHA="$baseSha" \
-        MOCK_CANDIDATE_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
-        RELEASE_SKOPEO_BIN="$mockSkopeo" \
-        release-verify-candidates \
-          --base-revision "$baseSha" \
-          --head-revision "$unchangedAppTamperedHead" \
-          --cluster "$testCluster" \
-          --owner 0xdsqr >/dev/null 2>&1; then
-        echo "candidate verification accepted a promotion change for an unchanged app" >&2
-        exit 1
-      fi
-
-      git checkout "$releaseHead" -- "gitops/values/dotdev-studio/$testCluster.yaml"
-      yq -i \
-        '.image.digest = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"' \
-        "gitops/values/dotdev-web/$testCluster.yaml"
+        helm/dotdev-web/values-prod.yaml
       git add .
       git commit -m tamper >/dev/null
       tamperedHead="$(git rev-parse HEAD)"
@@ -252,9 +156,8 @@ stdenvNoCC.mkDerivation {
         release-verify-candidates \
           --base-revision "$baseSha" \
           --head-revision "$tamperedHead" \
-          --cluster "$testCluster" \
           --owner 0xdsqr >/dev/null 2>&1; then
-        echo "candidate verification accepted an arbitrary promotion digest" >&2
+        echo "candidate verification accepted an arbitrary production digest" >&2
         exit 1
       fi
     )

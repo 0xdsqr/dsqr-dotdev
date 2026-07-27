@@ -61,7 +61,7 @@ runCommand "dsqr-dotdev-normalized-manifests"
         if has("peerDependencies") then .peerDependencies |= normalize_dependencies else . end |
         if has("optionalDependencies") then .optionalDependencies |= normalize_dependencies else . end;
       def workspace_root:
-        .key | test("^(apps/[^/]+|packages/(api|database|haven|infra-model|observability|react|typescript-config)|packages/effect-pulumi/[^/]+)$");
+        .key | test("^(apps/[^/]+|packages/(api|database|observability|react|typescript-config))$");
       .version = "0.0.0" |
       .packages[""].version = "0.0.0" |
       .packages |= with_entries(

@@ -35,25 +35,16 @@ in
       packages.studioImage
     ];
   };
-  gitops = pkgs.callPackage ./gitops.nix {
-    inherit (packages) gitopsGenerateApplications gitopsRender;
-  };
-  infra-smoke = pkgs.callPackage ./infra-smoke.nix {
-    nodeModules = packages.nodeModules;
-  };
   runtime-smoke = pkgs.callPackage ./runtime-smoke.nix {
     inherit (packages) dotdev labs studio;
   };
   release-versioning = pkgs.callPackage ./release-versioning.nix {
-    inherit (packages) gitopsReleaseImage releaseVerifyCandidates;
+    inherit (packages) releaseStampImage releaseVerifyCandidates;
   };
   typecheck = pkgs.callPackage ./typecheck.nix {
     nodeModules = packages.nodeModules;
   };
   security-boundaries = pkgs.callPackage ./security-boundaries.nix {
-    nodeModules = packages.nodeModules;
-  };
-  typecheck-infra-native = pkgs.callPackage ./typecheck-infra-native.nix {
     nodeModules = packages.nodeModules;
   };
   workflows = pkgs.callPackage ./workflows.nix { };

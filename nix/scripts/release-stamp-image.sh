@@ -5,7 +5,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  gitops-release-image --cluster <cluster> --app <app> --version <semver> --digest <sha256:digest>
+  release-stamp-image --app <app> --version <semver> --digest <sha256:digest>
 
 Apps:
   dotdev-web
@@ -13,22 +13,18 @@ Apps:
   dotdev-labs
 
 The application package version is the release source of truth. The chart is
-stamped with that version, while the immutable image version and digest are
-promoted only into the selected cluster's GitOps values file.
+stamped with that version and its production values pin the immutable image
+version and digest. Cluster repositories may layer environment-specific values
+on top without owning the normal application release.
 EOF
 }
 
-cluster=""
 app=""
 version=""
 digest=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --cluster)
-      cluster="${2:-}"
-      shift 2
-      ;;
     --app)
       app="${2:-}"
       shift 2
@@ -53,15 +49,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$cluster" || -z "$app" || -z "$version" || -z "$digest" ]]; then
+if [[ -z "$app" || -z "$version" || -z "$digest" ]]; then
   usage >&2
   exit 2
 fi
 
-if [[ ! "$cluster" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
-  echo "Cluster '$cluster' is not a valid DNS label." >&2
-  exit 2
-fi
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
   echo "Version '$version' is not valid SemVer." >&2
   exit 2
@@ -75,14 +67,17 @@ case "$app" in
   dotdev-web)
     package_file="apps/dotdev/package.json"
     chart_file="helm/dotdev-web/Chart.yaml"
+    production_values="helm/dotdev-web/values-prod.yaml"
     ;;
   dotdev-studio)
     package_file="apps/studio/package.json"
     chart_file="helm/dotdev-studio/Chart.yaml"
+    production_values="helm/dotdev-studio/values-prod.yaml"
     ;;
   dotdev-labs)
     package_file="apps/labs/package.json"
     chart_file="helm/dotdev-labs/Chart.yaml"
+    production_values="helm/dotdev-labs/values-prod.yaml"
     ;;
   *)
     echo "Unknown app '$app'." >&2
@@ -91,23 +86,6 @@ case "$app" in
     ;;
 esac
 
-cluster_applications="gitops/clusters/$cluster/applications/kustomization.yaml"
-cluster_values="gitops/values/$app/$cluster.yaml"
-if [[ ! -f "$cluster_applications" ]]; then
-  echo "Unknown cluster '$cluster': $cluster_applications does not exist." >&2
-  exit 1
-fi
-if [[ ! -f "$cluster_values" ]]; then
-  echo "Missing cluster promotion values: $cluster_values" >&2
-  exit 1
-fi
-if ! APPLICATION_RESOURCE="$app.yaml" yq -e \
-  '.resources[] | select(. == strenv(APPLICATION_RESOURCE))' \
-  "$cluster_applications" >/dev/null; then
-  echo "Application '$app' is not enabled for cluster '$cluster'." >&2
-  exit 1
-fi
-
 package_version="$(yq -r '.version' "$package_file")"
 if [[ "$package_version" != "$version" ]]; then
   echo "$app package version is $package_version, not requested release $version." >&2
@@ -115,10 +93,10 @@ if [[ "$package_version" != "$version" ]]; then
 fi
 
 temporary_chart="$chart_file.tmp.$$"
-temporary_values="$cluster_values.tmp.$$"
+temporary_values="$production_values.tmp.$$"
 trap 'rm -f "$temporary_chart" "$temporary_values"' EXIT
 cp "$chart_file" "$temporary_chart"
-cp "$cluster_values" "$temporary_values"
+cp "$production_values" "$temporary_values"
 
 yq -i ".version = \"$version\" | .appVersion = \"$version\"" "$temporary_chart"
 VERSION="$version" DIGEST="$digest" yq -i '
@@ -136,7 +114,7 @@ VERSION="$version" DIGEST="$digest" yq -i '
   { echo "Failed to stage image digest $digest." >&2; exit 1; }
 
 mv "$temporary_chart" "$chart_file"
-mv "$temporary_values" "$cluster_values"
+mv "$temporary_values" "$production_values"
 trap - EXIT
 
-echo "$cluster/$app $version -> $digest"
+echo "$app $version -> $digest"

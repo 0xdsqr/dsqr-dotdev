@@ -79,11 +79,9 @@ const allowedDeprecated = new Map([
 ])
 
 const allowedInstallScripts = new Map([
-  ["node_modules/@pulumi/kubernetes", "4.33.0"],
   ["node_modules/esbuild", "0.28.1"],
   ["node_modules/fsevents", "2.3.3"],
   ["node_modules/msgpackr-extract", "3.0.4"],
-  ["node_modules/protobufjs", "7.6.5"],
 ])
 
 for (const [path, entry] of Object.entries(lock.packages ?? {})) {

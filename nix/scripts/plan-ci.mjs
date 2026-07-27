@@ -69,9 +69,7 @@ const normalizeManifest = (manifest, internalNames) => {
 }
 
 const isWorkspaceLockPath = (path) =>
-  /^(apps\/[^/]+|packages\/(api|database|haven|infra-model|observability|react|typescript-config)|packages\/effect-pulumi\/[^/]+)$/.test(
-    path,
-  )
+  /^(apps|packages)\/[^/]+$/.test(path)
 
 const normalizeLock = (lock, internalNames) => {
   if (!lock) return lock
@@ -110,7 +108,7 @@ const stableJson = (value) => {
 const listWorkspaceManifests = (revision) => {
   const paths = git("ls-tree", "-r", "--name-only", revision)
     .split("\n")
-    .filter((path) => /^(apps\/[^/]+|packages\/[^/]+|packages\/effect-pulumi\/[^/]+)\/package\.json$/.test(path))
+    .filter((path) => /^(apps|packages)\/[^/]+\/package\.json$/.test(path))
 
   return paths.map((path) => ({
     path: dirname(path),
@@ -211,7 +209,7 @@ const normalizeChartReleaseFields = (contents) =>
     ?.replace(/^version:\s*.+$/m, "version: 0.0.0")
     .replace(/^appVersion:\s*.+$/m, "appVersion: 0.0.0")
 
-const normalizeGitOpsImageFields = (contents) => {
+const normalizeImageFields = (contents) => {
   if (contents === undefined) return undefined
   const lines = contents.split("\n")
   let imageIndent
@@ -250,10 +248,10 @@ const isGeneratedReleaseChange = (path, base, head, internalNames) => {
       normalizeChartReleaseFields(readRevisionFile(head, path))
     )
   }
-  if (/^gitops\/values\/[^/]+\/[^/]+\.yaml$/.test(path)) {
+  if (/^helm\/[^/]+\/values-prod\.yaml$/.test(path)) {
     return (
-      normalizeGitOpsImageFields(readRevisionFile(base, path)) ===
-      normalizeGitOpsImageFields(readRevisionFile(head, path))
+      normalizeImageFields(readRevisionFile(base, path)) ===
+      normalizeImageFields(readRevisionFile(head, path))
     )
   }
   return false
@@ -372,8 +370,6 @@ const plan = ({ base, head }) => {
       path.startsWith("docs/") ||
       path.startsWith(".changeset/") ||
       path.startsWith("helm/") ||
-      path.startsWith("gitops/") ||
-      path.startsWith("infra/") ||
       path.startsWith("tests/") ||
       path.startsWith("nix/scripts/") ||
       path === ".github/dependabot.yml" ||
@@ -395,9 +391,7 @@ const plan = ({ base, head }) => {
     any: apps.length > 0,
     apps,
     changedPaths: paths,
-    infra: paths.some((path) => path.startsWith("infra/") || path.startsWith("packages/effect-pulumi/")),
     helm: paths.some((path) => path.startsWith("helm/")),
-    gitops: paths.some((path) => path.startsWith("gitops/")),
     releaseOnly:
       paths.length > 0 &&
       !materialManifestChange &&
@@ -419,9 +413,7 @@ const writeGitHubOutputs = (path, result) => {
       `matrix=${matrix}`,
       `release_only=${result.releaseOnly}`,
       `workspace_typecheck=${result.workspaceTypecheck}`,
-      `infra=${result.infra}`,
       `helm=${result.helm}`,
-      `gitops=${result.gitops}`,
       `reasons=${reasons}`,
       "",
     ].join("\n"),

@@ -100,19 +100,11 @@ let
 
   studio = pkgs.callPackage ./studio.nix ({ inherit nodeModules; } // runtime);
 
-  gitopsGenerateApplications = pkgs.callPackage ./gitops-generate-applications.nix { };
-
-  gitopsCleanupTracking = pkgs.callPackage ./gitops-cleanup-tracking.nix { };
-
-  gitopsRender = pkgs.callPackage ./gitops-render.nix { };
-
-  gitopsReleaseImage = pkgs.callPackage ./gitops-release-image.nix { };
+  releaseStampImage = pkgs.callPackage ./release-stamp-image.nix { };
 
   releasePrepare = pkgs.callPackage ./release-prepare.nix {
-    inherit changeset gitopsReleaseImage registriesConf;
+    inherit changeset registriesConf releaseStampImage;
   };
-
-  releasePublishCharts = pkgs.callPackage ./release-publish-charts.nix { };
 
   releasePublishImages = pkgs.callPackage ./release-publish-images.nix {
     inherit registriesConf;
@@ -129,15 +121,11 @@ in
     changeset
     ciPlan
     dotdev
-    gitopsCleanupTracking
-    gitopsGenerateApplications
-    gitopsRender
-    gitopsReleaseImage
     labs
     nodeModules
     releasePrepare
-    releasePublishCharts
     releasePublishImages
+    releaseStampImage
     releaseVerifyCandidates
     securityAudit
     studio

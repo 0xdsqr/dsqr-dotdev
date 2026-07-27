@@ -84,16 +84,13 @@ const createRepository = () => {
   })
   mkdirSync(join(root, "docs"), { recursive: true })
   writeFileSync(join(root, "docs/readme.md"), "baseline\n")
-  mkdirSync(join(root, "infra"), { recursive: true })
-  writeFileSync(join(root, "infra/main.ts"), "export {}\n")
   mkdirSync(join(root, "helm/dotdev-web"), { recursive: true })
   writeFileSync(
     join(root, "helm/dotdev-web/Chart.yaml"),
     "apiVersion: v2\nname: dotdev-web\nversion: 0.0.1\nappVersion: 0.0.1\n",
   )
-  mkdirSync(join(root, "gitops/values/dotdev-web"), { recursive: true })
   writeFileSync(
-    join(root, "gitops/values/dotdev-web/hub-a.yaml"),
+    join(root, "helm/dotdev-web/values-prod.yaml"),
     "image:\n  version: 0.0.1\n  digest: sha256:old\nreplicas: 1\n",
   )
   for (const app of ["dotdev", "labs", "studio"]) {
@@ -151,15 +148,10 @@ test("fans a shared React package change out through workspace dependencies", ()
   assert.equal(result.workspaceTypecheck, true)
 })
 
-test("does not build web apps for infra or documentation changes", () => {
-  for (const [path, contents] of [
-    ["infra/main.ts", "export const changed = true\n"],
-    ["docs/readme.md", "documentation only\n"],
-  ]) {
-    const root = createRepository()
-    change(root, path, contents)
-    assert.deepEqual(selectedApps(plan(root)), [])
-  }
+test("does not build web apps for documentation changes", () => {
+  const root = createRepository()
+  change(root, "docs/readme.md", "documentation only\n")
+  assert.deepEqual(selectedApps(plan(root)), [])
 })
 
 test("ignores Changesets version-only release output semantically", () => {
@@ -202,14 +194,14 @@ test("shared Nix builders rebuild every app", () => {
   assert.deepEqual(selectedApps(plan(root)), ["dotdev", "labs", "studio"])
 })
 
-test("does not misclassify arbitrary Helm or GitOps edits as release-only", () => {
+test("does not misclassify arbitrary Helm edits as release-only", () => {
   for (const [path, contents] of [
     [
       "helm/dotdev-web/Chart.yaml",
       "apiVersion: v2\nname: dotdev-web\nversion: 0.0.1\nappVersion: 0.0.1\ndescription: changed\n",
     ],
     [
-      "gitops/values/dotdev-web/hub-a.yaml",
+      "helm/dotdev-web/values-prod.yaml",
       "image:\n  version: 0.0.1\n  digest: sha256:old\nreplicas: 2\n",
     ],
   ]) {

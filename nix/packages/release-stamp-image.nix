@@ -1,11 +1,11 @@
 { pkgs }:
 pkgs.writeShellApplication {
-  name = "gitops-release-image";
+  name = "release-stamp-image";
 
   runtimeInputs = [
     pkgs.coreutils
     pkgs.yq-go
   ];
 
-  text = builtins.readFile ../scripts/gitops-release-image.sh;
+  text = builtins.readFile ../scripts/release-stamp-image.sh;
 }

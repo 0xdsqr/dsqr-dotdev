@@ -1,5 +1,5 @@
 # Production Helm values for dotdev-web.
-# Keep deployment pins and cluster-only overrides in gitops/values/dotdev-web/<cluster>.yaml.
+# This app owns its normal production image pin; cluster-only overrides live in infrastructure.
 fullnameOverride: dotdev-web
 image:
   repository: ghcr.io/0xdsqr/dotdev-web

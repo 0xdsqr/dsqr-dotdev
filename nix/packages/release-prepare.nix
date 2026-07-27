@@ -1,7 +1,7 @@
 {
   pkgs,
   changeset,
-  gitopsReleaseImage,
+  releaseStampImage,
   registriesConf,
 }:
 pkgs.writeShellApplication {
@@ -11,12 +11,13 @@ pkgs.writeShellApplication {
 
   runtimeInputs = [
     changeset
-    gitopsReleaseImage
+    releaseStampImage
     pkgs.coreutils
     pkgs.docker-client
     pkgs.git
     pkgs.grype
     pkgs.jq
+    pkgs.kubernetes-helm
     pkgs.nodejs_24
     pkgs.skopeo
     pkgs.syft

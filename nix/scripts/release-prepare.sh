@@ -5,7 +5,6 @@ set -euo pipefail
 source_revision="${RELEASE_SOURCE_REVISION:-${GITHUB_SHA:-}}"
 registry="${RELEASE_REGISTRY:-ghcr.io}"
 owner="${RELEASE_REGISTRY_OWNER:-${GITHUB_REPOSITORY_OWNER:-}}"
-cluster="${RELEASE_CLUSTER:-hub-a}"
 candidate_plan="${RELEASE_CANDIDATE_PLAN:-}"
 
 if [[ ! "$source_revision" =~ ^[0-9a-f]{40}$ ]]; then
@@ -96,8 +95,7 @@ prepare_app() {
     exit 1
   fi
 
-  gitops-release-image \
-    --cluster "$cluster" \
+  release-stamp-image \
     --app "$app" \
     --version "$version" \
     --digest "$digest"
@@ -125,4 +123,9 @@ prepare_app dotdev-studio studio apps/studio/package.json studioImage dotdev-stu
 prepare_app dotdev-labs labs apps/labs/package.json labsImage dotdev-labs:latest
 
 node nix/scripts/check-release-versions.mjs
-npm run gitops:render >/dev/null
+for chart in dotdev-web dotdev-studio dotdev-labs; do
+  helm lint "helm/$chart" -f "helm/$chart/values-prod.yaml" >/dev/null
+  helm template "$chart" "helm/$chart" \
+    --namespace dsqr \
+    -f "helm/$chart/values-prod.yaml" >/dev/null
+done

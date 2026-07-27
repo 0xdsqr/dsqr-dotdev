@@ -28,7 +28,7 @@
     "better-auth": "1.6.25",
     "clsx": "2.1.1",
     "framer-motion": "12.42.2",
-    "lucide-react": "1.26.0",
+    "lucide-react": "1.27.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sonner": "2.0.7",
@@ -39,7 +39,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "24.13.3",
+    "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.4",
