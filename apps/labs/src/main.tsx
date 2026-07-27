@@ -1,22 +1,9 @@
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { ThemeToggle } from "@dsqr-dotdev/react/components/theme-toggle"
-import { GitHubLogo } from "@dsqr-dotdev/react/components/brand-icons"
+import { SiteSocialLinks } from "@dsqr-dotdev/react/components/site-social-links"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "./styles.css"
-
-function XLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" {...props}>
-      <path d="M13.9 10.47 21.35 2h-1.76l-6.47 7.35L7.96 2H2l7.81 11.12L2 22h1.76l6.83-7.77L16.04 22H22zM11.48 13.21l-.79-1.1L4.4 3.3h2.72l5.08 7.11.79 1.1 6.6 9.24h-2.72z" />
-    </svg>
-  )
-}
-
-const socialLinks = [
-  ["GitHub", "https://github.com/dsqr-labs", GitHubLogo],
-  ["X", "https://x.com/dsqr_labs", XLogo],
-] as const
 
 const currentYear = new Date().getFullYear()
 
@@ -31,26 +18,11 @@ function App() {
         </div>
 
         <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8 lg:px-10">
-          <header className="flex items-center justify-between gap-4 border-b border-dotted border-border pb-4 font-mono text-sm">
-            <nav className="flex items-center gap-3">
-              <a
-                href="/"
-                className="font-semibold text-primary underline decoration-dotted decoration-2 underline-offset-4 transition-colors hover:text-primary/75"
-              >
-                labs
-              </a>
-              <span className="text-muted-foreground">/</span>
-              <a
-                href="https://dsqr.dev"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                dsqr.dev
-              </a>
-            </nav>
+          <div className="flex justify-end">
             <ThemeToggle />
-          </header>
+          </div>
 
-          <section className="flex items-start justify-center pt-20 sm:pt-28 lg:pt-32">
+          <section className="flex items-start justify-center pt-16 sm:pt-24 lg:pt-28">
             <div className="max-w-3xl text-center">
               <div className="mx-auto inline-flex flex-col items-center gap-3">
                 <h1 className="font-mono text-sm font-semibold uppercase tracking-[0.36em] text-primary">
@@ -61,28 +33,18 @@ function App() {
 
               <div className="mx-auto mt-7 max-w-2xl text-pretty font-mono text-sm leading-8 text-muted-foreground sm:text-base">
                 <p>
-                  DSQR Labs LLC is David&apos;s one-person consulting studio. He enjoys working
-                  across{" "}
+                  DSQR Labs LLC is a one-person consulting studio focused on{" "}
                   <span className="border-b-2 border-dotted border-primary/55 text-foreground">
-                    systems, infrastructure, performance, and backend engineering,
-                  </span>{" "}
-                  but the goal is simple: help people ship the systems, infrastructure, and software
-                  they need &mdash; the kind that stays{" "}
+                    systems, infrastructure, performance, and backend engineering
+                  </span>
+                  . The goal is simple: help people ship software that stays{" "}
                   <span className="border-b-2 border-dotted border-chart-1/55 text-foreground">
                     understandable, operable, and boring in the best way.
                   </span>{" "}
-                  <a
-                    href="https://dsqr.dev/about"
-                    className="whitespace-nowrap text-xs uppercase tracking-[0.14em] text-muted-foreground/80 underline decoration-dotted decoration-from-font underline-offset-4 transition-colors hover:text-primary"
-                  >
-                    more about David &rarr;
-                  </a>
-                </p>
-                <p className="mt-6">
-                  Want to get in touch? Email me at{" "}
+                  Want to work together?{" "}
                   <a
                     href="mailto:me@dsqr.dev"
-                    className="text-foreground underline decoration-dotted decoration-2 underline-offset-4 transition-colors hover:text-primary"
+                    className="whitespace-nowrap text-foreground underline decoration-dotted decoration-2 underline-offset-4 transition-colors hover:text-primary"
                   >
                     me@dsqr.dev
                   </a>
@@ -93,21 +55,18 @@ function App() {
           </section>
 
           <footer className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 border-t border-dotted border-border pt-4 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>DSQR Labs LLC {currentYear}</p>
-            <nav className="flex items-center gap-4" aria-label="Social links">
-              {socialLinks.map(([label, href, Icon]) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground transition-colors hover:text-purple-600 dark:hover:text-purple-400"
-                  aria-label={label}
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-            </nav>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <a href="https://dsqr.dev" className="transition-colors hover:text-primary">
+                © {currentYear} dsqr.dev
+              </a>
+              <a
+                href="https://labs.dsqr.dev"
+                className="text-purple-600 underline decoration-2 decoration-dotted underline-offset-4 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+              >
+                labs.dsqr.dev
+              </a>
+            </div>
+            <SiteSocialLinks />
           </footer>
         </div>
       </main>

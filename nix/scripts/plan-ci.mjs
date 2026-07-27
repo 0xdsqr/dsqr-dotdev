@@ -370,7 +370,6 @@ const plan = ({ base, head }) => {
       path.startsWith("docs/") ||
       path.startsWith(".changeset/") ||
       path.startsWith("helm/") ||
-      path.startsWith("tests/") ||
       path.startsWith("nix/scripts/") ||
       path === ".github/dependabot.yml" ||
       path.startsWith(".github/workflows/")

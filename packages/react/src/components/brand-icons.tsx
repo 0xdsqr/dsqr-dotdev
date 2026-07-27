@@ -8,6 +8,14 @@ function GitHubLogo(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function GitLabLogo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true" {...props}>
+      <path d="m22.65 14.39-10.65 7.74L1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51a.4.4 0 0 1 .77 0l2.44 7.51h8.16l2.44-7.51a.4.4 0 0 1 .77 0l2.44 7.51 1.22 3.78a.84.84 0 0 1-.3.94Z" />
+    </svg>
+  )
+}
+
 function LinkedInLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true" {...props}>
@@ -16,4 +24,12 @@ function LinkedInLogo(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-export { GitHubLogo, LinkedInLogo }
+function XLogo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true" {...props}>
+      <path d="M13.9 10.47 21.35 2h-1.76l-6.47 7.35L7.96 2H2l7.81 11.12L2 22h1.76l6.83-7.77L16.04 22H22zM11.48 13.21l-.79-1.1L4.4 3.3h2.72l5.08 7.11.79 1.1 6.6 9.24h-2.72z" />
+    </svg>
+  )
+}
+
+export { GitHubLogo, GitLabLogo, LinkedInLogo, XLogo }

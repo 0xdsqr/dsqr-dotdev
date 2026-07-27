@@ -20,7 +20,7 @@ function Nav() {
   const navItems = [
     { label: "0xdsqr", href: "/" },
     { label: "posts", href: "/posts" },
-    { label: "misc", href: "/misc" },
+    // { label: "misc", href: "/misc" },
   ]
 
   return (
