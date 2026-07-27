@@ -3,9 +3,9 @@
 fullnameOverride: dotdev-web
 image:
   repository: ghcr.io/0xdsqr/dotdev-web
-  version: ""
+  version: 0.0.6
   tag: ""
-  digest: ""
+  digest: sha256:e46d907dbfa8ff28b9b22bf5d5a171154786a2800845f72559bf4e88478d21a3
   requireDigest: true
   pullPolicy: IfNotPresent
 imagePullSecrets:
