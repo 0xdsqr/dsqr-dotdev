@@ -9,7 +9,8 @@ function Nav() {
   const pathname = router.location.pathname
 
   const getLinkClass = (active: boolean) => {
-    const baseClass = "text-primary hover:text-primary/80 transition-colors whitespace-nowrap text-sm"
+    const baseClass =
+      "text-primary hover:text-primary/80 transition-colors whitespace-nowrap text-sm"
     return active ? `${baseClass} font-semibold border-b-2 border-dotted border-primary` : baseClass
   }
 
