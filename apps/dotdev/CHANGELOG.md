@@ -1,5 +1,20 @@
 # dotdev
 
+## 0.0.8
+
+### Patch Changes
+
+- 0269b61: refactor(design): unify primary token, shared eyebrow/heading, simplify post list and nav
+- 0269b61: fix(dotdev): drop dead subscribe error branch, add gpg fetch timeout, restrict sign-in error surfacing
+- 14b6315: feat(dotdev): misc and about pages with live health, combined contribution history, and footer rework
+- 5c55715: chore(react): drop unused ui kit components, deps, and orphaned app files
+- Updated dependencies [14b6315]
+- Updated dependencies [0269b61]
+- Updated dependencies [5c55715]
+- Updated dependencies [14b6315]
+  - @dsqr-dotdev/api@0.0.3
+  - @dsqr-dotdev/react@0.0.3
+
 ## 0.0.7
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # labs
 
+## 0.0.7
+
+### Patch Changes
+
+- 0269b61: refactor(design): unify primary token, shared eyebrow/heading, simplify post list and nav
+- Updated dependencies [0269b61]
+- Updated dependencies [5c55715]
+- Updated dependencies [14b6315]
+  - @dsqr-dotdev/react@0.0.3
+
 ## 0.0.6
 
 ### Patch Changes

@@ -3,9 +3,9 @@
 fullnameOverride: dotdev-labs
 image:
   repository: ghcr.io/0xdsqr/dotdev-labs
-  version: 0.0.6
+  version: 0.0.7
   tag: ""
-  digest: sha256:5278383cc093aa722429a3b201aa9696c0667f1e12e36f87315fe1b720180e37
+  digest: sha256:38ed115727b75b07c2dd8375fda85fbc234741f50c38b24e79ee3067f5c17d6e
   requireDigest: true
   pullPolicy: IfNotPresent
 imagePullSecrets:

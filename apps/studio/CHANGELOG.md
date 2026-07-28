@@ -1,5 +1,18 @@
 # studio
 
+## 0.0.6
+
+### Patch Changes
+
+- 5c55715: chore(react): drop unused ui kit components, deps, and orphaned app files
+- 0269b61: refactor(studio): split admin route into sections, loader-driven data, save role on change
+- Updated dependencies [14b6315]
+- Updated dependencies [0269b61]
+- Updated dependencies [5c55715]
+- Updated dependencies [14b6315]
+  - @dsqr-dotdev/api@0.0.3
+  - @dsqr-dotdev/react@0.0.3
+
 ## 0.0.5
 
 ### Patch Changes
