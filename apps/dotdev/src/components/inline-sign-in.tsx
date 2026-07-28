@@ -11,23 +11,23 @@ import { UserDropdown } from "./user-dropdown"
 const emailSchema = z.string().email("Invalid email")
 const otpSchema = z.string().length(6, "OTP must be 6 digits")
 
+const otpSlotClass =
+  "w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-primary rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+
 function getErrorMessage(error: unknown, fallback: string): string {
   if (!error || typeof error !== "object") {
     return fallback
   }
 
-  const maybeMessage = ["message", "error", "statusText", "status"].find(
-    (key) => typeof Reflect.get(error, key) === "string",
-  )
-
-  if (maybeMessage) {
-    return String(Reflect.get(error, maybeMessage))
+  const directMessage = Reflect.get(error, "message")
+  if (typeof directMessage === "string" && directMessage.trim()) {
+    return directMessage
   }
 
   const nestedError = Reflect.get(error, "error")
   if (nestedError && typeof nestedError === "object") {
     const nestedMessage = Reflect.get(nestedError, "message")
-    if (typeof nestedMessage === "string") {
+    if (typeof nestedMessage === "string" && nestedMessage.trim()) {
       return nestedMessage
     }
   }
@@ -125,7 +125,7 @@ export function InlineSignIn() {
       <button
         type="button"
         onClick={() => setStep("email")}
-        className="text-xs font-mono text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 border-b border-dotted border-purple-600 dark:border-purple-400 transition-colors"
+        className="text-xs font-mono text-primary hover:text-primary/80 border-b border-dotted border-primary transition-colors"
       >
         sign in
       </button>
@@ -142,17 +142,17 @@ export function InlineSignIn() {
             placeholder="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-transparent text-xs font-mono border-0 border-b-2 border-purple-600 dark:border-purple-400 text-foreground placeholder-muted-foreground focus:outline-none px-1 py-0.5 w-32"
+            className="bg-transparent text-xs font-mono border-0 border-b-2 border-primary text-foreground placeholder-muted-foreground focus:outline-none px-1 py-0.5 w-32"
             disabled={loading}
           />
-          {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
+          {error && <span className="text-xs text-destructive mt-1">{error}</span>}
         </div>
         <Button
           type="submit"
           disabled={loading}
           variant="ghost"
           size="sm"
-          className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-transparent h-auto p-0"
+          className="text-xs text-primary hover:text-primary/80 hover:bg-transparent h-auto p-0"
         >
           {loading ? "..." : "→"}
         </Button>
@@ -175,7 +175,7 @@ export function InlineSignIn() {
 
   return (
     <form onSubmit={handleVerifyOTP} className="flex items-center gap-2">
-      <label htmlFor="otp-input" className="text-purple-600 dark:text-purple-400 text-xs font-mono">
+      <label htmlFor="otp-input" className="text-primary text-xs font-mono">
         otp
       </label>
       <div className="flex flex-col">
@@ -188,40 +188,19 @@ export function InlineSignIn() {
           disabled={loading}
         >
           <InputOTPGroup className="gap-1">
-            <InputOTPSlot
-              index={0}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <InputOTPSlot
-              index={1}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <InputOTPSlot
-              index={2}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <InputOTPSlot
-              index={3}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <InputOTPSlot
-              index={4}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <InputOTPSlot
-              index={5}
-              className="w-4 h-5 text-xs font-mono bg-transparent border-0 border-b-2 border-purple-600 dark:border-purple-400 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
+            {Array.from({ length: 6 }, (_, index) => (
+              <InputOTPSlot key={index} index={index} className={otpSlotClass} />
+            ))}
           </InputOTPGroup>
         </InputOTP>
-        {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
+        {error && <span className="text-xs text-destructive mt-1">{error}</span>}
       </div>
       <Button
         type="submit"
         disabled={loading}
         variant="ghost"
         size="sm"
-        className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-transparent h-auto p-0"
+        className="text-xs text-primary hover:text-primary/80 hover:bg-transparent h-auto p-0"
       >
         {loading ? "..." : "→"}
       </Button>

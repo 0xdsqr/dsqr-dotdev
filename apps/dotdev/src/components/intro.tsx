@@ -10,7 +10,7 @@ function Intro() {
       <div className="mt-7 font-mono text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
         <p>
           Dad of one. I&apos;m primarily interested in{" "}
-          <span className="text-purple-600 underline decoration-purple-600/50 decoration-2 decoration-dotted underline-offset-4 dark:text-purple-400 dark:decoration-purple-400/50">
+          <span className="text-primary underline decoration-primary/50 decoration-2 decoration-dotted underline-offset-4">
             infrastructure
           </span>
           ,{" "}
@@ -36,7 +36,7 @@ function Intro() {
           . I also enjoy hardware, Nix, and collecting things that are nice to look at.{" "}
           <Link
             to="/about"
-            className="whitespace-nowrap text-xs font-medium uppercase tracking-[0.14em] text-primary underline decoration-dotted underline-offset-4 transition-colors hover:text-primary/75"
+            className="whitespace-nowrap text-primary underline decoration-2 decoration-dotted underline-offset-4 transition-colors hover:text-primary/80"
           >
             more about me &rarr;
           </Link>

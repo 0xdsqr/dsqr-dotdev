@@ -1,4 +1,5 @@
 import type { PublicAppRouter } from "@dsqr-dotdev/api"
+import { Eyebrow } from "@dsqr-dotdev/react/components/eyebrow"
 import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
 import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
 import type { QueryClient } from "@tanstack/react-query"
@@ -41,7 +42,7 @@ export const Route = createRootRouteWithContext<{
   shellComponent: RootDocument,
   notFoundComponent: () => (
     <main className="py-24 text-center">
-      <p className="text-xs font-mono uppercase tracking-[0.35em] text-muted-foreground">404</p>
+      <Eyebrow>404</Eyebrow>
       <h1 className="mt-4 text-3xl font-bold font-mono">not found</h1>
       <p className="mt-3 text-sm leading-7 text-muted-foreground">that page does not exist here.</p>
     </main>

@@ -47,7 +47,7 @@ function StudioNotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
-        <p className="text-xs font-mono uppercase tracking-[0.3em] text-muted-foreground">studio</p>
+        <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground">studio</p>
         <h1 className="mt-4 font-mono text-3xl font-semibold">page not found</h1>
         <p className="mt-3 text-sm leading-7 text-muted-foreground">
           Head back to the studio home page and keep going from there.

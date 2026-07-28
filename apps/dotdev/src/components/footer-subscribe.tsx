@@ -1,5 +1,6 @@
 "use client"
 
+import { Eyebrow } from "@dsqr-dotdev/react/components/eyebrow"
 import { Button } from "@dsqr-dotdev/react/components/ui/button"
 import { Input } from "@dsqr-dotdev/react/components/ui/input"
 import { useMutation } from "@tanstack/react-query"
@@ -12,11 +13,7 @@ import { trpcClient } from "@/lib/trpc"
 const emailSchema = z.string().email("Enter a valid email.")
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    if (error.message.includes("duplicate key")) {
-      return "Already subscribed."
-    }
-
+  if (error instanceof Error && error.message.trim()) {
     return error.message
   }
 
@@ -62,9 +59,7 @@ export function FooterSubscribe() {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-mono uppercase tracking-[0.28em] text-muted-foreground">
-        stay connected
-      </p>
+      <Eyebrow>stay connected</Eyebrow>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
         <Input
           type="email"

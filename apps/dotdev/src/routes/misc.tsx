@@ -1,4 +1,6 @@
 import { CopyButton } from "@dsqr-dotdev/react/components/copy-button"
+import { Eyebrow } from "@dsqr-dotdev/react/components/eyebrow"
+import { SectionHeading } from "@dsqr-dotdev/react/components/section-heading"
 import { createFileRoute } from "@tanstack/react-router"
 
 const gpgFingerprint = "2885 E3DB B899 5B0C 0B43 8441 6908 FE14 2198 DB65"
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/misc")({
         headers: {
           Accept: "application/pgp-keys, text/plain;q=0.9, */*;q=0.1",
         },
+        signal: AbortSignal.timeout(3000),
       })
 
       if (!response.ok) {
@@ -35,17 +38,13 @@ function MiscPage() {
   return (
     <div className="space-y-12">
       <div className="space-y-3">
-        <p className="text-xs font-mono uppercase tracking-[0.35em] text-muted-foreground">
-          0xdsqr
-        </p>
-        <h1 className="inline-block border-b-2 border-dotted border-border pb-2 font-mono text-2xl font-bold">
-          misc
-        </h1>
+        <Eyebrow>0xdsqr</Eyebrow>
+        <SectionHeading as="h1">misc</SectionHeading>
       </div>
 
       <section className="space-y-5 border-b border-dashed border-border pb-8">
         <div className="space-y-2">
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-muted-foreground">gpg</p>
+          <Eyebrow>gpg</Eyebrow>
           <h2 className="text-xl font-semibold font-mono">Public key</h2>
           <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
             Use this key if you need to verify something signed by me or encrypt something you want
@@ -54,9 +53,7 @@ function MiscPage() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground">
-            fingerprint
-          </p>
+          <Eyebrow>fingerprint</Eyebrow>
           <p className="break-all font-mono text-sm leading-7 text-foreground">{gpgFingerprint}</p>
         </div>
 

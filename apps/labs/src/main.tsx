@@ -12,8 +12,6 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="dsqr-labs-theme">
       <main className="min-h-dvh overflow-hidden bg-background text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute left-1/2 top-[-18rem] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute bottom-[-20rem] right-[-10rem] h-[34rem] w-[34rem] rounded-full bg-teal-400/10 blur-3xl" />
           <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-30 [mask-image:radial-gradient(circle_at_center,black,transparent_68%)]" />
         </div>
 
@@ -25,7 +23,7 @@ function App() {
           <section className="flex items-start justify-center pt-16 sm:pt-24 lg:pt-28">
             <div className="max-w-3xl text-center">
               <div className="mx-auto inline-flex flex-col items-center gap-3">
-                <h1 className="font-mono text-sm font-semibold uppercase tracking-[0.36em] text-primary">
+                <h1 className="font-mono text-sm font-semibold uppercase tracking-[0.25em] text-primary">
                   DSQR Labs LLC
                 </h1>
                 <div className="h-px w-36 bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
@@ -38,7 +36,7 @@ function App() {
                     systems, infrastructure, performance, and backend engineering
                   </span>
                   . The goal is simple: help people ship software that stays{" "}
-                  <span className="border-b-2 border-dotted border-chart-1/55 text-foreground">
+                  <span className="border-b-2 border-dotted border-primary/55 text-foreground">
                     understandable, operable, and boring in the best way.
                   </span>{" "}
                   Want to work together?{" "}
@@ -58,12 +56,6 @@ function App() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <a href="https://dsqr.dev" className="transition-colors hover:text-primary">
                 © {currentYear} dsqr.dev
-              </a>
-              <a
-                href="https://labs.dsqr.dev"
-                className="text-purple-600 underline decoration-2 decoration-dotted underline-offset-4 transition-colors hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
-              >
-                labs.dsqr.dev
               </a>
             </div>
             <SiteSocialLinks />

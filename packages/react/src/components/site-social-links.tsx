@@ -19,7 +19,7 @@ function SiteSocialLinks() {
           href={href}
           target={href.startsWith("http") ? "_blank" : undefined}
           rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-          className="text-muted-foreground transition-colors hover:text-purple-600 dark:hover:text-purple-400"
+          className="text-muted-foreground transition-colors hover:text-primary"
           aria-label={label}
         >
           <Icon className="size-4" />

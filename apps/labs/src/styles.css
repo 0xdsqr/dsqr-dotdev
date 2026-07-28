@@ -13,7 +13,6 @@
   --font-serif: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --tracking-normal: -0.025em;
-  --spacing: 0.27rem;
 }
 
 @theme inline {
@@ -39,24 +38,4 @@ body {
   letter-spacing: var(--tracking-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@keyframes labs-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-labs-marquee {
-  animation: labs-marquee 28s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-labs-marquee {
-    animation: none;
-    transform: translateX(0);
-  }
 }

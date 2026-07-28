@@ -100,7 +100,7 @@ export function BlogPostHeader({
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
+      <div className="mb-4 flex flex-wrap items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
         <span>{category}</span>
         <span className="text-muted-foreground/40">/</span>
         <span>

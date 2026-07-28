@@ -170,7 +170,7 @@ function StudioLoginPage() {
             <Shield className="size-5" />
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-mono uppercase tracking-[0.32em] text-muted-foreground">
+            <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground">
               dsqr / studio
             </p>
             <CardTitle className="font-mono text-2xl font-semibold">admin sign in</CardTitle>

@@ -40,16 +40,16 @@ export function UserDropdown({ email, username, onSignOut }: UserDropdownProps) 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 text-xs font-mono focus:outline-none group">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-500/50 bg-purple-500/10 text-[9px] text-purple-600 dark:text-purple-400">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-[9px] text-primary">
           {initials}
         </span>
-        <span className="text-purple-600 dark:text-purple-400 border-b-2 border-dotted border-purple-600 dark:border-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+        <span className="text-primary border-b-2 border-dotted border-primary group-hover:text-primary/80 transition-colors">
           {displayName}
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 font-mono">
         <div className="flex items-center gap-3 px-2 py-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-purple-500/50 bg-purple-500/10 text-xs text-purple-600 dark:text-purple-400">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-xs text-primary">
             {initials}
           </span>
           <div className="flex flex-col gap-0.5 overflow-hidden">

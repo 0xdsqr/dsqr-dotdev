@@ -125,7 +125,7 @@ export function OnThisPage({ headings, className }: OnThisPageProps) {
                   onClick={(e) => handleNavigate(heading.id, e)}
                   className={`inline-flex h-full items-center text-sm leading-relaxed transition-all duration-200 ${
                     isActive
-                      ? "font-medium text-purple-600 underline decoration-dotted decoration-purple-600 underline-offset-2 dark:text-purple-400 dark:decoration-purple-400"
+                      ? "font-medium text-primary underline decoration-dotted decoration-primary underline-offset-2"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                   style={{
