@@ -3,9 +3,9 @@
 fullnameOverride: dotdev-studio
 image:
   repository: ghcr.io/0xdsqr/dotdev-studio
-  version: 0.0.5
+  version: 0.0.6
   tag: ""
-  digest: sha256:d6c18cb8babb7e4c8ef7fa459f74198c706e17472e30d9c3070cc7478342998e
+  digest: sha256:6b755a856c598d55669f00ad3e7a7d72520ef60411519174bedefbc258b34b29
   requireDigest: true
   pullPolicy: IfNotPresent
 imagePullSecrets:

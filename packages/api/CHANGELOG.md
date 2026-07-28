@@ -1,5 +1,11 @@
 # @dsqr-dotdev/api
 
+## 0.0.3
+
+### Patch Changes
+
+- 14b6315: feat(api): expose database health check
+
 ## 0.0.2
 
 ### Patch Changes
