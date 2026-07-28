@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as MiscRouteImport } from './routes/misc'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiHistoryRouteImport } from './routes/api/history'
 import { Route as PostsIndexRouteImport } from './routes/posts/index'
 import { Route as PostsSlugRouteImport } from './routes/posts/$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
@@ -31,6 +33,16 @@ const AboutRoute = AboutRouteImport.update({
 const MiscRoute = MiscRouteImport.update({
   id: '/misc',
   path: '/misc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHistoryRoute = ApiHistoryRouteImport.update({
+  id: '/api/history',
+  path: '/api/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIndexRoute = PostsIndexRouteImport.update({
@@ -64,6 +76,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/misc': typeof MiscRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/history': typeof ApiHistoryRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/posts/': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,6 +88,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/misc': typeof MiscRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/history': typeof ApiHistoryRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/posts': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -85,6 +101,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/misc': typeof MiscRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/history': typeof ApiHistoryRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/posts/': typeof PostsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -97,6 +115,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/misc'
+    | '/api/health'
+    | '/api/history'
     | '/posts/$slug'
     | '/posts/'
     | '/api/auth/$'
@@ -107,6 +127,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/misc'
+    | '/api/health'
+    | '/api/history'
     | '/posts/$slug'
     | '/posts'
     | '/api/auth/$'
@@ -117,6 +139,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/misc'
+    | '/api/health'
+    | '/api/history'
     | '/posts/$slug'
     | '/posts/'
     | '/api/auth/$'
@@ -128,6 +152,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   MiscRoute: typeof MiscRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiHistoryRoute: typeof ApiHistoryRoute
   PostsSlugRoute: typeof PostsSlugRoute
   PostsIndexRoute: typeof PostsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -156,6 +182,20 @@ declare module '@tanstack/react-router' {
       path: '/misc'
       fullPath: '/misc'
       preLoaderRoute: typeof MiscRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/history': {
+      id: '/api/history'
+      path: '/api/history'
+      fullPath: '/api/history'
+      preLoaderRoute: typeof ApiHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts/': {
@@ -200,6 +240,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   MiscRoute: MiscRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiHistoryRoute: ApiHistoryRoute,
   PostsSlugRoute: PostsSlugRoute,
   PostsIndexRoute: PostsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

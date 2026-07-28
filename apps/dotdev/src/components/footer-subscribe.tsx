@@ -1,6 +1,5 @@
 "use client"
 
-import { Eyebrow } from "@dsqr-dotdev/react/components/eyebrow"
 import { Button } from "@dsqr-dotdev/react/components/ui/button"
 import { Input } from "@dsqr-dotdev/react/components/ui/input"
 import { useMutation } from "@tanstack/react-query"
@@ -58,30 +57,29 @@ export function FooterSubscribe() {
   }
 
   return (
-    <div className="space-y-2">
-      <Eyebrow>stay connected</Eyebrow>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+    <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-2">
+      <form onSubmit={handleSubmit} className="flex w-full items-center gap-2">
         <Input
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="email"
+          placeholder="email for new posts"
           autoComplete="email"
           disabled={subscribeMutation.isPending}
-          className="h-9 min-w-0 flex-1 font-mono text-sm"
+          className="h-9 min-w-0 flex-1 border-dotted font-mono text-sm"
         />
         <Button
           type="submit"
           variant="outline"
-          className="h-9 font-mono"
+          className="h-9 border-dotted font-mono"
           disabled={subscribeMutation.isPending}
         >
-          {subscribeMutation.isPending ? "sending" : "subscribe"}
+          {subscribeMutation.isPending ? "…" : "subscribe"}
         </Button>
       </form>
       {message ? (
         <p
-          className={`text-xs font-mono ${
+          className={`font-mono text-xs ${
             messageType === "error" ? "text-destructive" : "text-muted-foreground"
           }`}
         >

@@ -18,6 +18,7 @@ type RouterInputs = inferRouterInputs<PublicAppRouter>
  */
 type RouterOutputs = inferRouterOutputs<PublicAppRouter>
 
+export { checkDatabaseHealth, type ComponentHealth } from "./lib/health"
 export { getPublishedPostImage } from "./lib/s3"
 export { type PublicAppRouter, publicAppRouter } from "./root"
 export { createTRPCContext } from "./trpc"
