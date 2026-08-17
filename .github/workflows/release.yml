@@ -68,7 +68,7 @@ jobs:
 
       - name: Log in to GitHub Container Registry
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -77,7 +77,7 @@ jobs:
       - name: Create or update signed Version Packages pull request
         id: changesets
         if: ${{ steps.revision.outputs.current == 'true' }}
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v2.1.0
         with:
           branch: master
           commit: "chore(release): version packages"
@@ -146,7 +146,7 @@ jobs:
 
       - name: Attest dotdev-web provenance
         if: ${{ steps.candidates.outputs.web_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.web_repository }}
           subject-digest: ${{ steps.candidates.outputs.web_digest }}
@@ -155,7 +155,7 @@ jobs:
 
       - name: Attest dotdev-web SBOM
         if: ${{ steps.candidates.outputs.web_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.web_repository }}
           subject-digest: ${{ steps.candidates.outputs.web_digest }}
@@ -165,7 +165,7 @@ jobs:
 
       - name: Attest dotdev-studio provenance
         if: ${{ steps.candidates.outputs.studio_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.studio_repository }}
           subject-digest: ${{ steps.candidates.outputs.studio_digest }}
@@ -174,7 +174,7 @@ jobs:
 
       - name: Attest dotdev-studio SBOM
         if: ${{ steps.candidates.outputs.studio_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.studio_repository }}
           subject-digest: ${{ steps.candidates.outputs.studio_digest }}
@@ -184,7 +184,7 @@ jobs:
 
       - name: Attest dotdev-labs provenance
         if: ${{ steps.candidates.outputs.labs_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.labs_repository }}
           subject-digest: ${{ steps.candidates.outputs.labs_digest }}
@@ -193,7 +193,7 @@ jobs:
 
       - name: Attest dotdev-labs SBOM
         if: ${{ steps.candidates.outputs.labs_present == 'true' }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ steps.candidates.outputs.labs_repository }}
           subject-digest: ${{ steps.candidates.outputs.labs_digest }}
