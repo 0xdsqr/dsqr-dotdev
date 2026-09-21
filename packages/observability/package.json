@@ -11,12 +11,12 @@
     "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@effect/opentelemetry": "0.64.0",
-    "@effect/platform": "0.97.0",
-    "effect": "3.22.0"
+    "@effect/opentelemetry": "0.64.1",
+    "@effect/platform": "0.97.2",
+    "effect": "3.22.2"
   },
   "devDependencies": {
     "@dsqr-dotdev/tsconfig": "0.0.1",
-    "@types/node": "26.1.1"
+    "@types/node": "26.6.1"
   }
 }
