@@ -1,23 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { PostList } from "@dsqr-dotdev/react/components/post-list"
-import { SectionHeading } from "@dsqr-dotdev/react/components/section-heading"
-import { Intro } from "@/components/intro"
+import { HelloPage } from '@dsqr-dotdev/react/components/hello-page'
+import { useQuery } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.fetchQuery(context.trpc.post.all.queryOptions()),
-  component: App,
-})
+export const Route = createFileRoute('/')({ component: Home })
 
-function App() {
-  const posts = Route.useLoaderData()
+function Home() {
+  const { trpc } = Route.useRouteContext()
+  const health = useQuery(trpc.health.queryOptions())
 
   return (
-    <div className="py-8 space-y-12">
-      <Intro />
-      <section>
-        <SectionHeading className="mb-6">Recent Posts</SectionHeading>
-        <PostList posts={posts} limit={3} />
-      </section>
-    </div>
+    <HelloPage
+      title="Hello, world."
+      message={health.isError
+        ? 'Unable to connect to the API.'
+        : health.data?.message ?? 'Connecting to the API…'}
+    />
   )
 }

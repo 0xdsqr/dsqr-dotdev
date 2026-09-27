@@ -1,37 +1,23 @@
-import { QueryClient } from "@tanstack/react-query"
-import { createRouter } from "@tanstack/react-router"
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query"
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query"
-import SuperJSON from "superjson"
-import { routeTree } from "./routeTree.gen"
-import { TRPCProvider, trpcClient } from "./lib/trpc"
+import { createRouter } from '@tanstack/react-router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createApiContext } from '@dsqr-dotdev/api/client'
+import { routeTree } from './routeTree.gen'
 
-export const getRouter = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      dehydrate: { serializeData: SuperJSON.serialize },
-      hydrate: { deserializeData: SuperJSON.deserialize },
-    },
-  })
+export function getRouter() {
+  const context = createApiContext()
 
-  const trpc = createTRPCOptionsProxy({
-    client: trpcClient,
-    queryClient,
-  })
-
-  const router = createRouter({
+  return createRouter({
     routeTree,
-    context: { queryClient, trpc },
-    defaultPreload: "intent",
+    context,
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-    Wrap: (props) => <TRPCProvider trpcClient={trpcClient} queryClient={queryClient} {...props} />,
+    Wrap: ({ children }) => (
+      <QueryClientProvider client={context.queryClient}>{children}</QueryClientProvider>
+    ),
   })
+}
 
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient,
-  })
-
-  return router
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: ReturnType<typeof getRouter>
+  }
 }

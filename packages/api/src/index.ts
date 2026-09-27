@@ -1,1 +1,1 @@
-export * from "./api"
+export type { AppRouter } from './router.server'

@@ -1,109 +1,90 @@
 {
   lib,
-  stdenvNoCC,
+  buildNpmPackage,
   nodejs_24,
   nodejs-slim_24,
+  makeWrapper,
+  fetchNpmDeps,
   appName,
-  nodeModules,
-  port,
-  preBuildCommands ? "",
-  runtimeDependencies ? [ ],
-  sourcePaths,
 }:
 let
-  appPackage = builtins.fromJSON (builtins.readFile ../../apps/${appName}/package.json);
-  src = import ../lib/workspace-source.nix {
-    inherit lib;
-    paths = sourcePaths;
-  };
-  workspaceLinks = import ../lib/workspace-links.nix;
-  defaultPort = toString port;
-in
-stdenvNoCC.mkDerivation {
-  pname = "dsqr-dotdev-${appName}";
-  version = appPackage.version;
-  inherit src;
-
-  nativeBuildInputs = [
-    nodejs_24
+  root = ../..;
+  manifests = lib.fileset.unions [
+    ../../package.json
+    ../../package-lock.json
+    ../../apps/dotdev/package.json
+    ../../apps/labs/package.json
+    ../../apps/studio/package.json
+    ../../packages/api/package.json
+    ../../packages/react/package.json
   ];
+  appRoot = root + "/apps/${appName}";
+  sourceFiles = file: file.hasExt "ts" || file.hasExt "tsx" || file.hasExt "css";
+in
+(buildNpmPackage.override { nodejs = nodejs_24; }) {
+  pname = appName;
+  npmBuildFlags = [ "--workspace=${appName}" ];
+  version = "0.0.0";
 
-  configurePhase = ''
-    runHook preConfigure
+  src = lib.fileset.toSource {
+    inherit root;
+    fileset = lib.fileset.unions [
+      manifests
+      ../../tsconfig.base.json
+      (appRoot + "/tsconfig.json")
+      (appRoot + "/vite.config.ts")
+      ../../packages/api/tsconfig.json
+      ../../packages/react/tsconfig.json
+      (lib.fileset.fileFilter sourceFiles (appRoot + "/src"))
+      (lib.fileset.fileFilter sourceFiles ../../packages/api/src)
+      (lib.fileset.fileFilter sourceFiles ../../packages/react/src)
+    ];
+  };
+  # A separate cached derivation internally; app edits do not refetch packages.
+  npmDeps = fetchNpmDeps {
+    name = "workspace-npm-deps";
+    src = lib.fileset.toSource {
+      inherit root;
+      fileset = manifests;
+    };
+    hash = "sha256-6D8k4yGkxRsqaxOpVXPLFfT+PIg5id/dumemjBUF85U=";
+  };
+  npmRebuildFlags = [ "--ignore-scripts" ];
+  env = {
+    npm_config_audit = "false";
+    npm_config_fund = "false";
+  };
+  nativeBuildInputs = [ makeWrapper ];
 
-    export HOME="$TMPDIR/home"
-    mkdir -p "$HOME"
-
-    cp -R ${nodeModules}/. .
-    find . -type d -path '*/node_modules*' -exec chmod u+w {} +
-
-    ${workspaceLinks.linkWorkspacePackages}
-
-    export PATH="$PWD/node_modules/.bin:$PATH"
-
-    runHook postConfigure
+  # Pinned upstream builders embed local paths/times in generated manifests.
+  # Normalize before bundling (and hashing chunks); fail loudly on API changes.
+  preBuild = ''
+    substituteInPlace node_modules/@tanstack/start-plugin-core/dist/esm/start-manifest-plugin/manifestBuilder.js \
+      --replace-fail 'return serialize(startManifest);' \
+        'return serialize(startManifest).split(process.cwd()).join(".");'
+    substituteInPlace node_modules/nitro/dist/_build/common.mjs \
+      --replace-fail 'mtime: stat.mtime.toJSON(),' \
+        'mtime: new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toJSON(),' \
+      --replace-fail 'JSON.stringify(assets, null, 2)' \
+        'JSON.stringify(Object.fromEntries(Object.keys(assets).sort().map(key => [key, assets[key]])), null, 2)'
+    substituteInPlace node_modules/nitro/dist/_chunks/nitro3.mjs \
+      --replace-fail 'hash(h.handler)' 'hash(h.handler.replace(process.env.NIX_BUILD_TOP, "."))'
   '';
 
-  buildPhase = ''
-    runHook preBuild
-
-    ${preBuildCommands}
-    pushd "apps/${appName}" >/dev/null
-    npm run build
-    popd >/dev/null
-
-    runHook postBuild
+  postBuild = ''
+    npm run typecheck --workspace ${appName} --workspace @dsqr-dotdev/api --workspace @dsqr-dotdev/react
   '';
 
   installPhase = ''
-        runHook preInstall
-
-        mkdir -p "$out/app" "$out/bin"
-        cp -R "apps/${appName}/.output" "$out/app/.output"
-        ${nodejs_24}/bin/node ${../lib/copy-runtime-dependencies.mjs} \
-          "$PWD" \
-          "$out/app" \
-          ${lib.escapeShellArgs runtimeDependencies}
-
-        for dependency in ${lib.escapeShellArgs runtimeDependencies}; do
-          (
-            cd "$out/app"
-            ${nodejs_24}/bin/node -e \
-              'require("node:module").createRequire(process.cwd() + "/runtime-check.cjs")(process.argv[1])' \
-              "$dependency"
-          )
-        done
-
-        # Guard against accidentally returning to the previous full-workspace
-        # runtime closure. These packages are build/test tools, never app runtime
-        # dependencies.
-        test ! -e "$out/app/node_modules/typescript"
-        test ! -e "$out/app/node_modules/vite"
-        test ! -e "$out/app/node_modules/vitest"
-
-        appDir="$out/app"
-
-        cat > "$out/bin/${appName}" <<EOF
-    #!${stdenvNoCC.shell}
-    cd "$appDir"
-    export NODE_ENV="\''${NODE_ENV:-production}"
-    export HOST="\''${HOST:-0.0.0.0}"
-    export NITRO_HOST="\''${NITRO_HOST:-0.0.0.0}"
-    export PORT="\''${PORT:-${defaultPort}}"
-    exec ${nodejs-slim_24}/bin/node .output/server/index.mjs "\$@"
-    EOF
-
-        chmod +x "$out/bin/${appName}"
-
-        runHook postInstall
+    runHook preInstall
+    mkdir -p "$out/share/${appName}"
+    # Nitro's metadata contains a wall-clock timestamp; only ship runtime files.
+    cp -r apps/${appName}/.output/server apps/${appName}/.output/public "$out/share/${appName}/"
+    makeWrapper ${nodejs-slim_24}/bin/node "$out/bin/${appName}" \
+      --add-flags "$out/share/${appName}/server/index.mjs" \
+      --set NODE_ENV production
+    runHook postInstall
   '';
 
-  meta = {
-    description = "Packaged ${appName} application for dsqr-dotdev";
-    mainProgram = appName;
-    platforms = [
-      "aarch64-darwin"
-      "x86_64-linux"
-    ];
-  };
+  meta.mainProgram = appName;
 }

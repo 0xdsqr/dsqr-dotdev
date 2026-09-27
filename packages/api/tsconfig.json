@@ -1,8 +1,7 @@
 {
-  "extends": "@dsqr-dotdev/tsconfig/compiled-package.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "include": ["src"]
 }
