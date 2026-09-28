@@ -38,9 +38,9 @@
     "test:security": "npm run build:database && npm run build:api && npm run test:security -w dotdev"
   },
   "devDependencies": {
-    "@changesets/cli": "2.31.1",
-    "@types/node": "26.1.1",
-    "esbuild": "0.28.1",
+    "@changesets/cli": "3.0.3",
+    "@types/node": "26.6.2",
+    "esbuild": "0.28.2",
     "typescript": "7.0.2"
   },
   "overrides": {
