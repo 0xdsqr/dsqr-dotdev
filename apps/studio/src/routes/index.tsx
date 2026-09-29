@@ -10,6 +10,7 @@ function Home() {
 
   return (
     <HelloPage
+      site="dsqr studio"
       title="Hello, studio."
       message={health.isError
         ? 'Unable to connect to the API.'

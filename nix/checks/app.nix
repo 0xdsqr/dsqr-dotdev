@@ -37,9 +37,16 @@ runCommand "${appName}-http-smoke"
     assert.ok(response, 'Production server must start');
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, /<h1[^>]*>Hello, ${
-      if appName == "dotdev" then "world" else appName
-    }\.<\/h1>/, 'Home page must be server-rendered');
+    assert.match(html, /<h1[^>]*>${
+      {
+        dotdev = "\\s*0xdsqr\\s*";
+        labs = "DSQR Labs LLC";
+        studio = "Hello, studio\\.";
+      }
+      .${appName}
+    }<\/h1>/, 'Home page must be server-rendered');
+
+    assert.match(html, /<footer[^>]*>/, 'Shared footer must be server-rendered');
 
     const api = await fetch(origin + '/api/trpc/health', { signal: AbortSignal.timeout(1000) });
     assert.equal(api.status, 200, 'Public API must work without authentication');
@@ -59,7 +66,7 @@ runCommand "${appName}-http-smoke"
       assert.equal(asset.status, 200, path);
       if (path.endsWith('.css')) css += await asset.text();
     }
-    assert.match(css, /place-items:\s*center/, 'StyleX CSS must be emitted and served');
+    assert.match(css, /min-height:\s*100dvh/, 'StyleX CSS must be emitted and served');
     assert.match(css, /prefers-color-scheme:\s*dark/, 'Shared dark theme must be emitted');
     const fonts = [...css.matchAll(/url\(["']?([^\s"')]+\.woff2)["']?\)/g)].map(match => match[1]);
     assert.ok(fonts.length > 0, 'Shared Geist fonts must be bundled');

@@ -7,8 +7,9 @@ A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
 
 - Keep the starter minimal. Implement only the current request; record future
   standards here without building that infrastructure ahead of time.
-- Current scope: hello-world Dotdev, Labs, and Studio apps, shared React/StyleX
-  and API packages, one public tRPC endpoint per app, and Nix app/Linux image builds. No database, auth, Helm files,
+- Current scope: the Dotdev intro and Labs pages, a hello-world Studio app, shared React/StyleX
+  and API packages, one public tRPC endpoint per app, Nix app/Linux image builds,
+  and a local PostgreSQL/Drizzle subscription schema. No live subscription flow, auth, Helm files,
   deployment workflows, publishing, or cache hosting yet.
 - Keep guidance in this file. Do not create `docs/` or speculative packages.
 - Work in this checkout; no worktrees unless requested. Leave unrelated changes
@@ -57,6 +58,7 @@ apps/
   studio/              Studio placeholder; development port 3032
 packages/
   api/                 Shared server procedures, API client factory, and types
+  database/            Drizzle schema, server connection factory, local CLI config
   react/               Shared components, StyleX theme, fonts, and reset
 nix/
   packages/            Application and image derivations
@@ -65,7 +67,7 @@ tsconfig.base.json     Shared strict TypeScript settings
 ```
 
 - `apps/*` are deployable applications; `packages/*` are reusable source packages.
-  Use direct names (`api`, `react`, later `database`), not a generic `core/` layer.
+  Use direct names (`api`, `react`, `database`), not a generic `core/` layer.
 - Apps may import shared packages. Packages must not import apps or create cyclic
   dependencies. React components remain independent of API/database runtime code.
 - Consumers use package exports, never reach into another package's `src/`.
@@ -78,9 +80,42 @@ tsconfig.base.json     Shared strict TypeScript settings
 - Shared packages compile with their consuming app; a type-check config does not
   imply a separate emitted library build. Keep browser and Node ambient types local
   to the workspaces that need them.
-- Add `packages/database` with the first persisted feature, owning its schema,
-  connection factory, and migrations. API code may depend on it; it must not depend
+- `packages/database` owns its schema, connection factory, and eventual migrations.
+  API code may depend on it; it must not depend
   on API or React. Add folders/modules only when real code needs them.
+
+## Database standards
+
+- PostgreSQL 18 matches Knox. Local tooling lives in `nix/database.nix`; run
+  `nix run .#db-start` / `.#db-stop` from the repository root. Data is ignored
+  under `.local/postgres`, outside the Nix store. Stop preserves the data.
+- Development PostgreSQL listens only on a private Unix socket, with trust auth
+  gated by owner-only directory permissions. No TCP listener or production secrets.
+- `packages/database` owns schema and the server-only connection factory. It has
+  its own TypeScript config; no emitted library build or eager connection on import.
+  API code owns subscription behavior and email delivery; React never imports DB code.
+- `app.subscriptions` is independent of accounts: UUID, unique normalized email,
+  pending/subscribed/unsubscribed status, and timezone-aware timestamps. Validate
+  email syntax in the future API; the DB enforces nonempty lowercase/trimmed values,
+  uniqueness, allowed statuses, and a timestamp for unsubscribed records.
+  Drizzle updates `updated_at`; raw SQL must update it explicitly.
+- Repeated signup must not reactivate unsubscribed people without new confirmation.
+  Preserve opt-outs during import; do not invent confirmation dates. Confirmation
+  tokens, Resend contact sync/webhooks, unsubscribe routes, and sending arrive with
+  the subscription flow; the schema alone does not implement these behaviors.
+- Existing `public` tables stay intact. Create only `app` now; `auth` arrives with
+  sign-in. Scope Drizzle push to `app`, never implicitly manage every schema.
+- All current DB scripts use the local socket, ignoring DATABASE_URL. Do not
+  repoint this config at Knox. Remote migration configuration/access is separate work.
+  Starting PostgreSQL or a dev shell never applies schema changes automatically.
+- During local prototyping use explicit `db:push`. Generate the initial migration
+  only when the design settles; test it on a fresh database, not a database already
+  initialized by push. Commit migration files then, and never rewrite applied history.
+  New migration history uses `app_migrations`, separate from the old application.
+- `checks.database` type-checks the package, generates/migrates in a disposable
+  PostgreSQL instance, repeats migrate/push, and checks constraints and preservation
+  of a sentinel `public` table. Use the shared fixed-output npm cache offline; no
+  live database or email service in builds. It never touches developer data.
 
 ## Container standards
 
@@ -111,23 +146,117 @@ These are future requirements, not authorization to add a chart now.
 ## React and styling standards
 
 - React + TanStack Start/Router, TypeScript, Vite, and StyleX in each app.
-  Nitro produces standalone Node servers. Keep one hello-world page per app for now.
+  Nitro produces standalone Node servers. Keep one page per app for now.
 - Use the stable Go-native TypeScript compiler (currently pinned to `7.0.2`).
   TypeScript 7 runs through `tsc`; a separate native-preview package is unnecessary.
   Update stable versions deliberately with the lockfile and Nix dependency hash.
 - Shared components, theme tokens, fonts, and the reset live in `packages/react`
   (`@dsqr-dotdev/react`). Apps compose them; do not duplicate shared styling.
-- Preserve the purple palette and Geist typography. Evolve centralized StyleX
-  tokens as design decisions are made. Light/dark currently follows the system.
+- The color palette is the owner's palette from master and is fixed: near-white
+  and black in light, cool grey-black in dark, purple primary as the one accent.
+  Map it into tokens exactly; never substitute or "improve" it without asking.
+  Keep Geist typography. Evolve other StyleX tokens as decisions are made.
+- Light/dark: every color token is `light-dark(light, dark)`, resolved by
+  `color-scheme` on `<html>`. The inline theme script (`packages/react/src/theme.ts`)
+  sets `data-theme` before paint from the stored choice or the system, and follows
+  system changes live; the footer `ThemeToggle` stores an override and clears it
+  when the choice matches the system again. React never renders `data-theme`.
+  Style against the theme with inline `stylex.when.ancestor('[data-theme="dark"]')`
+  (never hoisted into a variable) and never with `prefers-color-scheme` media.
+- The root `browserslist` targets browsers with native `light-dark()`; without it
+  LightningCSS rewrites the tokens into a broken polyfill. Keep it when updating.
+- Every app renders the shared `Document` (tokens on `<html>`/`<body>`) in its root
+  route and wraps each page in the shared `Page`: `main` stacking `Section`s and
+  the footer at the bottom. `centered` places a single focal block (the Dotdev
+  intro) in the middle of the viewport. There is no header or nav yet; add one
+  only with real destinations, and never link to routes that do not exist.
+  Every shared region aligns to `column.base` in
+  `packages/react/src/styles/column.ts`; never re-derive width/gutters locally.
+- Home-page voice, shared by Dotdev and Labs: `Stack` (centered or start column
+  at the reading measure), `Prose` (the Geist Mono paragraph), `Mark` (dotted
+  underline phrase; hue tones, `emphasis`, `quiet`), and `TextLink` (inline
+  link, accent on hover). Compose these rather than restyling text per app.
+- Labs is the DSQR Labs LLC page: its name, one `Prose` paragraph with
+  `emphasis` marks, and the email as a `TextLink`, centered, shared footer.
+- Dotdev's home is master's intro, ported as-is: a small centered portrait over
+  one Geist Mono paragraph whose interests carry master's highlight `hues`
+  (dotted underlines at half strength). Keep its copy and styling unless asked.
+- The portrait is a transparent cutout (background removed with macOS Vision's
+  subject lift), exported as AVIF/WebP with alpha: no frame, border, or shadow,
+  with the shoulder fades baked into its alpha and fully transparent edges.
+  Replace it the same way.
+- Import images from `src/assets` so Vite fingerprints their URLs (no stale
+  caches, immutable caching); `public/` is only for files that need fixed URLs.
+- Screen-reader-only text uses the shared `visuallyHidden` style. Separate
+  items in a row with the shared `Separator` (a quiet grey dot), not glyphs.
+- `globals.css` is a token-free reset inside `@layer reset`, with the layer order
+  declared first so StyleX's priority layers always win over it.
 - No Tailwind or old UI stack without an explicit decision. Add only consumed
   components. Compile shared source through the app; type-check every workspace.
 - `routeTree.gen.ts` is generated and ignored. Build before standalone typechecking
   in a fresh checkout. Keep environment secrets in ignored local files.
 
+## Design principles
+
+Direction: calm, minimal, comforting interfaces (September 2026). The structure is
+minimal, but the feel is warm, not cold. Record new design decisions here as they
+are made; tokens in `packages/react/src/styles/theme.stylex.ts` are the source of truth.
+
+- Design is hierarchy: decide what is foreground, background, and hidden on each
+  view, and let that shift with context. One job and one primary action per view.
+  A spreadsheet-like dump of everything is a failure to choose, not a design.
+- Group with space and alignment, not boxes. Use few borders and few cards, and
+  never nest cards. Chrome (nav, footer, meta) recedes; content is the loudest thing.
+- Spend boldness once per page: one memorable element, everything else quiet.
+- Color: a small set of named OKLCH tokens (ground, surface, ink, muted, line,
+  accent) holding master's palette in light and dark. The purple accent marks
+  actionable things only. Meet WCAG AA text contrast; never put grey text on a
+  colored ground.
+- Type: Geist Variable (upright and italic) with weight and size doing the
+  hierarchy work. Body 17px at 1.6, a 1.2 scale (`Heading` levels 1–3), and the
+  38rem content column as the ~70ch measure. Dark mode body weight drops slightly
+  (380) because light text blooms. `font-synthesis: none`: only real weights and
+  italics render. `text-wrap: balance` on headings, `pretty` on paragraphs.
+  `Text` is ink by default; `tone="muted"` is for supporting copy only.
+  Spacing between elements belongs to the parent layout, never to primitives.
+- Space follows a 4px-based scale with clamp()-driven section rhythm. Radius follows
+  hierarchy (small for controls, larger for surfaces), never one value everywhere.
+  Depth is flat or a single tinted, diffuse shadow.
+- Motion answers the user (open, expand, confirm, navigate): 150–250ms ease-out,
+  animate only `transform`/`opacity`, never `transition: all`, interruptible, no
+  bounce. Allow at most one orchestrated load moment. Always honor
+  `prefers-reduced-motion`. Prefer the View Transitions API for page continuity.
+- Accessibility is infrastructure: keyboard-operable flows, visible soft
+  `:focus-visible` rings, 24px minimum hit targets (44px touch), text labels with
+  icons, and designed empty, loading, and error states.
+- Fast is calm: few font files (subset, `font-display: swap`), no layout shift,
+  sized images in modern formats.
+- Copy is plain and kind: say what things do. Buttons name the action ("Save
+  changes"), results reuse the verb ("Saved"), and errors say how to fix the
+  problem. Empty states invite action.
+- Avoid generated-looking tells: cream background + serif + terracotta; identical
+  rounded card grids with gradient washes; all-caps tracked eyebrow labels;
+  `A · B · C` meta strings; `→` on every link; mono for small labels; decorative
+  blobs/grain; fade-slide-up on every section; hover lift on every card.
+- Icons: inline SVG through the shared `Icon` component, no icon library. They
+  use `currentColor`; brand marks are filled, interface glyphs are Lucide v0.552
+  (main's set, 2px round strokes), and viewBoxes are tuned so they match optically. Icons are decorative;
+  the control carries the name (visually hidden text, no `title` tooltips).
+- Interactive controls: `controls` constants set glyph sizes and targets (32px,
+  44px on any coarse pointer). Rest muted; hover (only under `hover: hover`) and
+  focus turn the accent; focus adds a 2px accent ring; press scales to 0.92.
+  Transition only `color`/`transform` on the `motion.fast` token.
+- StyleX: tokens via `defineVars` (themeable) and `defineConsts` (fixed values,
+  breakpoints); alternate themes via `createTheme`; motion via `keyframes` and
+  `viewTransitionClass`. Components consume tokens and never hard-code colors.
+- Before shipping UI, check mobile and desktop in light and dark, then remove one
+  more accessory. Project-scoped design skills (`impeccable`, `animate`,
+  `review-animations`, `apple-design`, `mobile-native`, `web-design-guidelines`)
+  live untracked in `.claude/skills/` when installed locally.
+
 ## API standards
 
-- Shared API code lives in `packages/api`; add `packages/database` when a feature
-  needs persistence. Do not add a `core/` layer, empty packages, or domain scaffolds.
+- Shared API code lives in `packages/api`; persistence lives in `packages/database`. Do not add a `core/` layer, empty packages, or domain scaffolds.
 - Compile shared API source inside each consuming app's Nix build, like the React
   package. The app owns the HTTP handler; a separate API service is not needed yet.
 - Use tRPC's Fetch adapter and `@trpc/tanstack-react-query`. Browser code imports

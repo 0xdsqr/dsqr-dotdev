@@ -1,13 +1,73 @@
-@import '@fontsource/geist-sans/latin-400.css';
-@import '@fontsource/geist-sans/latin-500.css';
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/geist/wght-italic.css';
+@import '@fontsource-variable/geist-mono/wght.css';
 
-/* Global reset only. Theme and component styles are authored in StyleX. */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/*
+ * Token-free reset only. Theme and component styles are authored in StyleX;
+ * the shared Document component applies tokens to <html> and <body>.
+ * Declare the layer order up front so the reset always loses to StyleX's
+ * priority layers, whatever order the stylesheets load in.
+ */
+@layer reset, priority1, priority2, priority3, priority4, priority5, priority6, priority7;
 
-body {
-  margin: 0;
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /*
+   * The theme switch: color-scheme resolves every light-dark() token. Without
+   * a data-theme (or without JavaScript) the page follows the system.
+   */
+  html {
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  html[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+
+  :focus-visible {
+    outline: 2px solid;
+    outline-offset: 3px;
+  }
+
+  /* Token durations already collapse; this catches third-party animation. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

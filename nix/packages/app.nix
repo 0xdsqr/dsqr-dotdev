@@ -17,9 +17,19 @@ let
     ../../apps/studio/package.json
     ../../packages/api/package.json
     ../../packages/react/package.json
+    ../../packages/database/package.json
   ];
   appRoot = root + "/apps/${appName}";
-  sourceFiles = file: file.hasExt "ts" || file.hasExt "tsx" || file.hasExt "css";
+  # Source plus imported image assets (Vite fingerprints them at build time).
+  sourceFiles =
+    file:
+    lib.any file.hasExt [
+      "ts"
+      "tsx"
+      "css"
+      "avif"
+      "webp"
+    ];
 in
 (buildNpmPackage.override { nodejs = nodejs_24; }) {
   pname = appName;
@@ -47,7 +57,7 @@ in
       inherit root;
       fileset = manifests;
     };
-    hash = "sha256-6D8k4yGkxRsqaxOpVXPLFfT+PIg5id/dumemjBUF85U=";
+    hash = "sha256-yuVMjLVkqr/YPwuTBE7vs4XEFym2xV50SLeyF+GYS2M=";
   };
   npmRebuildFlags = [ "--ignore-scripts" ];
   env = {

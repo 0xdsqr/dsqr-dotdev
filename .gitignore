@@ -1,5 +1,6 @@
 # Local environment and secrets
 .direnv/
+.local/
 .env
 .env.*
 !.env.example

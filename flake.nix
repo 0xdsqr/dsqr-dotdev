@@ -19,6 +19,7 @@
       ];
       imports = [
         ./nix/devshell.nix
+        ./nix/database.nix
         ./nix/checks.nix
         ./nix/packages
       ];

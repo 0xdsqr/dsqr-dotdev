@@ -2,20 +2,25 @@ import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/reac
 import { useEffect, type ReactNode } from 'react'
 import appCss from '@dsqr-dotdev/react/globals.css?url'
 import type { ApiContext } from '@dsqr-dotdev/api/client'
+import { Document } from '@dsqr-dotdev/react/components/document'
 
 export const Route = createRootRouteWithContext<ApiContext>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Labs · dsqr.dev' },
+      { title: 'DSQR Labs LLC' },
+      {
+        name: 'description',
+        content: 'A one-person consulting studio for systems, infrastructure, performance, and backend engineering.',
+      },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
-  shellComponent: Document,
+  shellComponent: RootDocument,
 })
 
-function Document({ children }: { children: ReactNode }) {
+function RootDocument({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (import.meta.env.DEV) {
       void import('virtual:stylex:runtime')
@@ -23,15 +28,16 @@ function Document({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-        {import.meta.env.DEV && <link rel="stylesheet" href="/virtual:stylex.css" />}
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
+    <Document
+      head={
+        <>
+          <HeadContent />
+          {import.meta.env.DEV && <link rel="stylesheet" href="/virtual:stylex.css" />}
+        </>
+      }
+    >
+      {children}
+      <Scripts />
+    </Document>
   )
 }
