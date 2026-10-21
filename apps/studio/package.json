@@ -11,10 +11,10 @@
   "dependencies": {
     "@dsqr-dotdev/api": "0.0.0",
     "@dsqr-dotdev/react": "0.0.0",
-    "@tanstack/react-query": "5.104.0",
+    "@effect/atom-react": "4.0.0-beta.107",
     "@tanstack/react-router": "1.170.40",
     "@tanstack/react-start": "1.168.59",
-    "@trpc/server": "11.19.0",
+    "effect": "4.0.0-beta.107",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

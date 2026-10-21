@@ -20,7 +20,6 @@ let
     ../../packages/database/package.json
   ];
   appRoot = root + "/apps/${appName}";
-  # Source plus imported image assets (Vite fingerprints them at build time).
   sourceFiles =
     file:
     lib.any file.hasExt [
@@ -45,19 +44,21 @@ in
       (appRoot + "/vite.config.ts")
       ../../packages/api/tsconfig.json
       ../../packages/react/tsconfig.json
+      ../../packages/database/tsconfig.json
+      ../../packages/database/drizzle.config.ts
       (lib.fileset.fileFilter sourceFiles (appRoot + "/src"))
       (lib.fileset.fileFilter sourceFiles ../../packages/api/src)
       (lib.fileset.fileFilter sourceFiles ../../packages/react/src)
+      (lib.fileset.fileFilter sourceFiles ../../packages/database/src)
     ];
   };
-  # A separate cached derivation internally; app edits do not refetch packages.
   npmDeps = fetchNpmDeps {
     name = "workspace-npm-deps";
     src = lib.fileset.toSource {
       inherit root;
       fileset = manifests;
     };
-    hash = "sha256-yuVMjLVkqr/YPwuTBE7vs4XEFym2xV50SLeyF+GYS2M=";
+    hash = "sha256-AfRJhZFa/qjd/AvJz3WmYDBS3MNK8KMZuZa/+moSRKU=";
   };
   npmRebuildFlags = [ "--ignore-scripts" ];
   env = {
@@ -66,8 +67,6 @@ in
   };
   nativeBuildInputs = [ makeWrapper ];
 
-  # Pinned upstream builders embed local paths/times in generated manifests.
-  # Normalize before bundling (and hashing chunks); fail loudly on API changes.
   preBuild = ''
     substituteInPlace node_modules/@tanstack/start-plugin-core/dist/esm/start-manifest-plugin/manifestBuilder.js \
       --replace-fail 'return serialize(startManifest);' \
@@ -88,7 +87,6 @@ in
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/share/${appName}"
-    # Nitro's metadata contains a wall-clock timestamp; only ship runtime files.
     cp -r apps/${appName}/.output/server apps/${appName}/.output/public "$out/share/${appName}/"
     makeWrapper ${nodejs-slim_24}/bin/node "$out/bin/${appName}" \
       --add-flags "$out/share/${appName}/server/index.mjs" \

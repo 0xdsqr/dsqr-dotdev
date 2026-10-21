@@ -1,18 +1,17 @@
-import type { AppRouter } from './router.server'
-import { QueryClient } from '@tanstack/react-query'
-import { createTRPCClient, httpBatchLink } from '@trpc/client'
-import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
+import { FetchHttpClient } from 'effect/unstable/http'
+import * as AtomHttpApi from 'effect/unstable/reactivity/AtomHttpApi'
+import { AppApi, DotdevApi } from './api/api'
 
-export function createApiContext() {
-  const queryClient = new QueryClient()
-  const client = createTRPCClient<AppRouter>({
-    links: [httpBatchLink({ url: '/api/trpc' })],
-  })
+const baseUrl = (globalThis as { location?: { origin: string } }).location?.origin
 
-  return {
-    queryClient,
-    trpc: createTRPCOptionsProxy<AppRouter>({ client, queryClient }),
-  }
-}
+export class DotdevClient extends AtomHttpApi.Service<DotdevClient>()('@dsqr-dotdev/api/DotdevClient', {
+  api: DotdevApi,
+  httpClient: FetchHttpClient.layer,
+  baseUrl,
+}) {}
 
-export type ApiContext = ReturnType<typeof createApiContext>
+export class AppClient extends AtomHttpApi.Service<AppClient>()('@dsqr-dotdev/api/AppClient', {
+  api: AppApi,
+  httpClient: FetchHttpClient.layer,
+  baseUrl,
+}) {}
