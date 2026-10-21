@@ -10,9 +10,10 @@ A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
 - Current scope: the Dotdev intro and Labs pages, a hello-world Studio app, shared React/StyleX
   and API packages, an Effect HttpApi per app, Nix app/Linux image builds,
   a local PostgreSQL/Drizzle subscription schema, and Dotdev's newsletter signup
-  (stores the address only). No auth, Helm files, deployment workflows, publishing, or
-  cache hosting yet.
+  (stores the address only), and CI that checks, scans, and publishes images to
+  GHCR. No auth, Helm files, or deployment workflows yet.
 - Keep guidance in this file. Do not create `docs/` or speculative packages.
+- Commit and push straight to `master`; no feature branches or PRs unless asked.
 - Work in this checkout; no worktrees unless requested. Leave unrelated changes
   alone. The deferred deployment setup is saved on `codex/deployment-baseline`.
 - Keep Dotdev on port 3030, Labs on 3031, and Studio on 3032. Keep hot updates
@@ -22,6 +23,12 @@ A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
 
 - Nix owns the toolchain, builds, and checks. Keep `flake.lock` committed; update
   pins intentionally. Pinning enables repeatability, not automatic security fixes.
+- Flake inputs come from FlakeHub (`nixpkgs` 0.1 is the rolling unstable channel)
+  for semver-resolved, fast tarball fetches. A weekly workflow opens a
+  `flake.lock` update PR; review it like any dependency bump.
+- CI tooling lives in `nix/ci.nix` as `writeShellApplication` apps
+  (`ci-image-scan`, `ci-image-push`, `ci-image-index`): shellchecked, pinned by
+  `flake.lock`, and runnable locally. Workflows stay thin and call them.
 - Compose with flake-parts. Keep inputs, supported systems, and module imports in
   `flake.nix`; system outputs belong in each module's `perSystem`.
 - Keep tools/formatter in `nix/devshell.nix`, checks in `nix/checks.nix`, package
@@ -64,7 +71,10 @@ packages/
 nix/
   packages/            Application and image derivations
   checks/              Runtime/build checks
-tsconfig.base.json     Shared strict TypeScript settings
+  ci.nix               CI apps for image scan, push, and index
+.github/
+  actions/setup-nix/   Determinate Nix + FlakeHub Cache
+  workflows/           CI and weekly flake.lock updates
 ```
 
 - `apps/*` are deployable applications; `packages/*` are reusable source packages.
@@ -74,8 +84,10 @@ tsconfig.base.json     Shared strict TypeScript settings
 - Consumers use package exports, never reach into another package's `src/`.
   Browser-safe types and server runtime code have separate exports. Name server
   implementation files `*.server.ts` so Start's import protection can reject leaks.
-- Every workspace has a `tsconfig.json` extending the root base and a `typecheck`
-  script covering its entire source. The root command checks all workspaces, not
+- Every workspace owns a complete `tsconfig.json` (no shared base): strict,
+  `noUncheckedIndexedAccess`, `noImplicitOverride`, `verbatimModuleSyntax`,
+  `isolatedModules`, Bundler resolution, `noEmit`, plus only the libs and ambient
+  types it needs. Each has a `typecheck` script covering its entire source. The root command checks all workspaces, not
   just files reached through app imports. TypeScript is pinned once at the root;
   packages declare their own dependencies and required ambient type packages.
 - Shared packages compile with their consuming app; a type-check config does not
@@ -134,7 +146,31 @@ tsconfig.base.json     Shared strict TypeScript settings
   A Nix output tag is not the OCI registry digest.
 - Linux images require a matching native or remote Linux builder. macOS output
   cannot run in a Linux container. Supported Linux targets are x86_64 and aarch64.
-- Building is in scope; pushing images, deploying, or setting up a cluster is not.
+- Images publish to `ghcr.io/0xdsqr/{dotdev-web,dotdev-labs,dotdev-studio}`.
+  Deploy by digest (`image@sha256:...`), never by tag; `sha-<commit>` and
+  `master` tags exist only for humans.
+
+## CI standards
+
+- `.github/workflows/ci.yml` runs on pushes to `master`, pull requests, and
+  manual dispatch: `nix flake check` (including the `workflows` lint check), then
+  each image on native x86_64 and aarch64 runners: build, Trivy scan (fails on
+  fixable HIGH/CRITICAL), and a CycloneDX SBOM. Pull requests stop there.
+- On `master`, each architecture image is pushed (OCI) with an SBOM attestation,
+  combined into one multi-architecture index tagged `sha-<commit>` and `master`,
+  and given a build provenance attestation. The `image-digests` artifact
+  (`images.json`, 90 days) and the run summary record every immutable digest;
+  verify with `gh attestation verify oci://<image>@<digest> --owner 0xdsqr`.
+- CI publishes with the job's `GITHUB_TOKEN` only (`packages: write`). It holds no
+  cluster credentials and never deploys; clusters pull digests themselves.
+- Workflows start from `permissions: {}` and grant per job. Pin every action to a
+  full commit SHA with the version in a trailing tag comment; Dependabot updates
+  actions and npm weekly with a 7-day cooldown. Check out with
+  `persist-credentials: false`. Set `timeout-minutes` on every job.
+- The `workflows` check runs actionlint and zizmor (medium and above) over
+  `.github`, so CI lints itself. Run it locally before pushing workflow changes.
+- Nix runs through `.github/actions/setup-nix` (Determinate Nix and FlakeHub
+  Cache via OIDC, so jobs that use it need `id-token: write`).
 
 ## Helm standards
 
@@ -371,6 +407,8 @@ nix run .#dev-studio                     # Studio: http://127.0.0.1:3032
 nix build .#dotdev .#labs .#studio        # Production apps
 nix run .                               # Production server, port 3000
 nix build .#dotdev-image .#labs-image .#studio-image # Linux builder
+nix build .#checks.aarch64-darwin.workflows  # lint workflows (actionlint + zizmor)
+nix run .#ci-image-scan -- result image.cdx.json # scan an image archive
 nix fmt flake.nix nix/*.nix nix/checks/*.nix nix/packages/*.nix
 nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false
 nix flake check --all-systems --no-build --no-update-lock-file
