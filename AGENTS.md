@@ -155,7 +155,10 @@ nix/
 - `.github/workflows/ci.yml` runs on pushes to `master`, pull requests, and
   manual dispatch: `nix flake check` (including the `workflows` lint check), then
   each image on native x86_64 and aarch64 runners: build, Trivy scan (fails on
-  fixable HIGH/CRITICAL), and a CycloneDX SBOM. Pull requests stop there.
+  fixable HIGH/CRITICAL), and a CycloneDX SBOM. CodeQL scans TypeScript and the
+  workflows. The `Required checks` job gates on all of them and is the status
+  check the `master` ruleset requires; keep its name stable. Pull requests stop
+  there.
 - On `master`, each architecture image is pushed (OCI) with an SBOM attestation,
   combined into one multi-architecture index tagged `sha-<commit>` and `master`,
   and given a build provenance attestation. The `image-digests` artifact
