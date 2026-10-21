@@ -28,6 +28,7 @@ let
       "css"
       "avif"
       "webp"
+      "svg"
     ];
 in
 (buildNpmPackage.override { nodejs = nodejs_24; }) {
