@@ -8,9 +8,10 @@ A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
 - Keep the starter minimal. Implement only the current request; record future
   standards here without building that infrastructure ahead of time.
 - Current scope: the Dotdev intro and Labs pages, a hello-world Studio app, shared React/StyleX
-  and API packages, one public tRPC endpoint per app, Nix app/Linux image builds,
-  and a local PostgreSQL/Drizzle subscription schema. No live subscription flow, auth, Helm files,
-  deployment workflows, publishing, or cache hosting yet.
+  and API packages, an Effect HttpApi per app, Nix app/Linux image builds,
+  a local PostgreSQL/Drizzle subscription schema, and Dotdev's newsletter signup
+  (stores the address only). No auth, Helm files, deployment workflows, publishing, or
+  cache hosting yet.
 - Keep guidance in this file. Do not create `docs/` or speculative packages.
 - Work in this checkout; no worktrees unless requested. Leave unrelated changes
   alone. The deferred deployment setup is saved on `codex/deployment-baseline`.
@@ -91,18 +92,22 @@ tsconfig.base.json     Shared strict TypeScript settings
   under `.local/postgres`, outside the Nix store. Stop preserves the data.
 - Development PostgreSQL listens only on a private Unix socket, with trust auth
   gated by owner-only directory permissions. No TCP listener or production secrets.
+- The pool sets a 10 s statement and idle-in-transaction timeout and recycles
+  connections after 30 min; `ping(db)` backs health checks. Nitro's graceful
+  shutdown force-exits, so no signal handlers; `closeDatabase()` exists for a
+  Nitro `close` hook if forced exit is ever disabled. Imports are extensionless.
 - `packages/database` owns schema and the server-only connection factory. It has
   its own TypeScript config; no emitted library build or eager connection on import.
   API code owns subscription behavior and email delivery; React never imports DB code.
-- `app.subscriptions` is independent of accounts: UUID, unique normalized email,
+- `app.subscriptions` is independent of accounts: UUIDv7 key (PostgreSQL 18
+  `uuidv7()`), unique normalized email,
   pending/subscribed/unsubscribed status, and timezone-aware timestamps. Validate
   email syntax in the future API; the DB enforces nonempty lowercase/trimmed values,
   uniqueness, allowed statuses, and a timestamp for unsubscribed records.
   Drizzle updates `updated_at`; raw SQL must update it explicitly.
 - Repeated signup must not reactivate unsubscribed people without new confirmation.
-  Preserve opt-outs during import; do not invent confirmation dates. Confirmation
-  tokens, Resend contact sync/webhooks, unsubscribe routes, and sending arrive with
-  the subscription flow; the schema alone does not implement these behaviors.
+  Preserve opt-outs during import; do not invent confirmation dates.
+  Confirmation, unsubscribe, sending, and Resend contact sync are future work.
 - Existing `public` tables stay intact. Create only `app` now; `auth` arrives with
   sign-in. Scope Drizzle push to `app`, never implicitly manage every schema.
 - All current DB scripts use the local socket, ignoring DATABASE_URL. Do not
@@ -113,8 +118,8 @@ tsconfig.base.json     Shared strict TypeScript settings
   initialized by push. Commit migration files then, and never rewrite applied history.
   New migration history uses `app_migrations`, separate from the old application.
 - `checks.database` type-checks the package, generates/migrates in a disposable
-  PostgreSQL instance, repeats migrate/push, and checks constraints and preservation
-  of a sentinel `public` table. Use the shared fixed-output npm cache offline; no
+  PostgreSQL instance, repeats migrate/push, and checks that a sentinel `public`
+  table survives. There are no unit tests for now; they return later. Use the shared fixed-output npm cache offline; no
   live database or email service in builds. It never touches developer data.
 
 ## Container standards
@@ -176,8 +181,12 @@ These are future requirements, not authorization to add a chart now.
   at the reading measure), `Prose` (the Geist Mono paragraph), `Mark` (dotted
   underline phrase; hue tones, `emphasis`, `quiet`), and `TextLink` (inline
   link, accent on hover). Compose these rather than restyling text per app.
-- Labs is the DSQR Labs LLC page: its name, one `Prose` paragraph with
-  `emphasis` marks, and the email as a `TextLink`, centered, shared footer.
+- Labs is the DSQR Labs LLC page: the "square, squared" mark (`LabsMark`: a
+  purple squircle with a faint, lighter squircle in its top-right corner like a
+  quiet exponent, since dsqr is "d squared") as the h1 with the name visually hidden, one `Prose` paragraph
+  with `emphasis` marks, and the email as a `TextLink`, centered, shared footer.
+  The same mark is every app's favicon: `@dsqr-dotdev/react/mark.svg`, linked
+  as `rel="icon"` in each root route.
 - Dotdev's home is master's intro, ported as-is: a small centered portrait over
   one Geist Mono paragraph whose interests carry master's highlight `hues`
   (dotted underlines at half strength). Keep its copy and styling unless asked.
@@ -238,6 +247,15 @@ are made; tokens in `packages/react/src/styles/theme.stylex.ts` are the source o
   rounded card grids with gradient washes; all-caps tracked eyebrow labels;
   `A · B · C` meta strings; `→` on every link; mono for small labels; decorative
   blobs/grain; fade-slide-up on every section; hover lift on every card.
+- Form controls: `Input` (`outlined`, or `bare` inside a `FieldGroup`, which
+  draws one hairline border that turns the accent on focus-within) and `Button`
+  (`solid` for a page's one primary action; `quiet` is text toned like the icon
+  controls, muted then accent). Footer controls stay quiet: no filled buttons.
+- The footer is one centered axis, like the pages: social links · theme toggle,
+  then an optional `action` (Dotdev's `SitePage` passes the subscribe field on
+  every page), then the copyright as a small line in the intro's Geist Mono,
+  all on one even row gap. Same arrangement at every width. The page grid column
+  is `minmax(0, 1fr)` so no control's intrinsic width can widen the page.
 - Icons: inline SVG through the shared `Icon` component, no icon library. They
   use `currentColor`; brand marks are filled, interface glyphs are Lucide v0.552
   (main's set, 2px round strokes), and viewBoxes are tuned so they match optically. Icons are decorative;
@@ -254,29 +272,94 @@ are made; tokens in `packages/react/src/styles/theme.stylex.ts` are the source o
   `review-animations`, `apple-design`, `mobile-native`, `web-design-guidelines`)
   live untracked in `.claude/skills/` when installed locally.
 
+## Effect standards
+
+Effect (v4, pinned exactly to `4.0.0-beta.107`) is the primary way this project
+models logic, errors, dependencies, validation, and HTTP. References: the Effect
+guide shipped in `node_modules/effect/AGENTS.md` and `ai-docs/` (prefer these and
+the installed source over outside docs), OpenCode, and Executor.
+
+- Write Effect code with `Effect.gen` and `Effect.fn("Service.method")`; attach
+  behaviour with combinators. Never build functions that return `Effect.gen`.
+- Model every dependency as a service: `class X extends Context.Service<X, Shape>()("@dsqr-dotdev/<package>/X")`
+  with `static readonly layer`. Compose with `Layer.provide`/`provideMerge`;
+  resources use `Effect.acquireRelease` inside the layer so they close with it.
+- Errors are `Schema.TaggedError` classes (with `httpApiStatus` when they cross
+  HTTP). Handle them with `Effect.catchTag`; turn unexpected failures into
+  defects with `Effect.orDie` at the handler boundary (clients get a bare 500).
+- All validation and domain modeling uses Effect `Schema`: no predicates, manual
+  parsing, or other schema libraries. Forms decode with the same schema the API
+  uses (`Schema.decodeUnknownResult`), so messages match and invalid input never
+  hits the network.
+- Configuration comes from `Config`, read when a layer is built, never per
+  request. Use the typed readers (`Config.boolean`, `Config.literals`,
+  `Config.redacted` for secrets) instead of string comparisons; parse anything
+  that can throw (URLs, files) with `Effect.try` into a tagged error.
+- Values with a sensible default are a `Context.Reference` (for example
+  `HealthCheck`, which defaults to `Effect.void` and is overridden per app).
+- Layers passed together to `Layer.provide([...])` are siblings and cannot see
+  each other; wrap cross-cutting layers (the `LoggerLive` logger) around the
+  whole app with `Layer.provideMerge` so every layer and request uses them.
+- Non-Effect callbacks (driver events, timers) run Effects through
+  `Effect.runForkWith(yield* Effect.context())`, never bare `Effect.runFork`, so
+  they keep the app's logger and services.
+- Log through Effect (`Effect.logInfo`/`logWarning`/`logError`), never
+  `console`. `LoggerLive` writes JSON lines in production and the pretty logger
+  in development. Never log secrets or subscriber emails. `HttpPolicy` holds request policy
+  (TRUST_PROXY, TRUSTED_ORIGINS).
+- Upgrade Effect deliberately: bump every `effect`/`@effect/*` package to the
+  same exact version, update the lockfile and Nix hash, and re-run all apps.
+  `effect/unstable/*` modules may change between betas.
+
 ## API standards
 
-- Shared API code lives in `packages/api`; persistence lives in `packages/database`. Do not add a `core/` layer, empty packages, or domain scaffolds.
-- Compile shared API source inside each consuming app's Nix build, like the React
-  package. The app owns the HTTP handler; a separate API service is not needed yet.
-- Use tRPC's Fetch adapter and `@trpc/tanstack-react-query`. Browser code imports
-  only the API router type; runtime server exports live under `@dsqr-dotdev/api/server`. All apps share the
-  client factory exported by `@dsqr-dotdev/api/client` and mount their own handler.
-- Create QueryClient and tRPC clients per router instance, never as server globals.
-  The initial health query runs in the browser after hydration; add SSR prefetch
-  and cache hydration together when a feature needs server-fetched query data.
-- The current `health` query is public and confirms API connectivity only. Add
-  request validation and server-side authorization with the first real inputs and
-  protected feature; UI login checks alone must never authorize an endpoint.
-- Mount only the procedures each app needs. Add bounded input schemas, explicit
-  response fields, pagination, and consistent errors as domain endpoints arrive.
-  Authentication must be followed by role/ownership checks for each operation.
-- Keep same-origin browser transport by default. Before adding cookie-authenticated
-  mutations, implement and test CSRF/origin protection at the tRPC HTTP boundary;
-  Start's server-function protection does not automatically cover custom routes.
-  Add request limits and appropriate rate limiting with exposed write operations.
-- Add database schema, migrations, and Better Auth only as the corresponding
-  features arrive. Keep builds independent of database connections and secrets.
+- `packages/api/src` follows Effect's HttpApi layout. Browser-safe: `domain/`
+  (schemas, tagged errors), `api/` (`HttpApiGroup`s and the per-app `HttpApi`s:
+  `AppApi` for Labs/Studio, `DotdevApi`), `index.ts`, and `client.ts`
+  (`AtomHttpApi` clients `AppClient` and `DotdevClient`). Server-only
+  (`*.server.ts`, kept for Start's import protection): `server/` services
+  (`Subscriptions`, `RateLimiter`, `HttpPolicy`, `HealthCheck`), `server/http/`
+  handler layers (`HttpApiBuilder.group`), `probes.server.ts`,
+  `origin.server.ts`, `logging.server.ts`, and
+  `app.server.ts`, which composes each app's layer and exports lazily built web
+  handlers (`dotdevHandler`, `appHandler`) via `HttpRouter.toWebHandler`.
+- API contracts never import server code. New features add a domain schema, an
+  endpoint in a group, a service with a layer, and a handler layer; mount a group
+  only in the apps that need it.
+- Each app mounts its handler in one TanStack Start server route, `/api/$` (GET,
+  POST); the API owns every path under `/api`, including the probes. The handler caps request bodies at 4 KB as
+  byte streams before Effect sees them (Effect's `MaxBodySize` covers multipart
+  only); the global origin guard rejects cross-origin writes before routing,
+  comparing the full origin (scheme from X-Forwarded-Proto only when TRUST_PROXY=1).
+- React calls the API through `AtomHttpApi` query and mutation atoms with
+  `@effect/atom-react` hooks; each app root renders a `RegistryProvider`. Keep
+  presentational components plain React; Effect belongs in data and logic.
+  Queries that need the browser's origin render after mount; add SSR hydration
+  (`effect/unstable/reactivity/Hydration`) with the first server-fetched data.
+- `packages/database` exposes the `Database` service: Drizzle over a `pg` pool
+  acquired in the layer's scope (closed when the runtime disposes). It reads
+  config with `Config`; if that fails, the layer still builds as an unavailable
+  service so `/api/livez` stays up and `/api/healthz` reports 503. Config
+  errors (including an unreadable CA file or malformed URL) fail into this path.
+- Subscriptions (Dotdev only): `POST /api/subscriptions` decodes the payload with
+  `SubscribeRequest`, applies the global (500/10 min), per-client (20/10 min,
+  only when TRUST_PROXY=1 identifies the rightmost X-Forwarded-For hop), then
+  per-address (3/hour) limits via `RateLimiter` (bounded to 10,000 windows,
+  oldest evicted first), and stores the row with `onConflictDoNothing`. Every accepted request answers
+  `{ status: "accepted" }` whatever the row's state, so responses never reveal
+  whether an address is on the list. `RateLimited` returns 429.
+  Confirmation, unsubscribe, and delivery arrive later with Resend.
+- Development uses the local socket database until `DSQR_DATABASE=remote`;
+  production requires DATABASE_URL and PGSSLROOTCERT. With a CA, the driver gets
+  only the URL's connection fields plus an explicit `ssl`. Rate limits live in
+  process memory: move them to a shared store before running several instances.
+- Probes on every app's API: `/api/livez` (process up, no dependencies) and
+  `/api/healthz`
+  (dependencies; Dotdev pings the database with a 2 s timeout). Plain
+  `ok`/`unavailable`, `Cache-Control: no-store`, no details.
+- Add authentication with the first protected feature as `HttpApiMiddleware`
+  plus role/ownership checks per operation; UI checks never authorize. Add
+  bounded schemas, explicit response fields, and pagination as endpoints grow.
 
 ## Working commands
 
@@ -297,7 +380,7 @@ nix build .#dotdev .#labs .#studio --rebuild --offline --option substitute false
 
 Stage new files explicitly before Git-backed flake commands; avoid `git add .`.
 The `smoke` check verifies toolchain execution. Each app check builds/type-checks
-that app and both shared packages, then checks HTML, public tRPC requests/batching,
+that app and both shared packages, then checks HTML, the public API, origin guard,
 assets, shared styles/fonts, and unknown routes/procedures. Each app build includes
 only its own source plus shared source and all workspace manifests. Root
 `npm run build` builds all apps; `npm run typecheck` checks every workspace.
@@ -312,6 +395,7 @@ implementation when making changes, not popularity alone.
 - [Zed flake-parts setup](https://github.com/zed-industries/zed/blob/main/flake.nix)
 - [Kubernetes Restricted policy](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Cachix signed caches](https://docs.cachix.org/getting-started)
-- [tRPC TanStack Query integration](https://trpc.io/docs/client/tanstack-react-query/setup)
-- [tRPC Fetch adapter](https://trpc.io/docs/server/adapters/fetch)
+- [Effect](https://github.com/Effect-TS/effect) (v4; `node_modules/effect/AGENTS.md`)
+- [Executor Effect + TanStack Start app](https://github.com/UsefulSoftwareCo/executor)
+- [OpenCode Effect usage](https://github.com/anomalyco/opencode)
 - [TanStack Start server routes](https://tanstack.com/start/latest/docs/framework/react/guide/server-routes)

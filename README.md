@@ -1,7 +1,7 @@
 # dsqr.dev
 
 Three minimal React + TanStack Start apps with a shared StyleX design system and
-tRPC API foundation. Nix and flake-parts own development tools, builds, and checks.
+Effect HttpApi foundation. Nix and flake-parts own development tools, builds, and checks.
 Architecture and incremental security requirements live in [AGENTS.md](AGENTS.md).
 
 ## Develop
@@ -15,8 +15,9 @@ Install once with `nix develop --command npm ci`, then run each app in its own t
 | Studio | `nix run .#dev-studio` | http://127.0.0.1:3032 |
 
 Dotdev renders the intro and Labs the DSQR Labs page; Studio renders the shared
-hello-world UI and fetches "API connected." from its public `/api/trpc/health`. Vite hot updates include
-shared components and StyleX tokens. No auth or live subscription flow yet. The database foundation runs locally without secrets.
+hello-world UI and fetches "API connected." from its public `/api/health`. Vite hot updates include
+shared components and StyleX tokens. No auth yet. Dotdev's newsletter signup stores addresses in the local database;
+set `DSQR_DATABASE=remote` to use `DATABASE_URL` instead.
 
 ## Local database
 
@@ -81,7 +82,7 @@ and batching, styles/fonts, and missing routes/procedures. Images use Nix
 
 - `apps/dotdev`, `apps/labs`, `apps/studio`: app routes, HTTP adapters, and configuration.
 - `packages/database`: local subscription schema, connection factory, Drizzle commands.
-- `packages/api`: shared tRPC router, browser client factory, and type exports.
+- `packages/api`: Effect HttpApi contracts, services, handlers, and atom clients.
 - `packages/react`: shared hello-world layout, components, StyleX theme, fonts, and reset.
 - `tsconfig.base.json`: common strict settings; every workspace has its own config
   and type-check command covering all its source.
