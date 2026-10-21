@@ -1,0 +1,11 @@
+name: Set up Nix
+description: Install Determinate Nix and enable FlakeHub Cache
+
+runs:
+  using: composite
+  steps:
+    - name: Install Determinate Nix
+      uses: DeterminateSystems/determinate-nix-action@96c5ee93a9dddf2830d31e1da6ec719077336c28 # v3.23.3
+
+    - name: Enable FlakeHub Cache
+      uses: DeterminateSystems/flakehub-cache-action@5a904648441896ace9bab97c70b321339eb127ed # v3.23.3

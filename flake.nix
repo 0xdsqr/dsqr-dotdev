@@ -22,6 +22,7 @@
         ./nix/database.nix
         ./nix/checks.nix
         ./nix/packages
+        ./nix/ci.nix
       ];
     };
 }

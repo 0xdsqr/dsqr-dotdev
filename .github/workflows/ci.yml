@@ -1,0 +1,244 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  PUBLISH: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  check:
+    name: Nix checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Check flake.lock health
+        uses: DeterminateSystems/flake-checker-action@786422608c7bded2bbc9741ad9f91356842bf520 # v14
+        with:
+          send-statistics: false
+
+      - name: Run flake checks
+        run: nix flake check --print-build-logs --keep-going
+
+  image:
+    name: Image ${{ matrix.image }} (${{ matrix.platform.arch }})
+    needs: check
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 45
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [dotdev, labs, studio]
+        platform:
+          - { system: x86_64-linux, arch: amd64, runner: ubuntu-24.04 }
+          - { system: aarch64-linux, arch: arm64, runner: ubuntu-24.04-arm }
+        include:
+          - { app: dotdev, image: dotdev-web }
+          - { app: labs, image: dotdev-labs }
+          - { app: studio, image: dotdev-studio }
+    env:
+      APP: ${{ matrix.app }}
+      ARCH: ${{ matrix.platform.arch }}
+      IMAGE: ${{ matrix.image }}
+      SYSTEM: ${{ matrix.platform.system }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Build image
+        run: nix build --print-build-logs ".#packages.$SYSTEM.$APP-image" --out-link image.tar.gz
+
+      - name: Resolve Trivy database cache key
+        id: trivy
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Trivy database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ steps.trivy.outputs.day }}
+          restore-keys: trivy-db-
+
+      - name: Scan image and write SBOM
+        run: nix run .#ci-image-scan -- image.tar.gz "sbom-$IMAGE-$ARCH.cdx.json"
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-${{ matrix.image }}-${{ matrix.platform.arch }}
+          path: sbom-${{ matrix.image }}-${{ matrix.platform.arch }}.cdx.json
+          if-no-files-found: error
+
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GITHUB_TOKEN" |
+            nix shell --inputs-from . nixpkgs#crane --command \
+              crane auth login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Push image
+        id: push
+        if: env.PUBLISH == 'true'
+        run: |
+          digest="$(nix run .#ci-image-push -- image.tar.gz "$REGISTRY/$IMAGE:sha-$GITHUB_SHA-$ARCH")"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          mkdir -p digests
+          printf '%s\n' "$digest" > "digests/$IMAGE-$ARCH"
+
+      - name: Attest SBOM
+        if: env.PUBLISH == 'true'
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ matrix.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: sbom-${{ matrix.image }}-${{ matrix.platform.arch }}.cdx.json
+          push-to-registry: true
+
+      - name: Upload digest
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digest-${{ matrix.image }}-${{ matrix.platform.arch }}
+          path: digests/${{ matrix.image }}-${{ matrix.platform.arch }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish ${{ matrix.image }}
+    needs: image
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [dotdev-web, dotdev-labs, dotdev-studio]
+    env:
+      IMAGE: ${{ matrix.image }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Nix
+        uses: ./.github/actions/setup-nix
+
+      - name: Download architecture digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: digest-${{ matrix.image }}-*
+          path: digests
+          merge-multiple: true
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GITHUB_TOKEN" |
+            nix shell --inputs-from . nixpkgs#crane --command \
+              crane auth login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Create multi-architecture index
+        id: index
+        run: |
+          amd64="$(cat "digests/$IMAGE-amd64")"
+          arm64="$(cat "digests/$IMAGE-arm64")"
+          digest="$(nix run .#ci-image-index -- "$REGISTRY/$IMAGE" "sha-$GITHUB_SHA,master" "$amd64" "$arm64")"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          mkdir -p record
+          jq -n \
+            --arg image "$REGISTRY/$IMAGE" \
+            --arg digest "$digest" \
+            --arg amd64 "$amd64" \
+            --arg arm64 "$arm64" \
+            --arg commit "$GITHUB_SHA" \
+            '{image: $image, digest: $digest, ref: "\($image)@\($digest)", tags: ["sha-\($commit)", "master"], platforms: {"linux/amd64": $amd64, "linux/arm64": $arm64}, commit: $commit}' \
+            > "record/$IMAGE.json"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ matrix.image }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          push-to-registry: true
+
+      - name: Upload digest record
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: record-${{ matrix.image }}
+          path: record/${{ matrix.image }}.json
+          if-no-files-found: error
+
+  record:
+    name: Record image digests
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Download digest records
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: record-*
+          path: record
+          merge-multiple: true
+
+      - name: Write images.json and summary
+        run: |
+          jq -s 'map({(.image | split("/") | last): .}) | add' record/*.json > images.json
+          {
+            echo "## Published images"
+            echo
+            echo "Commit \`$GITHUB_SHA\`"
+            echo
+            echo "| Image | Immutable reference |"
+            echo "| --- | --- |"
+            jq -r 'to_entries[] | "| \(.key) | `\(.value.ref)` |"' images.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload images.json
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-digests
+          path: images.json
+          retention-days: 90
+          if-no-files-found: error

@@ -23,6 +23,26 @@
           }
         // {
 
+          workflows =
+            pkgs.runCommand "dsqr-dotdev-workflows"
+              {
+                nativeBuildInputs = [
+                  pkgs.actionlint
+                  pkgs.shellcheck
+                  pkgs.zizmor
+                ];
+                src = lib.fileset.toSource {
+                  root = ../.;
+                  fileset = ../.github;
+                };
+              }
+              ''
+                cd "$src"
+                actionlint .github/workflows/*.yml
+                zizmor --offline --no-progress --min-severity medium .github
+                touch "$out"
+              '';
+
           smoke =
             pkgs.runCommand "dsqr-dotdev-toolchain-smoke"
               {

@@ -24,5 +24,9 @@ dockerTools.buildLayeredImage {
       "NODE_EXTRA_CA_CERTS=${cacert}/etc/ssl/certs/ca-bundle.crt"
     ];
     ExposedPorts."3000/tcp" = { };
+    Labels = {
+      "org.opencontainers.image.source" = "https://github.com/0xdsqr/dsqr-dotdev";
+      "org.opencontainers.image.title" = appName;
+    };
   };
 }

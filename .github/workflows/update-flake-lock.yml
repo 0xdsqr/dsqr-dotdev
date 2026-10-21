@@ -1,0 +1,37 @@
+name: Update flake.lock
+
+on:
+  schedule:
+    - cron: "0 15 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: update-flake-lock
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update flake inputs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@96c5ee93a9dddf2830d31e1da6ec719077336c28 # v3.23.3
+
+      - name: Open flake.lock update pull request
+        uses: DeterminateSystems/update-flake-lock@da03c0f078bc4b2c37ee4f7e072d34bf8f188bb3 # v29
+        with:
+          pr-title: "chore(nix): update flake.lock"
+          commit-msg: "chore(nix): update flake.lock"
+          pr-labels: dependencies
