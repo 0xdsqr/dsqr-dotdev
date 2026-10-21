@@ -167,8 +167,8 @@ nix/
 - CI publishes with the job's `GITHUB_TOKEN` only (`packages: write`). It holds no
   cluster credentials and never deploys; clusters pull digests themselves.
 - Workflows start from `permissions: {}` and grant per job. Pin every action to a
-  full commit SHA with the version in a trailing tag comment; Dependabot updates
-  actions and npm weekly with a 7-day cooldown. Check out with
+  full commit SHA with the version in a trailing tag comment; bump pins
+  deliberately (no Dependabot for now). Check out with
   `persist-credentials: false`. Set `timeout-minutes` on every job.
 - The `workflows` check runs actionlint and zizmor (medium and above) over
   `.github`, so CI lints itself. Run it locally before pushing workflow changes.
