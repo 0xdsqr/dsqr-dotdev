@@ -127,12 +127,13 @@ helm/
 - All current DB scripts use the local socket, ignoring DATABASE_URL. Do not
   repoint this config at Knox. Remote migration configuration/access is separate work.
   Starting PostgreSQL or a dev shell never applies schema changes automatically.
-- During local prototyping use explicit `db:push`. Generate the initial migration
-  only when the design settles; test it on a fresh database, not a database already
-  initialized by push. Commit migration files then, and never rewrite applied history.
+- During local prototyping use explicit `db:push`. The initial application migration
+  is committed under `packages/database/migrations`; test it on a fresh database,
+  not a database already initialized by push. Never rewrite applied history.
   New migration history uses `app_migrations`, separate from the old application.
-- `checks.database` type-checks the package, generates/migrates in a disposable
-  PostgreSQL instance, repeats migrate/push, and checks that a sentinel `public`
+- `checks.database` type-checks the package, applies committed migrations in a
+  disposable PostgreSQL instance, repeats migrate/push, checks schema drift, and
+  checks that a sentinel `public`
   table survives. There are no unit tests for now; they return later. Use the shared fixed-output npm cache offline; no
   live database or email service in builds. It never touches developer data.
 

@@ -23,6 +23,7 @@
       ../../packages/database/package.json
       ../../packages/database/tsconfig.json
       ../../packages/database/drizzle.config.ts
+      ../../packages/database/migrations
       ../../packages/database/src
     ];
   };
@@ -42,12 +43,12 @@
     db-start
     export PGHOST="$PWD/.local/postgres/socket" PGPORT=55432 PGUSER=dsqr_dev PGDATABASE=dsqr_dotdev_dev
     psql -v ON_ERROR_STOP=1 -c "CREATE TABLE public.legacy_sentinel (id integer PRIMARY KEY); INSERT INTO public.legacy_sentinel VALUES (1);"
+    npm run db:migrate
+    npm run db:migrate
     npm run db:push -- --force
-    npm run db:push -- --force
-    psql -v ON_ERROR_STOP=1 -c "DROP SCHEMA app CASCADE;"
+    cp -r packages/database/migrations "$TMPDIR/expected-migrations"
     npm run db:generate -- --name=check
-    npm run db:migrate
-    npm run db:migrate
+    diff -r "$TMPDIR/expected-migrations" packages/database/migrations
     db-stop
     db-start
     test "$(psql -Atqc 'SELECT count(*) FROM public.legacy_sentinel')" = 1
