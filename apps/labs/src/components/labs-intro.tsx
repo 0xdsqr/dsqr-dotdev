@@ -2,26 +2,16 @@ import { Mark } from '@dsqr-dotdev/react/components/mark'
 import { Prose } from '@dsqr-dotdev/react/components/prose'
 import { Stack } from '@dsqr-dotdev/react/components/stack'
 import { TextLink } from '@dsqr-dotdev/react/components/text-link'
-import { colors, typography } from '@dsqr-dotdev/react/theme.stylex'
+import { visuallyHidden } from '@dsqr-dotdev/react/visually-hidden'
 import * as stylex from '@stylexjs/stylex'
-
-const styles = stylex.create({
-  // The studio's name, set in the same mono voice as the paragraph: ink and a
-  // step heavier, so it reads as a signature rather than a banner.
-  name: {
-    color: colors.ink,
-    fontFamily: typography.mono,
-    fontSize: typography.sizeProse,
-    fontWeight: typography.weightMedium,
-    lineHeight: typography.leadingProse,
-  },
-})
+import { LabsMark } from './labs-mark'
 
 export function LabsIntro() {
   return (
     <Stack align="center" gap="sm" labelledBy="labs-title">
-      <h1 id="labs-title" {...stylex.props(styles.name)}>
-        DSQR Labs LLC
+      <h1 id="labs-title">
+        <LabsMark />
+        <span {...stylex.props(visuallyHidden.base)}>DSQR Labs LLC</span>
       </h1>
       <Prose>
         A one-person consulting studio focused on{' '}
