@@ -11,14 +11,10 @@ spec:
   minReadySeconds: 10
   progressDeadlineSeconds: 300
   strategy:
-    {{- if eq .Values.application "dotdev" }}
-    type: Recreate
-    {{- else }}
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-    {{- end }}
   selector:
     matchLabels:
       {{- include "dsqr-app.selectorLabels" . | nindent 6 }}
@@ -121,7 +117,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /api/healthz
+              path: /api/livez
               port: http
             periodSeconds: 5
             timeoutSeconds: 3

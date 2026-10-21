@@ -4,7 +4,6 @@ let
     p.pyyaml
     p.jsonschema
   ]);
-  # Fixed-output schema fetches are separate from the network-isolated check.
   kubernetesSchema = pkgs.fetchurl {
     url = "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json";
     hash = "sha256-3O3iBj2h161i7LWvitttf6vQtSOFp/oASK+0kdrJBFA=";

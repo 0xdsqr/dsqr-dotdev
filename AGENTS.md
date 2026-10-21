@@ -1,7 +1,6 @@
 # Project context
 
-A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
-`master` is a reference, not an architecture to restore wholesale.
+dsqr-dotdev: the dsqr.dev site, Labs, and Studio, developed directly on `master`.
 
 ## Scope standards
 
@@ -197,13 +196,23 @@ helm/
   hostname topology spread and a one-pod disruption budget. Three VMs on one
   physical host do not provide physical-host fault tolerance. Capacity and live
   scheduling still need validation when deploying.
-- Dotdev is schema-guarded at one replica with Recreate while rate limits remain
-  process-local. Before allowing multiple replicas, implement shared atomic
+- Every app rolls out with RollingUpdate (`maxSurge: 1`, `maxUnavailable: 0`).
+  All probes use `/api/livez`: readiness must not depend on the database, or a
+  database blip takes the whole site offline when only signup needs it.
+  `/api/healthz` reports dependency health for monitoring and alerts.
+- Dotdev is schema-guarded at one replica while rate limits remain process-local;
+  a rollout's brief two-pod overlap only doubles per-process limits for seconds. Before allowing multiple replicas, implement shared atomic
   rate limits with expiry and explicit backend-failure behavior, validate the
   trusted proxy/client-IP chain, and test concurrent requests across replicas.
   Then update the chart guard, rollout strategy, profile and checks together.
-- `trustProxy` defaults false. Do not enable it until Envoy's trusted-hop/header
-  sanitization is verified; never trust arbitrary forwarded headers from clients.
+- `trustProxy` defaults false. Do not enable it yet: the app takes the rightmost
+  X-Forwarded-For hop, which behind Cloudflare and Envoy is a proxy, not the
+  visitor. First make the app trust a configured hop count (or Envoy's client
+  address header with Envoy's trusted hops set), then verify header sanitization.
+  With it off, per-client limits are skipped; per-address and global still apply.
+- Dotdev sets `trustedOrigins` to `https://dsqr.dev`: Envoy terminates TLS, so
+  without a trusted proxy the app sees `http://` and would otherwise rely solely
+  on `Sec-Fetch-Site` for same-origin writes.
 - Dotdev deployment inputs are `database.existingSecret` (key `DATABASE_URL`),
   `database.caConfigMap` (key `ca.crt`), and the actual database IPv4 `address`
   and `port`. No database, credentials, migrations or migration hooks are bundled.

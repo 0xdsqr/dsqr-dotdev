@@ -1,5 +1,3 @@
-"""Offline chart contracts; synthetic digests and names are never deploy values."""
-
 import copy
 import json
 from pathlib import Path
@@ -15,7 +13,6 @@ digest = "sha256:" + "a" * 64
 
 
 def strict_schema(value):
-    """Translate Kubernetes OpenAPI's int-or-string and reject unknown fields."""
     if isinstance(value, list):
         return [strict_schema(item) for item in value]
     if not isinstance(value, dict):
@@ -101,8 +98,8 @@ def check(application, overrides):
         "capabilities": {"drop": ["ALL"]},
     }
     for probe in ["startupProbe", "livenessProbe", "readinessProbe"]:
-        path = "/api/healthz" if probe == "readinessProbe" else "/api/livez"
-        assert container[probe]["httpGet"] == {"path": path, "port": "http"}
+        assert container[probe]["httpGet"] == {"path": "/api/livez", "port": "http"}
+    assert deployment["strategy"] == {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": 1, "maxUnavailable": 0}}
     assert set(container["resources"]) == {"limits", "requests"}
     expressions = pod["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]
     assert expressions == [{"matchExpressions": [
@@ -130,7 +127,8 @@ def check(application, overrides):
     }
     env = {e["name"]: e for e in container["env"]}
     if application == "dotdev":
-        assert deployment["replicas"] == 1 and deployment["strategy"] == {"type": "Recreate"}
+        assert env["TRUSTED_ORIGINS"]["value"] == ",".join(overrides.get("trustedOrigins", ["https://dsqr.dev"]))
+        assert deployment["replicas"] == 1
         assert "topologySpreadConstraints" not in pod
         assert env["DATABASE_URL"]["valueFrom"]["secretKeyRef"] == {"name": "test-db", "key": "DATABASE_URL"}
         assert env["PGSSLROOTCERT"]["value"] == "/etc/dsqr-db-ca/ca.crt"
@@ -138,7 +136,6 @@ def check(application, overrides):
         assert policy["egress"][1] == {"to": [{"ipBlock": {"cidr": "192.0.2.10/32"}}], "ports": [{"protocol": "TCP", "port": 5432}]}
     else:
         assert deployment["replicas"] == 3
-        assert deployment["strategy"]["rollingUpdate"] == {"maxSurge": 1, "maxUnavailable": 0}
         spread = pod["topologySpreadConstraints"][0]
         assert spread["topologyKey"] == "kubernetes.io/hostname"
         assert spread["maxSkew"] == 1 and spread["minDomains"] == 2
@@ -182,7 +179,6 @@ helm("template", "dotdev", {
     "image": {"digest": digest}, "replicaCount": 3,
     "database": {"existingSecret": "test-db", "caConfigMap": "test-ca", "address": "192.0.2.10"},
 }, success=False)
-# Registry portability (Harbor later) and private image pull references.
 check("labs", {"image": {"repository": "registry.example.com:8443/apps/labs", "digest": digest},
                "imagePullSecrets": [{"name": "test-pull"}]})
 print("Rejected missing digests, tag references, unsafe/unknown values, incomplete DB/route and premature Dotdev HA")
