@@ -1,0 +1,5 @@
+application: dotdev
+image:
+  repository: ghcr.io/0xdsqr/dotdev-web
+# Process-local rate limits: one replica and Recreate until a shared store exists.
+replicaCount: 1

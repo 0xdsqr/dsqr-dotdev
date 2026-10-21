@@ -4,6 +4,7 @@
       packages = with pkgs; [
         git
         nixfmt
+        kubernetes-helm
         nodejs_24
         postgresql_18
       ];

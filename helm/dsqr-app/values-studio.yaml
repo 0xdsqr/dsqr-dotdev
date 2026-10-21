@@ -1,0 +1,3 @@
+application: studio
+image:
+  repository: ghcr.io/0xdsqr/dotdev-studio

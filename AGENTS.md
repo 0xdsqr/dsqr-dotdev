@@ -11,7 +11,8 @@ A from-scratch dsqr-dotdev rebuild on `refactor/playground` in this checkout.
   and API packages, an Effect HttpApi per app, Nix app/Linux image builds,
   a local PostgreSQL/Drizzle subscription schema, and Dotdev's newsletter signup
   (stores the address only), and CI that checks, scans, and publishes images to
-  GHCR. No auth, Helm files, or deployment workflows yet.
+  GHCR, and a hardened shared Helm chart for Indigo. No auth or deployment
+  workflows yet; CI publishes images but never changes the cluster.
 - Keep guidance in this file. Do not create `docs/` or speculative packages.
 - Commit and push straight to `master`; no feature branches or PRs unless asked.
 - Work in this checkout; no worktrees unless requested. Leave unrelated changes
@@ -72,6 +73,8 @@ nix/
   packages/            Application and image derivations
   checks/              Runtime/build checks
   ci.nix               CI apps for image scan, push, and index
+helm/
+  dsqr-app/            One chart, separate Dotdev/Labs/Studio releases
 .github/
   actions/setup-nix/   Determinate Nix + FlakeHub Cache
   workflows/           CI and weekly flake.lock updates
@@ -177,7 +180,8 @@ nix/
 
 ## Helm standards
 
-These are future requirements, not authorization to add a chart now.
+`helm/dsqr-app` is the shared application chart. Select `values-dotdev.yaml`,
+`values-labs.yaml`, or `values-studio.yaml`, then apply infrastructure-owned values.
 
 - Deploy immutable registry digests; require an explicit repository and digest.
 - Use non-root execution, read-only root filesystems, dropped capabilities,
@@ -185,7 +189,38 @@ These are future requirements, not authorization to add a chart now.
 - Disable automatic service-account tokens unless the application needs the API.
 - Provide startup/readiness/liveness probes and explicit resource requests/limits.
 - Keep secrets outside charts/images. Choose ingress, TLS, and network policy for
-  the actual cluster. Validate rendering/security through Nix when Helm is added.
+  the actual cluster. Validate rendering/security through `checks.helm`.
+- Chart version follows SemVer independently of application images. Bump it for
+  chart changes; application promotion changes the image digest in infrastructure.
+  Argo CD can render this Git-hosted chart; chart registry publishing is not needed.
+- Labs/Studio default to three replicas on `applications` workers (04–06), with
+  hostname topology spread and a one-pod disruption budget. Three VMs on one
+  physical host do not provide physical-host fault tolerance. Capacity and live
+  scheduling still need validation when deploying.
+- Dotdev is schema-guarded at one replica with Recreate while rate limits remain
+  process-local. Before allowing multiple replicas, implement shared atomic
+  rate limits with expiry and explicit backend-failure behavior, validate the
+  trusted proxy/client-IP chain, and test concurrent requests across replicas.
+  Then update the chart guard, rollout strategy, profile and checks together.
+- `trustProxy` defaults false. Do not enable it until Envoy's trusted-hop/header
+  sanitization is verified; never trust arbitrary forwarded headers from clients.
+- Dotdev deployment inputs are `database.existingSecret` (key `DATABASE_URL`),
+  `database.caConfigMap` (key `ca.crt`), and the actual database IPv4 `address`
+  and `port`. No database, credentials, migrations or migration hooks are bundled.
+  Schema readiness, migrations and database availability are separate rollout gates.
+- Ingress is only from shared Envoy pods; egress is only CoreDNS and, for Dotdev,
+  the configured database /32 and port. Policies are additive: infrastructure
+  must ensure no other namespace policy widens these permissions. Add future
+  service dependencies explicitly, never a blanket internet allowance.
+- Infrastructure owns namespaces (Restricted PSA and the
+  `platform.dsqr.dev/gateway-access: shared` label), ESO resources, CA trust,
+  gateway-side egress permission, Argo applications, tunnel routes and DNS.
+  `route.enabled` only creates an HTTPRoute attached to `gateway-system/shared`
+  listener `https`; it does not make the application publicly reachable alone.
+- `checks.helm` runs strict Helm lint, deterministic rendering for all profiles,
+  offline pinned Kubernetes 1.36/Gateway API 1.5 schema validation, security and
+  scheduling contracts, and negative-value cases. It has no cluster credentials;
+  it does not replace server-side admission/CEL or live rollout checks.
 
 ## React and styling standards
 
@@ -411,6 +446,7 @@ nix build .#dotdev .#labs .#studio        # Production apps
 nix run .                               # Production server, port 3000
 nix build .#dotdev-image .#labs-image .#studio-image # Linux builder
 nix build .#checks.aarch64-darwin.workflows  # lint workflows (actionlint + zizmor)
+nix build .#checks.aarch64-darwin.helm       # offline Helm/schema/security checks
 nix run .#ci-image-scan -- result image.cdx.json # scan an image archive
 nix fmt flake.nix nix/*.nix nix/checks/*.nix nix/packages/*.nix
 nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false

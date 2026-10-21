@@ -1,0 +1,31 @@
+# application is selected by a values-{dotdev,labs,studio}.yaml profile.
+application: ""
+# image.digest is the multi-architecture index digest published by CI.
+# Environment-specific digests belong in the infrastructure repository.
+image:
+  repository: ""
+  digest: ""
+imagePullSecrets: []
+replicaCount: 3
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+# trustProxy stays false until the Cloudflare -> Envoy header contract is verified.
+trustProxy: false
+trustedOrigins: []
+# database is required only for Dotdev; ESO, PKI and migrations are infra-owned.
+# The Secret contains DATABASE_URL; the ConfigMap contains ca.crt.
+database:
+  existingSecret: ""
+  caConfigMap: ""
+  address: ""
+  port: 5432
+# route attaches to Indigo's existing shared HTTPS Gateway. No public DNS,
+# certificate, tunnel, namespace or gateway-side egress rule is created here.
+route:
+  enabled: false
+  hostnames: []

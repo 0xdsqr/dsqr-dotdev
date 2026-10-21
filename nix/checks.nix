@@ -23,6 +23,8 @@
           }
         // {
 
+          helm = pkgs.callPackage ./checks/helm.nix { };
+
           workflows =
             pkgs.runCommand "dsqr-dotdev-workflows"
               {

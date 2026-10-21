@@ -39,8 +39,8 @@ jobs:
         with:
           send-statistics: false
 
-      - name: Run flake checks
-        run: nix flake check --print-build-logs --keep-going
+      - name: Run flake checks (apps, database, Helm, workflows)
+        run: nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false --print-build-logs --keep-going
 
   codeql:
     name: CodeQL (${{ matrix.language }})
