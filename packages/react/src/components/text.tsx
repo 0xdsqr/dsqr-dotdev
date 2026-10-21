@@ -16,8 +16,6 @@ type TextProps = Omit<ComponentProps<'p'>, 'className' | 'style'> & {
   tone?: 'default' | 'muted'
 }
 
-// Content is ink by default; `muted` is for supporting copy. StyleX owns
-// className/style, and spacing between elements belongs to the parent layout.
 export function Text({ tone = 'default', ...props }: TextProps) {
   return <p {...props} {...stylex.props(styles.text, styles[tone])} />
 }

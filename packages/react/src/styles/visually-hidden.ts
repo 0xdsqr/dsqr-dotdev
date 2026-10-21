@@ -1,6 +1,5 @@
 import * as stylex from '@stylexjs/stylex'
 
-// Text for screen readers only: read aloud, never shown, never affecting layout.
 export const visuallyHidden = stylex.create({
   base: {
     position: 'absolute',

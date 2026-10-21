@@ -2,12 +2,6 @@
 @import '@fontsource-variable/geist/wght-italic.css';
 @import '@fontsource-variable/geist-mono/wght.css';
 
-/*
- * Token-free reset only. Theme and component styles are authored in StyleX;
- * the shared Document component applies tokens to <html> and <body>.
- * Declare the layer order up front so the reset always loses to StyleX's
- * priority layers, whatever order the stylesheets load in.
- */
 @layer reset, priority1, priority2, priority3, priority4, priority5, priority6, priority7;
 
 @layer reset {
@@ -17,10 +11,6 @@
     box-sizing: border-box;
   }
 
-  /*
-   * The theme switch: color-scheme resolves every light-dark() token. Without
-   * a data-theme (or without JavaScript) the page follows the system.
-   */
   html {
     color-scheme: light dark;
     -webkit-text-size-adjust: 100%;
@@ -60,7 +50,6 @@
     outline-offset: 3px;
   }
 
-  /* Token durations already collapse; this catches third-party animation. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

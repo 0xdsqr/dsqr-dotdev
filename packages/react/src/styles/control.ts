@@ -1,9 +1,6 @@
 import * as stylex from '@stylexjs/stylex'
 import { breakpoints, colors, controls, motion, radius } from './theme.stylex'
 
-// Icon-only controls (links and buttons): muted at rest; the accent on hover and
-// focus, since it marks what is clickable; a 2px accent ring for keyboard focus;
-// a small press. Targets are 32px, 44px on any coarse pointer.
 export const iconControl = stylex.create({
   base: {
     position: 'relative',

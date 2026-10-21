@@ -14,8 +14,6 @@ const styles = stylex.create({
   lg: { gap: space.lg },
 })
 
-// A column of related blocks at the reading measure. The stack owns the space
-// between its children, so the children never carry margins.
 export function Stack({
   align = 'start',
   gap = 'md',
@@ -24,7 +22,6 @@ export function Stack({
 }: {
   align?: 'start' | 'center'
   gap?: 'sm' | 'md' | 'lg'
-  /** Renders a labelled <section> when the stack is a page region. */
   labelledBy?: string
   children: ReactNode
 }) {

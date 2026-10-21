@@ -2,8 +2,6 @@ import * as stylex from '@stylexjs/stylex'
 import { colors } from '../styles/theme.stylex'
 
 const styles = stylex.create({
-  // A quiet dot between items in a row: half-strength muted grey, so it reads
-  // as a pause rather than content. Decorative, so screen readers skip it.
   dot: {
     display: 'inline-block',
     flexShrink: 0,

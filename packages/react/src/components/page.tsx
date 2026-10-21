@@ -5,10 +5,9 @@ import { space } from '../styles/theme.stylex'
 import { Footer } from './footer'
 
 const styles = stylex.create({
-  // Content grows; the footer rests at the bottom on short pages. The small
-  // viewport unit keeps it still while mobile browser bars show and hide.
   page: {
     display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
     gridTemplateRows: '1fr auto',
     minHeight: stylex.firstThatWorks('100svh', '100vh'),
   },
@@ -18,8 +17,6 @@ const styles = stylex.create({
     rowGap: space.xxl,
     paddingBlock: space.section,
   },
-  // A single focal block (like the home intro) sits in the middle of the
-  // viewport above the footer.
   centered: {
     alignContent: 'center',
     justifyItems: 'center',
@@ -29,16 +26,18 @@ const styles = stylex.create({
 export function Page({
   site,
   centered = false,
+  footerAction,
   children,
 }: {
   site: string
   centered?: boolean
+  footerAction?: ReactNode
   children: ReactNode
 }) {
   return (
     <div {...stylex.props(styles.page)}>
       <main {...stylex.props(column.base, styles.main, centered && styles.centered)}>{children}</main>
-      <Footer site={site} />
+      <Footer site={site} action={footerAction} />
     </div>
   )
 }

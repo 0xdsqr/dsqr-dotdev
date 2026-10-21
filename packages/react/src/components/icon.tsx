@@ -2,9 +2,6 @@ import * as stylex from '@stylexjs/stylex'
 import type { ReactNode } from 'react'
 import { controls } from '../styles/theme.stylex'
 
-// Brand marks are filled edge to edge on a 24 grid; interface glyphs are Lucide
-// (v0.552, ISC), the set main used, with 2px strokes and 2px of padding. Brand marks get a wider viewBox so both families
-// read at the same optical size side by side; solid shapes get a little more.
 const BRAND_VIEWBOX = '-2 -2 28 28'
 const SOLID_VIEWBOX = '-3.5 -3.5 31 31'
 const GLYPH_VIEWBOX = '0 0 24 24'
@@ -89,7 +86,6 @@ const styles = stylex.create({
   lg: { width: controls.iconLg, height: controls.iconLg },
 })
 
-// Decorative by default: the surrounding control carries the accessible name.
 export function Icon({ name, size = 'md' }: { name: IconName; size?: 'sm' | 'md' | 'lg' }) {
   const { brand, viewBox, body }: IconDef = icons[name]
 

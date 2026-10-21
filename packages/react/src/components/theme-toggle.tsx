@@ -5,9 +5,6 @@ import { breakpoints, motion } from '../styles/theme.stylex'
 import { toggleTheme } from '../theme'
 import { Icon } from './icon'
 
-// The icons read the theme from <html data-theme> in CSS, so the server render
-// and first paint already show the right one; no client state, no flash.
-// `stylex.when` must be written inline in `create`; the compiler resolves it there.
 const styles = stylex.create({
   glyphs: {
     display: 'grid',
@@ -18,8 +15,6 @@ const styles = stylex.create({
     transitionDuration: motion.base,
     transitionTimingFunction: motion.easeOut,
   },
-  // main's swap: the sun turns away as the moon turns in. They scale from 0.6,
-  // never from nothing, and reduced motion keeps only the crossfade.
   sun: {
     opacity: { default: 1, [stylex.when.ancestor('[data-theme="dark"]')]: 0 },
     transform: {

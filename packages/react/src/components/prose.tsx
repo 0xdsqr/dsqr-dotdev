@@ -3,8 +3,6 @@ import type { ReactNode } from 'react'
 import { colors, typography } from '../styles/theme.stylex'
 
 const styles = stylex.create({
-  // The home-page voice (from master): Geist Mono, muted, generously leaded,
-  // so marked phrases and links carry the emphasis.
   prose: {
     color: colors.muted,
     fontFamily: typography.mono,

@@ -3,8 +3,6 @@ import type { ReactNode } from 'react'
 import { colors, hues, typography } from '../styles/theme.stylex'
 
 const styles = stylex.create({
-  // A phrase worth noticing inside prose: a 2px dotted underline, offset so it
-  // never touches descenders. Tones set the color; the underline runs at half.
   mark: {
     textDecorationLine: 'underline',
     textDecorationStyle: 'dotted',
@@ -16,8 +14,6 @@ const styles = stylex.create({
   orange: { color: hues.orange, textDecorationColor: `color-mix(in oklch, ${hues.orange} 50%, transparent)` },
   emerald: { color: hues.emerald, textDecorationColor: `color-mix(in oklch, ${hues.emerald} 50%, transparent)` },
   indigo: { color: hues.indigo, textDecorationColor: `color-mix(in oklch, ${hues.indigo} 50%, transparent)` },
-  // Ink text: `emphasis` keeps the accent underline, `quiet` a neutral one
-  // (used for names, like a workplace).
   emphasis: { color: colors.ink, textDecorationColor: `color-mix(in oklch, ${colors.accent} 50%, transparent)` },
   quiet: {
     color: colors.ink,

@@ -3,8 +3,6 @@ import type { ComponentProps } from 'react'
 import { breakpoints, colors, motion } from '../styles/theme.stylex'
 
 const styles = stylex.create({
-  // An inline link in running text: ink with a dotted underline at rest, the
-  // accent on hover (pointer devices only) and focus. It never wraps mid-link.
   link: {
     color: {
       default: colors.ink,

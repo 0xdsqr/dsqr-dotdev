@@ -7,7 +7,8 @@
     "./components/*": "./src/components/*.tsx",
     "./theme.stylex": "./src/styles/theme.stylex.ts",
     "./visually-hidden": "./src/styles/visually-hidden.ts",
-    "./globals.css": "./src/styles/globals.css"
+    "./globals.css": "./src/styles/globals.css",
+    "./mark.svg": "./src/assets/mark.svg"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

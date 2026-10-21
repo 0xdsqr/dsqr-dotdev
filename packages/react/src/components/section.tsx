@@ -10,8 +10,6 @@ const styles = stylex.create({
   },
 })
 
-// One block of related content. Page spaces sections apart; Section spaces its
-// own children, so primitives inside never carry margins.
 export function Section({ children }: { children: ReactNode }) {
   return <section {...stylex.props(styles.section)}>{children}</section>
 }
