@@ -126,6 +126,8 @@ def check(application, overrides):
         "ports": [{"protocol": "UDP", "port": 53}, {"protocol": "TCP", "port": 53}],
     }
     env = {e["name"]: e for e in container["env"]}
+    assert env["TRUST_PROXY"]["value"] == ("1" if overrides.get("trustProxy", False) else "0")
+    assert env["TRUSTED_PROXY_HOPS"]["value"] == str(overrides.get("trustedProxyHops", 0))
     if application == "dotdev":
         assert env["TRUSTED_ORIGINS"]["value"] == ",".join(overrides.get("trustedOrigins", ["https://dsqr.dev"]))
         assert deployment["replicas"] == 1
@@ -171,6 +173,12 @@ for invalid in [
     {"image": {"digest": digest, "tag": "latest"}},
     {"trustedOrigins": ["*"]},
     {"trustProxy": "true"},
+    {"trustProxy": True},
+    {"trustProxy": True, "trustedProxyHops": 0},
+    {"trustedProxyHops": -1},
+    {"trustedProxyHops": 17},
+    {"trustedProxyHops": 1.5},
+    {"trustedProxyHops": "2"},
     {"resources": {"requests": {"cpu": "0"}}},
 ]:
     helm("template", "labs", {"image": {"digest": digest}, **invalid}, success=False)
@@ -181,4 +189,5 @@ helm("template", "dotdev", {
 }, success=False)
 check("labs", {"image": {"repository": "registry.example.com:8443/apps/labs", "digest": digest},
                "imagePullSecrets": [{"name": "test-pull"}]})
+check("labs", {"image": {"digest": digest}, "trustProxy": True, "trustedProxyHops": 2})
 print("Rejected missing digests, tag references, unsafe/unknown values, incomplete DB/route and premature Dotdev HA")

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "required": ["application", "image", "imagePullSecrets", "replicaCount", "resources", "trustProxy", "trustedOrigins", "database", "route"],
+  "required": ["application", "image", "imagePullSecrets", "replicaCount", "resources", "trustProxy", "trustedProxyHops", "trustedOrigins", "database", "route"],
   "properties": {
     "application": {"enum": ["dotdev", "labs", "studio"]},
     "image": {
@@ -29,6 +29,7 @@
       }
     },
     "trustProxy": {"type": "boolean"},
+    "trustedProxyHops": {"type": "integer", "minimum": 0, "maximum": 16},
     "trustedOrigins": {
       "type": "array", "uniqueItems": true,
       "items": {"type": "string", "pattern": "^https://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$"}
@@ -57,6 +58,9 @@
     }
   },
   "allOf": [{
+    "if": {"properties": {"trustProxy": {"const": true}}},
+    "then": {"properties": {"trustedProxyHops": {"minimum": 1}}}
+  }, {
     "if": {"properties": {"application": {"const": "dotdev"}}},
     "then": {
       "properties": {

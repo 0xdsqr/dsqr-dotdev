@@ -12,6 +12,7 @@ resources:
     cpu: "1"
     memory: 512Mi
 trustProxy: false
+trustedProxyHops: 0
 trustedOrigins: []
 database:
   existingSecret: ""

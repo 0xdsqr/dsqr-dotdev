@@ -233,11 +233,17 @@ helm/
   rate limits with expiry and explicit backend-failure behavior, validate the
   trusted proxy/client-IP chain, and test concurrent requests across replicas.
   Then update the chart guard, rollout strategy, profile and checks together.
-- `trustProxy` defaults false. Do not enable it yet: the app takes the rightmost
-  X-Forwarded-For hop, which behind Cloudflare and Envoy is a proxy, not the
-  visitor. First make the app trust a configured hop count (or Envoy's client
-  address header with Envoy's trusted hops set), then verify header sanitization.
-  With it off, per-client limits are skipped; per-address and global still apply.
+- `trustProxy` defaults false. Enabling it requires `trustedProxyHops` (1–16),
+  exposed as `TRUSTED_PROXY_HOPS`; missing/invalid counts fail configuration.
+  Count X-Forwarded-For entries from the right: 1 selects the rightmost entry,
+  2 the second-rightmost. Ignore untrusted prefixes, validate the trusted suffix,
+  and canonicalize IPv6/mapped IPv4 before using the address as a limiter key.
+  Missing/malformed chains share an `unresolved` limiter bucket, never skip it.
+  Do not enable trust until the actual Cloudflare/Envoy path, header sanitization,
+  and every allowed ingress path are tested. Network policy must prevent clients
+  bypassing the trusted proxies. With trust off, only per-client limits are
+  skipped; per-address and global still apply. Application builds run
+  `nix/checks/proxy-policy.mjs` against the shared policy without external services.
 - Dotdev sets `trustedOrigins` to `https://dsqr.dev`: Envoy terminates TLS, so
   without a trusted proxy the app sees `http://` and would otherwise rely solely
   on `Sec-Fetch-Site` for same-origin writes.
@@ -454,7 +460,7 @@ the installed source over outside docs), OpenCode, and Executor.
   errors (including an unreadable CA file or malformed URL) fail into this path.
 - Subscriptions (Dotdev only): `POST /api/subscriptions` decodes the payload with
   `SubscribeRequest`, applies the global (500/10 min), per-client (20/10 min,
-  only when TRUST_PROXY=1 identifies the rightmost X-Forwarded-For hop), then
+  only when TRUST_PROXY=1 selects the explicitly configured trusted X-Forwarded-For hop), then
   per-address (3/hour) limits via `RateLimiter` (bounded to 10,000 windows,
   oldest evicted first), and stores the row with `onConflictDoNothing`. Every accepted request answers
   `{ status: "accepted" }` whatever the row's state, so responses never reveal

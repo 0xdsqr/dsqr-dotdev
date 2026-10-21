@@ -82,6 +82,7 @@ in
 
   postBuild = ''
     npm run typecheck --workspace ${appName} --workspace @dsqr-dotdev/api --workspace @dsqr-dotdev/react
+    node --input-type=module < ${../checks/proxy-policy.mjs}
   '';
 
   installPhase = ''

@@ -90,6 +90,8 @@ spec:
               value: "3000"
             - name: TRUST_PROXY
               value: {{ ternary "1" "0" .Values.trustProxy | quote }}
+            - name: TRUSTED_PROXY_HOPS
+              value: {{ .Values.trustedProxyHops | quote }}
             - name: TRUSTED_ORIGINS
               value: {{ join "," .Values.trustedOrigins | quote }}
             {{- if eq .Values.application "dotdev" }}
