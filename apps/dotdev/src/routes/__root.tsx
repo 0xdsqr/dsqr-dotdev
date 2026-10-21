@@ -1,69 +1,47 @@
-import type { PublicAppRouter } from "@dsqr-dotdev/api"
-import { Eyebrow } from "@dsqr-dotdev/react/components/eyebrow"
-import { ThemeProvider } from "@dsqr-dotdev/react/components/theme-provider"
-import { Toaster } from "@dsqr-dotdev/react/components/ui/sonner"
-import type { QueryClient } from "@tanstack/react-query"
-import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router"
-import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
-import { Footer } from "../components/footer"
-import { Nav } from "../components/nav"
+import { RegistryProvider } from '@effect/atom-react'
+import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
+import { useEffect, type ReactNode } from 'react'
+import appCss from '@dsqr-dotdev/react/globals.css?url'
+import markUrl from '@dsqr-dotdev/react/mark.svg?url'
+import { Document } from '@dsqr-dotdev/react/components/document'
 
-import appCss from "../styles.css?url"
-
-export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient
-  trpc: TRPCOptionsProxy<PublicAppRouter>
-}>()({
+export const Route = createRootRoute({
   head: () => ({
     meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'dsqr.dev' },
       {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "dsqr",
+        name: 'description',
+        content: 'Dad of one. Building infrastructure and systems at Stablecore.',
       },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      {
-        rel: "icon",
-        href: "/favicon.svg",
-        type: "image/svg+xml",
-      },
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', type: 'image/svg+xml', href: markUrl },
     ],
   }),
   shellComponent: RootDocument,
-  notFoundComponent: () => (
-    <main className="py-24 text-center">
-      <Eyebrow>404</Eyebrow>
-      <h1 className="mt-4 text-3xl font-bold font-mono">not found</h1>
-      <p className="mt-3 text-sm leading-7 text-muted-foreground">that page does not exist here.</p>
-    </main>
-  ),
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      void import('virtual:stylex:runtime')
+    }
+  }, [])
+
   return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body className="font-sans antialiased">
-        <ThemeProvider defaultTheme="system" storageKey="dsqr-theme">
-          <Nav />
-          <main className="container max-w-4xl mx-auto px-4 py-12">{children}</main>
-          <Footer />
-          <Toaster position="top-center" richColors />
-        </ThemeProvider>
-        <Scripts />
-      </body>
-    </html>
+    <Document
+      head={
+        <>
+          <HeadContent />
+          {import.meta.env.DEV && <link rel="stylesheet" href="/virtual:stylex.css" />}
+        </>
+      }
+    >
+      <RegistryProvider>{children}</RegistryProvider>
+      <Scripts />
+    </Document>
   )
 }

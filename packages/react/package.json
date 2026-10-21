@@ -1,50 +1,27 @@
 {
   "name": "@dsqr-dotdev/react",
-  "version": "0.0.3",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
-  "sideEffects": [
-    "**/*.css"
-  ],
   "exports": {
     "./components/*": "./src/components/*.tsx",
-    "./components/ui/*": "./src/components/ui/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts",
+    "./theme.stylex": "./src/styles/theme.stylex.ts",
+    "./visually-hidden": "./src/styles/visually-hidden.ts",
     "./globals.css": "./src/styles/globals.css",
-    "./lib/*": "./src/lib/*.ts"
-  },
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:tsc": "tsc --noEmit"
+    "./mark.svg": "./src/assets/mark.svg"
   },
   "dependencies": {
-    "@base-ui/react": "1.6.0",
-    "@dsqr-dotdev/api": "0.0.3",
-    "@shikijs/core": "4.3.1",
-    "@shikijs/engine-javascript": "4.3.1",
-    "@shikijs/langs": "4.3.1",
-    "@shikijs/themes": "4.3.1",
-    "@tanstack/react-router": "1.170.18",
-    "@tanstack/react-table": "8.21.3",
-    "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
-    "input-otp": "1.4.2",
-    "lucide-react": "1.27.0",
-    "react-markdown": "10.1.0",
-    "rehype-raw": "7.0.0",
-    "rehype-sanitize": "6.0.0",
-    "remark-gfm": "4.0.1",
-    "sonner": "2.0.7",
-    "tailwind-merge": "3.6.0"
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
+    "@stylexjs/stylex": "0.19.1"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@dsqr-dotdev/tsconfig": "0.0.1",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
-    "vite": "8.1.5"
+    "@types/react": "19.3.0"
   },
   "peerDependencies": {
-    "react": "^18 || ^19",
-    "react-dom": "^18 || ^19"
+    "react": "^19.3.0"
   }
 }

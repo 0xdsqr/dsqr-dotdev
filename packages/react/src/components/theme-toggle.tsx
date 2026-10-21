@@ -1,23 +1,50 @@
-"use client"
+import * as stylex from '@stylexjs/stylex'
+import { iconControl } from '../styles/control'
+import { visuallyHidden } from '../styles/visually-hidden'
+import { breakpoints, motion } from '../styles/theme.stylex'
+import { toggleTheme } from '../theme'
+import { Icon } from './icon'
 
-import { Button } from "@dsqr-dotdev/react/components/ui/button"
-import { MoonIcon, SunIcon } from "lucide-react"
-import { useTheme } from "./theme-provider"
+const styles = stylex.create({
+  glyphs: {
+    display: 'grid',
+  },
+  glyph: {
+    gridArea: '1 / 1',
+    transitionProperty: 'transform, opacity',
+    transitionDuration: motion.base,
+    transitionTimingFunction: motion.easeOut,
+  },
+  sun: {
+    opacity: { default: 1, [stylex.when.ancestor('[data-theme="dark"]')]: 0 },
+    transform: {
+      default: 'none',
+      [stylex.when.ancestor('[data-theme="dark"]')]: 'rotate(-90deg) scale(0.6)',
+      [breakpoints.reducedMotion]: 'none',
+    },
+  },
+  moon: {
+    opacity: { default: 0, [stylex.when.ancestor('[data-theme="dark"]')]: 1 },
+    transform: {
+      default: 'rotate(90deg) scale(0.6)',
+      [stylex.when.ancestor('[data-theme="dark"]')]: 'none',
+      [breakpoints.reducedMotion]: 'none',
+    },
+  },
+})
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme()
-
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="relative size-8 p-0"
-      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-    >
-      <SunIcon className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <MoonIcon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+    <button type="button" onClick={toggleTheme} {...stylex.props(iconControl.base)}>
+      <span aria-hidden="true" {...stylex.props(styles.glyphs)}>
+        <span {...stylex.props(styles.glyph, styles.sun)}>
+          <Icon name="sun" size="md" />
+        </span>
+        <span {...stylex.props(styles.glyph, styles.moon)}>
+          <Icon name="moon" size="md" />
+        </span>
+      </span>
+      <span {...stylex.props(visuallyHidden.base)}>Switch between light and dark theme</span>
+    </button>
   )
 }

@@ -1,55 +1,20 @@
 {
   "name": "dsqr-dotdev",
-  "version": "0.0.1",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=24 <25" },
   "scripts": {
-    "build:database": "npm run build -w @dsqr-dotdev/database",
-    "build:api": "npm run build -w @dsqr-dotdev/api",
-    "build:dotdev": "npm run build -w dotdev",
-    "build:labs": "npm run build -w labs",
-    "build:studio": "npm run build -w studio",
-    "build": "npm run build:database && npm run build:api && npm run build:dotdev && npm run build:studio && npm run build:labs",
-    "database:push": "npm run push -w @dsqr-dotdev/database",
-    "database:studio": "npm run studio -w @dsqr-dotdev/database",
-    "database:generate": "npm run generate -w @dsqr-dotdev/database",
-    "dev:dotdev": "npm run dev -w dotdev",
-    "dev:labs": "npm run dev -w labs",
-    "dev:studio": "npm run dev -w studio",
-    "format": "nix fmt",
-    "format:check": "sh -c 'nix build .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).format --no-link'",
-    "changeset": "changeset",
-    "changeset:status": "changeset status",
-    "changeset:version": "changeset version",
-    "release:prepare": "nix run .#releasePrepare --",
-    "release:publish:images": "nix run .#releasePublishImages --",
-    "release:check-versions": "node nix/scripts/check-release-versions.mjs",
-    "lint": "oxlint . --deny-warnings",
-    "lint:fix": "oxlint --fix .",
-    "typecheck": "npm run build:database && npm run build:api && npm run typecheck -w @dsqr-dotdev/database && npm run typecheck -w @dsqr-dotdev/observability && npm run typecheck -w @dsqr-dotdev/api && npm run typecheck -w @dsqr-dotdev/react && npm run typecheck -w dotdev && npm run typecheck -w studio && npm run typecheck -w labs",
-    "typecheck:tsc": "npm run build:database && npm run build:api && npm run typecheck:tsc --workspaces --if-present",
-    "clean": "git clean -xdf node_modules dist .turbo .cache apps/*/.output",
-    "setup": "npm ci",
-    "security:audit": "nix run .#securityAudit --",
-    "test:security": "npm run build:database && npm run build:api && npm run test:security -w dotdev"
+    "dev": "npm run dev --workspace dotdev",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces",
+    "db:push": "npm run push --workspace @dsqr-dotdev/database --",
+    "db:studio": "npm run studio --workspace @dsqr-dotdev/database --",
+    "db:generate": "npm run generate --workspace @dsqr-dotdev/database --",
+    "db:migrate": "npm run migrate --workspace @dsqr-dotdev/database --"
   },
   "devDependencies": {
-    "@changesets/cli": "2.31.1",
-    "@types/node": "26.1.1",
-    "esbuild": "0.28.1",
     "typescript": "7.0.2"
   },
-  "overrides": {
-    "esbuild": "$esbuild",
-    "typescript": "$typescript"
-  },
-  "engines": {
-    "node": "24.18.0",
-    "npm": "11.16.0"
-  },
-  "packageManager": "npm@11.16.0"
+  "browserslist": ["chrome >= 123", "edge >= 123", "firefox >= 120", "safari >= 17.5", "ios_saf >= 17.5"]
 }

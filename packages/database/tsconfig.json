@@ -1,5 +1,7 @@
 {
-  "extends": "@dsqr-dotdev/tsconfig/compiled-package.json",
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src", "drizzle.config.ts"]
 }

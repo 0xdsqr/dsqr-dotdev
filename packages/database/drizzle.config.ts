@@ -1,14 +1,18 @@
-import type { Config } from "drizzle-kit"
-import "dotenv/config"
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'drizzle-kit'
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required; set it to your database connection string")
-}
-export default {
-  schema: "./src/schema.ts",
-  out: "./data-migration",
-  dialect: "postgresql",
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/schema.ts',
+  out: './migrations',
+  schemaFilter: ['app'],
+  migrations: { schema: 'app_migrations', table: '__drizzle_migrations' },
   dbCredentials: {
-    url: process.env.DATABASE_URL || "",
+    host: fileURLToPath(new URL('../../.local/postgres/socket', import.meta.url)),
+    port: 55432,
+    user: 'dsqr_dev',
+    database: 'dsqr_dotdev_dev',
+    ssl: false,
   },
-} satisfies Config
+  strict: true,
+})

@@ -1,42 +1,27 @@
 {
   "name": "@dsqr-dotdev/database",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
-  "files": [
-    "src",
-    "dist"
-  ],
   "type": "module",
-  "sideEffects": false,
   "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "types": "./dist/types/index.d.ts"
-    },
-    "./*": {
-      "import": "./dist/esm/*.js",
-      "types": "./dist/types/*.d.ts"
-    }
+    "./schema": "./src/schema.ts",
+    "./server": "./src/database.server.ts"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.json",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "push": "drizzle-kit push",
-    "studio": "drizzle-kit studio",
-    "generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit",
-    "typecheck:tsc": "tsc --noEmit"
+    "push": "drizzle-kit push --config drizzle.config.ts",
+    "studio": "drizzle-kit studio --config drizzle.config.ts --host 127.0.0.1",
+    "generate": "drizzle-kit generate --config drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config drizzle.config.ts"
   },
   "dependencies": {
-    "@dsqr-dotdev/tsconfig": "0.0.1",
-    "drizzle-orm": "0.45.2",
-    "drizzle-zod": "0.8.3",
-    "pg": "8.22.0",
-    "zod": "4.4.3"
+    "drizzle-orm": "0.45.3",
+    "effect": "4.0.0-beta.107",
+    "pg": "8.23.0"
   },
   "devDependencies": {
-    "@types/pg": "8.20.0",
-    "drizzle-kit": "0.31.10"
+    "@types/node": "24.19.0",
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11"
   }
 }

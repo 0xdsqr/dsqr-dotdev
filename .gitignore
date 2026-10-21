@@ -1,62 +1,21 @@
-# dependencies
-node_modules
-
-# output
-out
-dist
-.output
-*.tgz
-.vinxi
-
-# coverage
-coverage
-*.lcov
-
-# logs
-logs
-*.log
-
-# env files
+.direnv/
+.local/
 .env
 .env.*
-.dev.vars
-.prod.vars
+!.env.example
 .envrc.local
 
-# private keys
-*.pem
+node_modules/
+dist/
+.output/
+.cache/
+.tanstack/
+.turbo/
+.vinxi/
+routeTree.gen.ts
+/result
+/result-*
 
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IDE
-.idea
-.vscode
-
-# OS
 .DS_Store
-
-# Direnv
-.direnv
-.haven
-
-# Turbo
-.turbo
-
-# TanStack
-.tanstack
-.tanstackim
-
-# Temp/Reference files
-.temp
-learning/
-result*
-count.txt
-
-# Database (root level only)
-/data/
-
-# Large files
-*.iso
+.haven/
+.temp/
