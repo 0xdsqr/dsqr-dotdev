@@ -24,7 +24,9 @@
       ../../packages/database/tsconfig.json
       ../../packages/database/drizzle.config.ts
       ../../packages/database/migrations
+      ../../packages/database/migrate
       ../../packages/database/src
+      ./database-migrate.ts
     ];
   };
   inherit npmDeps;
@@ -43,7 +45,11 @@
     db-start
     export PGHOST="$PWD/.local/postgres/socket" PGPORT=55432 PGUSER=dsqr_dev PGDATABASE=dsqr_dotdev_dev
     psql -v ON_ERROR_STOP=1 -c "CREATE TABLE public.legacy_sentinel (id integer PRIMARY KEY); INSERT INTO public.legacy_sentinel VALUES (1);"
-    npm run db:migrate
+    node_modules/.bin/esbuild nix/checks/database-migrate.ts --bundle --platform=node \
+      --format=esm --external:pg-native \
+      --banner:js='import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' \
+      --outfile=migration-check.mjs
+    node migration-check.mjs
     npm run db:migrate
     npm run db:push -- --force
     cp -r packages/database/migrations "$TMPDIR/expected-migrations"

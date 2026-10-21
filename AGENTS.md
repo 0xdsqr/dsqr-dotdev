@@ -95,7 +95,7 @@ helm/
 - Shared packages compile with their consuming app; a type-check config does not
   imply a separate emitted library build. Keep browser and Node ambient types local
   to the workspaces that need them.
-- `packages/database` owns its schema, connection factory, and eventual migrations.
+- `packages/database` owns its schema, connection factory, and migrations.
   API code may depend on it; it must not depend
   on API or React. Add folders/modules only when real code needs them.
 
@@ -124,9 +124,24 @@ helm/
   Confirmation, unsubscribe, sending, and Resend contact sync are future work.
 - Existing `public` tables stay intact. Create only `app` now; `auth` arrives with
   sign-in. Scope Drizzle push to `app`, never implicitly manage every schema.
-- All current DB scripts use the local socket, ignoring DATABASE_URL. Do not
-  repoint this config at Knox. Remote migration configuration/access is separate work.
+- The npm DB scripts use the local socket, ignoring DATABASE_URL. Do not
+  repoint `drizzle.config.ts` at Knox.
   Starting PostgreSQL or a dev shell never applies schema changes automatically.
+- Production uses `nix run .#db-migrate-production -- --check` first, then
+  `--apply` with interactive confirmation. This packages the checked-in migrations
+  and pinned Drizzle runner, builds the Linux closure on Khaos, copies it to Knox,
+  and executes it through SSH/passwordless sudo as OS postgres. It connects only
+  to Knox's Unix socket, verifies PostgreSQL 18/database/owner, then drops database
+  privileges to `dsqr-dotdev` before running Drizzle. No password, `.envrc`, TCP
+  access change, or production secret in a derivation is needed. Application TCP
+  connections still require verified TLS and the separate runtime login.
+- The runner requires a session advisory lock and exact applied-history hash/order
+  matching. It refuses untracked existing `app` schemas and older/divergent releases.
+  `--check` creates no schema or journal. Drizzle applies pending SQL and journal
+  rows transactionally; its journal schema/table setup precedes that transaction.
+  Review every migration and verify a recoverable backup before `--apply`.
+  This command does not grant runtime permissions, provision secrets, import old
+  data, or remove `public`. Never rewrite applied migrations or auto-baseline drift.
 - During local prototyping use explicit `db:push`. The initial application migration
   is committed under `packages/database/migrations`; test it on a fresh database,
   not a database already initialized by push. Never rewrite applied history.
@@ -136,6 +151,10 @@ helm/
   checks that a sentinel `public`
   table survives. There are no unit tests for now; they return later. Use the shared fixed-output npm cache offline; no
   live database or email service in builds. It never touches developer data.
+- The same disposable database exercises the production migration core: check-only,
+  owner-scoped execution, concurrent-run rejection, repeat application, history
+  tampering rejection and failed-migration rollback. `checks.database-production-command`
+  checks CLI/host guards without connecting to Knox. Neither check deploys anything.
 
 ## Container standards
 
@@ -457,6 +476,8 @@ nix run .                               # Production server, port 3000
 nix build .#dotdev-image .#labs-image .#studio-image # Linux builder
 nix build .#checks.aarch64-darwin.workflows  # lint workflows (actionlint + zizmor)
 nix build .#checks.aarch64-darwin.helm       # offline Helm/schema/security checks
+nix run .#db-migrate-production -- --check # inspect Knox migration history; no DDL
+nix run .#db-migrate-production -- --apply # explicit confirmation; applies on Knox
 nix run .#ci-image-scan -- result image.cdx.json # scan an image archive
 nix fmt flake.nix nix/*.nix nix/checks/*.nix nix/packages/*.nix
 nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false
