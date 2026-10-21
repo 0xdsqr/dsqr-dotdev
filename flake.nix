@@ -1,10 +1,10 @@
 {
-  description = "dsqr-dotdev refactor development environment";
+  description = "dsqr-dotdev";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
     flake-parts = {
-      url = "github:hercules-ci/flake-parts";
+      url = "https://flakehub.com/f/hercules-ci/flake-parts/0.1";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
   };
