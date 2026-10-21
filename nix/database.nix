@@ -24,7 +24,6 @@
             root="$PWD/.local/postgres"
             export PGDATA="$root/data" PGHOST="$root/socket"
             export PGPORT=55432 PGUSER=dsqr_dev PGDATABASE=dsqr_dotdev_dev
-            # No TCP listener; the private socket directory gates local access.
             unset PGHOSTADDR PGSERVICE PGSERVICEFILE PGOPTIONS
             ${
               if action == "start" then

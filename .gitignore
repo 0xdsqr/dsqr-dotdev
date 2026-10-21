@@ -1,4 +1,3 @@
-# Local environment and secrets
 .direnv/
 .local/
 .env
@@ -6,7 +5,6 @@
 !.env.example
 .envrc.local
 
-# Generated dependencies and build outputs
 node_modules/
 dist/
 .output/
@@ -18,7 +16,6 @@ routeTree.gen.ts
 /result
 /result-*
 
-# Local scratch files and tooling
 .DS_Store
 .haven/
 .temp/

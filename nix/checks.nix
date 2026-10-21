@@ -23,7 +23,6 @@
           }
         // {
 
-          # Exercise the same toolchain developers receive from `nix develop`.
           smoke =
             pkgs.runCommand "dsqr-dotdev-toolchain-smoke"
               {

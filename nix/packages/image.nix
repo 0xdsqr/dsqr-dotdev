@@ -7,13 +7,11 @@
 }:
 dockerTools.buildLayeredImage {
   name = appName;
-  # Omit tag: dockerTools uses a content-derived Nix output hash.
   created = "1970-01-01T00:00:01Z";
   contents = [ cacert ];
   config = {
     User = "10001:10001";
     WorkingDir = "${app}/share/${appName}";
-    # Execute Node directly as PID 1, without a shell entrypoint.
     Entrypoint = [
       "${nodejs-slim_24}/bin/node"
       "${app}/share/${appName}/server/index.mjs"
