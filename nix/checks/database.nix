@@ -15,7 +15,6 @@
     fileset = lib.fileset.unions [
       ../../package.json
       ../../package-lock.json
-      ../../tsconfig.base.json
       ../../apps/dotdev/package.json
       ../../apps/labs/package.json
       ../../apps/studio/package.json

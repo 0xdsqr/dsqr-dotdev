@@ -40,7 +40,6 @@ in
     inherit root;
     fileset = lib.fileset.unions [
       manifests
-      ../../tsconfig.base.json
       (appRoot + "/tsconfig.json")
       (appRoot + "/vite.config.ts")
       ../../packages/api/tsconfig.json

@@ -60,7 +60,7 @@ export function Subscribe() {
     event.preventDefault()
     if (!email.trim()) return setProblem('Enter your email to subscribe.')
     const parsed = decodeRequest({ email })
-    if (Result.isFailure(parsed)) return setProblem(firstIssueMessage(parsed.failure))
+    if (Result.isFailure(parsed)) return setProblem(firstIssueMessage(parsed.failure) ?? fallback)
     setProblem(null)
     subscribe({ payload: parsed.success })
   }
