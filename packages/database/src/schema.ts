@@ -4,15 +4,13 @@ import { check, pgSchema, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-
 export const app = pgSchema('app')
 
 export const subscriptions = app.table('subscriptions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  // The API will validate addresses. Keep one trimmed, lowercase value here;
-  // do not strip dots or plus tags, which can identify different mailboxes.
+  id: uuid('id').default(sql`uuidv7()`).primaryKey(),
   email: varchar('email', { length: 254 }).notNull().unique(),
   status: text('status', { enum: ['pending', 'subscribed', 'unsubscribed'] })
     .notNull().default('pending'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
-    .$onUpdate(() => new Date()),
+    .$onUpdate(() => sql`now()`),
   subscribedAt: timestamp('subscribed_at', { withTimezone: true }),
   unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
 }, (table) => [
