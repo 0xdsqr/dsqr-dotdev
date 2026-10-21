@@ -135,6 +135,14 @@ helm/
   privileges to `dsqr-dotdev` before running Drizzle. No password, `.envrc`, TCP
   access change, or production secret in a derivation is needed. Application TCP
   connections still require verified TLS and the separate runtime login.
+- The wrapper evaluates locally with `--eval-store auto` and builds using
+  `--store ssh-ng://srv-lx-khaos`, then copies from that store to Knox. Do not
+  substitute daemon-managed `--builders`: that would require separate SSH
+  credentials/configuration for the local Nix daemon rather than the caller.
+- The Knox copy uses its existing passwordless sudo access to `nix-daemon` and
+  `--no-check-sigs` for that transfer only. This explicitly trusts the freshly built
+  Khaos closure over authenticated SSH; it does not change global signature policy
+  or add trusted users/keys. Do not use this path for untrusted build sources.
 - The runner requires a session advisory lock and exact applied-history hash/order
   matching. It refuses untracked existing `app` schemas and older/divergent releases.
   `--check` creates no schema or journal. Drizzle applies pending SQL and journal

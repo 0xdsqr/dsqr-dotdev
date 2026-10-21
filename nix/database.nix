@@ -92,16 +92,18 @@
               exit 2
             fi
           fi
-          payload="$(nix build --no-link --print-out-paths --max-jobs 0 \
-            --builders 'ssh-ng://srv-lx-khaos x86_64-linux' \
-            --option builders-use-substitutes true \
+          payload="$(nix build --no-link --print-out-paths \
+            --store ssh-ng://srv-lx-khaos --eval-store auto \
+            --max-jobs 1 --builders "" \
             --no-update-lock-file \
             '${self.outPath}#packages.x86_64-linux.db-migrate-knox')"
           if [[ ! "$payload" =~ ^/nix/store/[a-z0-9]{32}-dotdev-db-migrate-0.0.0$ ]]; then
             echo 'Unexpected migration package output; stopping.' >&2
             exit 1
           fi
-          nix copy --to ssh-ng://srv-lx-knox "$payload"
+          nix copy --from ssh-ng://srv-lx-khaos \
+            --to 'ssh-ng://srv-lx-knox?remote-program=sudo%20-n%20/run/current-system/sw/bin/nix-daemon' \
+            --no-check-sigs "$payload"
           exec ssh -o BatchMode=yes -o ConnectTimeout=10 srv-lx-knox \
             "sudo -n -u postgres env -i PATH=/run/current-system/sw/bin $payload/bin/db-migrate-knox $mode"
         '';
