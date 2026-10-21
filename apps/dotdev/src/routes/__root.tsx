@@ -1,10 +1,11 @@
-import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
+import { RegistryProvider } from '@effect/atom-react'
+import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
 import { useEffect, type ReactNode } from 'react'
 import appCss from '@dsqr-dotdev/react/globals.css?url'
-import type { ApiContext } from '@dsqr-dotdev/api/client'
+import markUrl from '@dsqr-dotdev/react/mark.svg?url'
 import { Document } from '@dsqr-dotdev/react/components/document'
 
-export const Route = createRootRouteWithContext<ApiContext>()({
+export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -15,7 +16,10 @@ export const Route = createRootRouteWithContext<ApiContext>()({
         content: 'Dad of one. Building infrastructure and systems at Stablecore.',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', type: 'image/svg+xml', href: markUrl },
+    ],
   }),
   shellComponent: RootDocument,
 })
@@ -36,7 +40,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         </>
       }
     >
-      {children}
+      <RegistryProvider>{children}</RegistryProvider>
       <Scripts />
     </Document>
   )
