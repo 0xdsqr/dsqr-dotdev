@@ -15,8 +15,8 @@ export const palette = {
   brass: '#b08d57',
   metal: '#2a2733',
   speaker: '#0e0d12',
-  cabinet: '#1d1b26',
-  grille: '#34303f',
+  cabinet: '#2a2736',
+  grille: '#3d384b',
   ivory: '#f4f1fb',
   stick: '#ede9fe',
 } as const

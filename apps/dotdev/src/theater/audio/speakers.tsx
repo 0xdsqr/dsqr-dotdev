@@ -1,5 +1,6 @@
 import { stage } from '../lib/layout'
 import { palette } from '../lib/palette'
+import { AimedSpot } from '../lighting/aimed-spot'
 import { ceilingY } from '../venue/hall'
 import { LineArray } from './line-array'
 import { SubStack } from './sub-stack'
@@ -19,7 +20,14 @@ export function Speakers() {
       {[-1, 1].map((side) => (
         <group key={side}>
           <LineArray position={[side * mains.x, mains.y, mains.z]} yaw={-side * 0.12} hang={9.4 - mains.y} />
-          <pointLight position={[side * (mains.x - 1.2), mains.y - 1.2, mains.z + 2]} intensity={6} distance={5} decay={1.6} color={palette.lilac} />
+          <AimedSpot
+            position={[side * (mains.x - 2.5), mains.y - 5, mains.z + 6]}
+            target={[side * mains.x, mains.y - 1.4, mains.z]}
+            angle={0.32}
+            intensity={70}
+            distance={14}
+            color={palette.lilac}
+          />
         </group>
       ))}
       {delays.map(([x, y, z]) => (

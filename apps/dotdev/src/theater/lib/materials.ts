@@ -11,7 +11,7 @@ export const materials = {
   wall: new MeshStandardMaterial({ color: palette.wall, roughness: 0.85 }),
   riser: new MeshStandardMaterial({ color: palette.riser, roughness: 0.95 }),
   metal: new MeshStandardMaterial({ color: palette.metal, metalness: 0.8, roughness: 0.35 }),
-  cabinet: new MeshStandardMaterial({ color: palette.cabinet, metalness: 0.35, roughness: 0.45 }),
+  cabinet: new MeshStandardMaterial({ color: palette.cabinet, metalness: 0.45, roughness: 0.38 }),
   grille: new MeshStandardMaterial({ color: palette.grille, roughness: 0.75, metalness: 0.2 }),
   rubber: new MeshStandardMaterial({ color: palette.speaker, roughness: 0.7 }),
   lacquer: new MeshPhysicalMaterial({

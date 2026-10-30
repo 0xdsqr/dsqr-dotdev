@@ -51,6 +51,9 @@ const styles = stylex.create({
     justifyContent: 'center',
     width: '100%',
   },
+  plain: {
+    borderTopWidth: 0,
+  },
   signoff: {
     fontFamily: typography.mono,
     fontSize: typography.sizeCaption,
@@ -59,10 +62,10 @@ const styles = stylex.create({
   },
 })
 
-export function Footer({ site, action }: { site: string; action?: ReactNode }) {
+export function Footer({ site, action, divider = true }: { site: string; action?: ReactNode; divider?: boolean }) {
   return (
     <footer {...stylex.props(column.base, styles.footer)}>
-      <div {...stylex.props(styles.inner)}>
+      <div {...stylex.props(styles.inner, !divider && styles.plain)}>
         <div {...stylex.props(styles.controls)}>
           <nav aria-label="Social links" {...stylex.props(styles.links)}>
             {links.map(({ label, href, icon, profile }) => (

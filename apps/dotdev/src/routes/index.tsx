@@ -25,7 +25,7 @@ function Home() {
       </div>
       <Theater />
       <div {...stylex.props(styles.encore)}>
-        <Footer site="dsqr.dev" action={<Subscribe />} />
+        <Footer site="dsqr.dev" action={<Subscribe />} divider={false} />
       </div>
     </main>
   )

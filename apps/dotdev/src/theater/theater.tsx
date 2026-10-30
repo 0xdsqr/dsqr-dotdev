@@ -4,12 +4,17 @@ import {
   lazy,
   type ReactNode,
   Suspense,
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from 'react'
+import type { Destination } from '../content/destinations'
 import type { CameraApi } from './camera/camera-director'
+import type { TheaterControls, TheaterMode } from './mode'
+import { SiteMenu } from './site-menu'
 
 const StageScene = lazy(() => import('./stage-scene'))
 
@@ -35,15 +40,16 @@ function isTyping(target: EventTarget | null) {
   return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 }
 
-function useRecenterKey(recenter: () => void) {
+function useTheaterKeys(recenter: () => void, leave: () => void) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'r' || event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
-      recenter()
+      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
+      if (event.key === 'Escape') leave()
+      else if (event.key.toLowerCase() === 'r') recenter()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [recenter])
+  }, [recenter, leave])
 }
 
 class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -114,29 +120,50 @@ export function Theater() {
   const reducedMotion = useReducedMotion()
   const camera = useRef<CameraApi | null>(null)
   const [moved, setMoved] = useState(false)
-  const recenter = useRef(() => camera.current?.recenter()).current
-  useRecenterKey(recenter)
+  const [mode, setMode] = useState<TheaterMode>('crowd')
+  const leave = useCallback(() => setMode('crowd'), [])
+  const recenter = useCallback(() => {
+    if (mode === 'booth') leave()
+    else camera.current?.recenter()
+  }, [mode, leave])
+  const controls = useMemo<TheaterControls>(
+    () => ({
+      mode,
+      enterBooth: () => setMode('booth'),
+      select: (destination: Destination) => window.location.assign(destination.href),
+    }),
+    [mode],
+  )
+  useTheaterKeys(recenter, leave)
 
   return (
     <div {...stylex.props(styles.theater)}>
       <section
-        aria-label="An animated theater: a packed crowd under four sweeping purple spotlights, a sound booth in the stands, speaker stacks, and a stick figure with 0xdsqr's face playing a grand piano. Drag to look around; press R to recenter."
-        onDoubleClick={recenter}
+        aria-label="An animated theater: a packed crowd under four sweeping purple spotlights, a sound booth in the stands, speaker stacks, and a stick figure with 0xdsqr's face playing a grand piano. Drag to look around, press R to recenter, and open the sound booth to navigate."
+        onDoubleClick={() => mode === 'crowd' && camera.current?.recenter()}
         {...stylex.props(styles.stage)}
       >
         {mounted && (
           <SceneBoundary>
             <Suspense fallback={null}>
-              <StageScene reducedMotion={reducedMotion} camera={camera} onMovedChange={setMoved} />
+              <StageScene reducedMotion={reducedMotion} camera={camera} controls={controls} onMovedChange={setMoved} />
             </Suspense>
           </SceneBoundary>
         )}
       </section>
-      {moved && (
-        <button type="button" onClick={recenter} {...stylex.props(styles.recenter)}>
-          Recenter
-          <kbd {...stylex.props(styles.key)}>R</kbd>
+      <SiteMenu onEnterBooth={controls.enterBooth} />
+      {mode === 'booth' ? (
+        <button type="button" onClick={leave} {...stylex.props(styles.recenter)}>
+          Back to crowd
+          <kbd {...stylex.props(styles.key)}>Esc</kbd>
         </button>
+      ) : (
+        moved && (
+          <button type="button" onClick={recenter} {...stylex.props(styles.recenter)}>
+            Recenter
+            <kbd {...stylex.props(styles.key)}>R</kbd>
+          </button>
+        )
       )}
     </div>
   )

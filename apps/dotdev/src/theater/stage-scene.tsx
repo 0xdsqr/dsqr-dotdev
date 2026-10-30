@@ -13,15 +13,17 @@ import { Spotlights } from './lighting/spotlights'
 import { StageWash } from './lighting/stage-wash'
 import { Piano } from './piano/piano'
 import { SideScreens } from './screens/side-screens'
+import type { TheaterControls } from './mode'
 import { Hall } from './venue/hall'
 
 export type StageSceneProps = {
   reducedMotion: boolean
   camera: RefObject<CameraApi | null>
+  controls: TheaterControls
   onMovedChange: (moved: boolean) => void
 }
 
-export default function StageScene({ reducedMotion, camera, onMovedChange }: StageSceneProps) {
+export default function StageScene({ reducedMotion, camera, controls, onMovedChange }: StageSceneProps) {
   const [dpr, setDpr] = useState(1.5)
   return (
     <Canvas
@@ -37,11 +39,11 @@ export default function StageScene({ reducedMotion, camera, onMovedChange }: Sta
       <color attach="background" args={[palette.night]} />
       <fogExp2 attach="fog" args={[palette.haze, 0.014]} />
       <hemisphereLight args={['#5b47a8', '#07040e', 0.9]} />
-      <CameraDirector still={reducedMotion} api={camera} onMovedChange={onMovedChange} />
+      <CameraDirector still={reducedMotion} mode={controls.mode} api={camera} onMovedChange={onMovedChange} />
       <StageWash />
       <Hall />
       <Audience />
-      <TechBooth />
+      <TechBooth mode={controls.mode} onEnter={controls.enterBooth} onSelect={controls.select} />
       <Speakers />
       <Spotlights />
       <Suspense fallback={null}>

@@ -23,8 +23,8 @@ export function LineArray({
         <boxGeometry args={[1.35, 0.08, 0.5]} />
       </mesh>
       {Array.from({ length: boxes }, (_, index) => (
-        <group key={index} position={[0, -index * 0.4, index * index * 0.012]} rotation={[0.04 + index * 0.05, 0, 0]}>
-          <Cabinet />
+        <group key={index} position={[0, -index * 0.44, index * index * 0.012]} rotation={[0.04 + index * 0.05, 0, 0]}>
+          <Cabinet width={1.4} height={0.4} />
         </group>
       ))}
     </group>
