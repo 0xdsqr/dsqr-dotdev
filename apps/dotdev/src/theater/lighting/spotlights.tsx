@@ -2,7 +2,7 @@ import { SpotLight } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import { CylinderGeometry, type Group, type SpotLight as SpotLightImpl, Vector3 } from 'three'
-import { palette } from '../palette'
+import { palette } from '../lib/palette'
 
 const rigs = [
   { x: -7.5, color: palette.violet, speed: 0.31, phase: 0 },

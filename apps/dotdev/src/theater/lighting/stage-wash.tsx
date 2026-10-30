@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Object3D } from 'three'
-import { stage } from '../layout'
-import { palette } from '../palette'
+import { stage } from '../lib/layout'
+import { palette } from '../lib/palette'
 
 export function StageWash() {
   const pianoTarget = useMemo(() => {

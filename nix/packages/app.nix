@@ -58,7 +58,7 @@ in
       inherit root;
       fileset = manifests;
     };
-    hash = "sha256-gCkWZgVotZXkUjukD9RP3COYVvsQTgvNVl2i7gDXBek=";
+    hash = "sha256-lTH8XDI3JBNccmDffmi8Tq+ekPx6h3IFWNKFJjlRBRo=";
   };
   npmRebuildFlags = [ "--ignore-scripts" ];
   env = {

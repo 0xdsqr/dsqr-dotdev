@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
-import { CylinderGeometry, type Group, type Mesh, Quaternion, Vector3 } from 'three'
-import { palette } from '../palette'
+import { CylinderGeometry, type Group, type Material, type Mesh, Quaternion, Vector3 } from 'three'
+import { materials } from '../lib/materials'
 
 export type Pose = Record<Joint, Vector3>
 
@@ -83,12 +83,12 @@ export function StickFigure({
   animate,
   head,
   thickness = 0.045,
-  color = palette.stick,
+  material = materials.stick,
 }: {
   animate: (time: number, pose: Pose) => void
   head: ReactNode
   thickness?: number
-  color?: string
+  material?: Material
 }) {
   const pose = useMemo(makePose, [])
   const geometry = useMemo(() => new CylinderGeometry(1, 1, 1, 10), [])
@@ -116,9 +116,8 @@ export function StickFigure({
             segments.current[index] = mesh
           }}
           geometry={geometry}
-        >
-          <meshStandardMaterial color={color} emissive={palette.violet} emissiveIntensity={0.18} roughness={0.6} />
-        </mesh>
+          material={material}
+        />
       ))}
       {[0, 1].map((index) => (
         <mesh
@@ -126,9 +125,9 @@ export function StickFigure({
           ref={(mesh) => {
             hands.current[index] = mesh
           }}
+          material={material}
         >
           <sphereGeometry args={[thickness * 1.5, 10, 10]} />
-          <meshStandardMaterial color={color} emissive={palette.violet} emissiveIntensity={0.35} />
         </mesh>
       ))}
       <group ref={headGroup}>{head}</group>

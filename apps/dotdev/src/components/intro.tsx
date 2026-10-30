@@ -3,8 +3,10 @@ import { Prose } from '@dsqr-dotdev/react/components/prose'
 import { Stack } from '@dsqr-dotdev/react/components/stack'
 import { visuallyHidden } from '@dsqr-dotdev/react/visually-hidden'
 import * as stylex from '@stylexjs/stylex'
+import { Fragment } from 'react'
 import portraitAvif from '../assets/portrait.avif'
 import portraitWebp from '../assets/portrait.webp'
+import { handle, intro } from '../content/intro'
 
 const styles = stylex.create({
   portrait: {
@@ -18,13 +20,13 @@ export function Intro() {
   return (
     <Stack align="center" gap="sm" labelledBy="intro-title">
       <h1 id="intro-title" {...stylex.props(visuallyHidden.base)}>
-        0xdsqr
+        {handle}
       </h1>
       <picture>
         <source srcSet={portraitAvif} type="image/avif" />
         <img
           src={portraitWebp}
-          alt="Portrait of 0xdsqr"
+          alt={`Portrait of ${handle}`}
           width={480}
           height={601}
           fetchPriority="high"
@@ -33,11 +35,15 @@ export function Intro() {
         />
       </picture>
       <Prose>
-        Dad of one. I&apos;m primarily interested in <Mark tone="accent">infrastructure</Mark>,{' '}
-        <Mark tone="teal">systems</Mark>, <Mark tone="orange">platforms</Mark>,{' '}
-        <Mark tone="emerald">making things fast</Mark>, and <Mark tone="indigo">operations</Mark>.
-        Currently building infrastructure and systems at <Mark tone="quiet">Stablecore</Mark>. I also
-        enjoy hardware, Nix, and collecting things that are nice to look at.
+        {intro.map((segment, index) =>
+          segment.tone ? (
+            <Mark key={index} tone={segment.tone}>
+              {segment.text}
+            </Mark>
+          ) : (
+            <Fragment key={index}>{segment.text}</Fragment>
+          ),
+        )}
       </Prose>
     </Stack>
   )
