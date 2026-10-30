@@ -6,7 +6,7 @@ import { Proscenium } from './proscenium'
 import { Risers } from './risers'
 import { Truss } from './truss'
 
-export const ceilingY = 16
+const ceilingY = 16
 
 export function Hall() {
   return (

@@ -1,17 +1,12 @@
 export type Destination = {
-  readonly id: 'blog' | 'about' | 'labs' | 'studio'
+  readonly id: 'blog' | 'about' | 'misc'
   readonly label: string
   readonly hint: string
-  readonly href: string
+  readonly href: '/blog' | '/about' | '/misc'
 }
 
 export const destinations: ReadonlyArray<Destination> = [
   { id: 'blog', label: 'Blog', hint: 'Writing', href: '/blog' },
   { id: 'about', label: 'About', hint: 'The long version', href: '/about' },
-  { id: 'labs', label: 'Labs', hint: 'Consulting', href: 'https://labs.dsqr.dev' },
-  { id: 'studio', label: 'Studio', hint: 'Projects', href: 'https://studio.dsqr.dev' },
+  { id: 'misc', label: 'Misc', hint: 'Odds and ends', href: '/misc' },
 ]
-
-export function isExternal(destination: Destination) {
-  return /^https?:\/\//.test(destination.href)
-}

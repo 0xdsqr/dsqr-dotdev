@@ -2,6 +2,7 @@ import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as stylex from '@stylexjs/stylex'
 import { type ReactNode, useEffect, useState } from 'react'
+import { chrome } from '../overlay/chrome.stylex'
 import { boothCenterZ, boothFloorY } from './geometry'
 
 const styles = stylex.create({
@@ -9,12 +10,13 @@ const styles = stylex.create({
     paddingBlock: '0.3rem',
     paddingInline: '0.7rem',
     borderRadius: '999px',
-    backgroundColor: 'rgba(13, 8, 24, 0.8)',
+    backgroundColor: chrome.glassStrong,
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'rgba(196, 181, 253, 0.55)',
-    color: '#ede9fe',
-    fontFamily: '"Geist Mono Variable", ui-monospace, monospace',
+    borderColor: chrome.edgeHot,
+    boxShadow: chrome.glow,
+    color: chrome.ink,
+    fontFamily: chrome.mono,
     fontSize: '0.75rem',
     whiteSpace: 'nowrap',
     pointerEvents: 'none',

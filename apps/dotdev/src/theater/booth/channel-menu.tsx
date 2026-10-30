@@ -2,22 +2,24 @@ import { Html } from '@react-three/drei'
 import * as stylex from '@stylexjs/stylex'
 import { useState } from 'react'
 import { type Destination, destinations } from '../../content/destinations'
+import { chrome } from '../overlay/chrome.stylex'
 import { deskTilt, deskY, deskZ } from './geometry'
 
 const styles = stylex.create({
   menu: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 7.5rem)',
+    gridAutoFlow: 'column',
+    gridAutoColumns: '8.5rem',
     columnGap: '0.75rem',
     padding: '1rem',
     borderRadius: '0.9rem',
-    backgroundColor: 'rgba(10, 6, 20, 0.82)',
+    backgroundColor: chrome.glassStrong,
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'rgba(139, 92, 246, 0.45)',
-    boxShadow: '0 0 40px rgba(139, 92, 246, 0.25)',
-    fontFamily: '"Geist Mono Variable", ui-monospace, monospace',
-    color: '#ede9fe',
+    borderColor: chrome.edge,
+    boxShadow: chrome.glow,
+    fontFamily: chrome.mono,
+    color: chrome.ink,
     userSelect: 'none',
   },
   channel: {
@@ -43,11 +45,11 @@ const styles = stylex.create({
     width: '0.45rem',
     height: '0.45rem',
     borderRadius: '50%',
-    backgroundColor: '#3b2a6b',
+    backgroundColor: chrome.led,
     transitionProperty: 'background-color, box-shadow',
     transitionDuration: '180ms',
   },
-  ledOn: { backgroundColor: '#5eead4', boxShadow: '0 0 10px #5eead4' },
+  ledOn: { backgroundColor: chrome.ledOn, boxShadow: `0 0 10px ${chrome.ledOn}` },
   track: {
     position: 'relative',
     width: '0.35rem',
@@ -71,7 +73,7 @@ const styles = stylex.create({
   },
   knobUp: { bottom: '4.6rem' },
   label: { fontSize: '1rem', fontWeight: 600 },
-  hint: { fontSize: '0.68rem', color: '#a79bd0' },
+  hint: { fontSize: '0.68rem', color: chrome.muted },
 })
 
 function Channel({

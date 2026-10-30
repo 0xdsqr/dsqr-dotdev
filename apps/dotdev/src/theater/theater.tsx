@@ -14,7 +14,8 @@ import {
 import type { Destination } from '../content/destinations'
 import type { CameraApi } from './camera/camera-director'
 import type { TheaterControls, TheaterMode } from './mode'
-import { SiteMenu } from './site-menu'
+import { pill } from './overlay/pill'
+import { SiteMenu } from './overlay/site-menu'
 
 const StageScene = lazy(() => import('./stage-scene'))
 
@@ -43,7 +44,7 @@ function isTyping(target: EventTarget | null) {
 function useTheaterKeys(recenter: () => void, leave: () => void) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
       if (event.key === 'Escape') leave()
       else if (event.key.toLowerCase() === 'r') recenter()
     }
@@ -79,43 +80,14 @@ const styles = stylex.create({
     inset: 0,
     touchAction: 'none',
   },
-  recenter: {
+  corner: {
     position: 'absolute',
     top: '1rem',
     right: '1rem',
-    paddingBlock: '0.45rem',
-    paddingInline: '0.9rem',
-    borderRadius: '999px',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'rgba(196, 181, 253, 0.35)',
-    backgroundColor: 'rgba(13, 8, 24, 0.7)',
-    backdropFilter: 'blur(8px)',
-    color: '#ede9fe',
-    font: 'inherit',
-    fontSize: '0.8125rem',
-    cursor: 'pointer',
-    transitionProperty: 'border-color, background-color',
-    transitionDuration: '160ms',
-    ':hover': {
-      borderColor: 'rgba(196, 181, 253, 0.7)',
-      backgroundColor: 'rgba(42, 20, 80, 0.75)',
-    },
-    ':focus-visible': {
-      outline: '2px solid #c4b5fd',
-      outlineOffset: '2px',
-    },
-  },
-  key: {
-    marginInlineStart: '0.5rem',
-    paddingInline: '0.35rem',
-    borderRadius: '0.25rem',
-    backgroundColor: 'rgba(196, 181, 253, 0.16)',
-    fontSize: '0.75rem',
   },
 })
 
-export function Theater() {
+export function Theater({ onNavigate }: { onNavigate: (destination: Destination) => void }) {
   const mounted = useMounted()
   const reducedMotion = useReducedMotion()
   const camera = useRef<CameraApi | null>(null)
@@ -130,9 +102,9 @@ export function Theater() {
     () => ({
       mode,
       enterBooth: () => setMode('booth'),
-      select: (destination: Destination) => window.location.assign(destination.href),
+      select: onNavigate,
     }),
-    [mode],
+    [mode, onNavigate],
   )
   useTheaterKeys(recenter, leave)
 
@@ -153,16 +125,20 @@ export function Theater() {
       </section>
       <SiteMenu onEnterBooth={controls.enterBooth} />
       {mode === 'booth' ? (
-        <button type="button" onClick={leave} {...stylex.props(styles.recenter)}>
-          Back to crowd
-          <kbd {...stylex.props(styles.key)}>Esc</kbd>
-        </button>
+        <div {...stylex.props(styles.corner)}>
+          <button type="button" onClick={leave} {...stylex.props(pill.base)}>
+            Back to crowd
+            <kbd {...stylex.props(pill.key)}>Esc</kbd>
+          </button>
+        </div>
       ) : (
         moved && (
-          <button type="button" onClick={recenter} {...stylex.props(styles.recenter)}>
-            Recenter
-            <kbd {...stylex.props(styles.key)}>R</kbd>
-          </button>
+          <div {...stylex.props(styles.corner)}>
+            <button type="button" onClick={recenter} {...stylex.props(pill.base)}>
+              Recenter
+              <kbd {...stylex.props(pill.key)}>R</kbd>
+            </button>
+          </div>
         )
       )}
     </div>

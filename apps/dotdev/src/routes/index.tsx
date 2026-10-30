@@ -1,7 +1,9 @@
 import { Footer } from '@dsqr-dotdev/react/components/footer'
 import { visuallyHidden } from '@dsqr-dotdev/react/visually-hidden'
 import * as stylex from '@stylexjs/stylex'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback } from 'react'
+import type { Destination } from '../content/destinations'
 import { Intro } from '../components/intro'
 import { Subscribe } from '../components/subscribe'
 import { Theater } from '../theater/theater'
@@ -18,12 +20,14 @@ const styles = stylex.create({
 })
 
 function Home() {
+  const navigate = useNavigate()
+  const onNavigate = useCallback((destination: Destination) => void navigate({ to: destination.href }), [navigate])
   return (
     <main>
       <div {...stylex.props(visuallyHidden.base)}>
         <Intro />
       </div>
-      <Theater />
+      <Theater onNavigate={onNavigate} />
       <div {...stylex.props(styles.encore)}>
         <Footer site="dsqr.dev" action={<Subscribe />} divider={false} />
       </div>
