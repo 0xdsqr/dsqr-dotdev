@@ -1,7 +1,9 @@
 name: Trigger deployment promotion
 
 on:
-  workflow_run:
+  # Deliberate: this workflow never checks out or executes source content, gates on a
+  # successful same-repository master run, and the receiver revalidates the run/SHA.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows:
       - CI
     types:
