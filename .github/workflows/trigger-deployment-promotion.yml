@@ -1,0 +1,55 @@
+name: Trigger deployment promotion
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+permissions: {}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: deployment-promotion-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Dispatch private promotion verification
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'master' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.event == 'push' ||
+      github.event.workflow_run.event == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Create trigger-only token
+        id: trigger
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.0.0
+        with:
+          client-id: ${{ vars.PROMOTION_TRIGGER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROMOTION_TRIGGER_APP_PRIVATE_KEY }}
+          owner: dsqr-labs
+          repositories: deployments
+          permission-actions: write
+
+      - name: Dispatch private receiver
+        env:
+          GH_TOKEN: ${{ steps.trigger.outputs.token }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          gh workflow run promote.yml \
+            --repo dsqr-labs/deployments \
+            --ref master \
+            -f app=dotdev-web \
+            -f source_sha="$SOURCE_SHA" \
+            -f source_run_id="$SOURCE_RUN_ID"

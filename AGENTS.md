@@ -10,8 +10,9 @@ dsqr-dotdev: the dsqr.dev site, Labs, and Studio, developed directly on `master`
   and API packages, an Effect HttpApi per app, Nix app/Linux image builds,
   a local PostgreSQL/Drizzle subscription schema, and Dotdev's newsletter signup
   (stores the address only), and CI that checks, scans, and publishes images to
-  GHCR, and a hardened shared Helm chart for Indigo. No auth or deployment
-  workflows yet; CI publishes images but never changes the cluster.
+  GHCR, and a hardened shared Helm chart for Indigo. Successful trusted `master`
+  CI dispatches a private, independently verified promotion workflow that opens a
+  reviewed deployment-state pull request; CI never changes the cluster directly.
 - Keep guidance in this file. Do not create `docs/` or speculative packages.
 - Commit and push straight to `master`; no feature branches or PRs unless asked.
 - Work in this checkout; no worktrees unless requested. Leave unrelated changes
@@ -195,7 +196,10 @@ helm/
   (`images.json`, 90 days) and the run summary record every immutable digest;
   verify with `gh attestation verify oci://<image>@<digest> --owner 0xdsqr`.
 - CI publishes with the job's `GITHUB_TOKEN` only (`packages: write`). It holds no
-  cluster credentials and never deploys; clusters pull digests themselves.
+  cluster credentials and never deploys; clusters pull digests themselves. A separate
+  trigger-only GitHub App may dispatch the private promotion receiver after the complete
+  CI workflow succeeds. That App cannot read or write deployment state, and the receiver
+  re-verifies the run, source, image and provenance before opening a pull request.
 - Workflows start from `permissions: {}` and grant per job. Pin every action to a
   full commit SHA with the version in a trailing tag comment; bump pins
   deliberately (no Dependabot for now). Check out with
