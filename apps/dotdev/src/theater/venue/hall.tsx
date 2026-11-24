@@ -29,7 +29,12 @@ export function Hall() {
         <planeGeometry args={[60, 20]} />
       </mesh>
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 24, 9, 10]} rotation={[0, -side * (Math.PI / 2), 0]} material={materials.wall}>
+        <mesh
+          key={side}
+          position={[side * 24, 9, 10]}
+          rotation={[0, -side * (Math.PI / 2), 0]}
+          material={materials.wall}
+        >
           <planeGeometry args={[50, 20]} />
         </mesh>
       ))}

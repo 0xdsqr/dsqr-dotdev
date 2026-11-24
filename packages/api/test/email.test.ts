@@ -11,9 +11,12 @@ describe('SubscribeRequest', () => {
     if (Result.isSuccess(result)) assert.strictEqual(result.success.email, 'me@dsqr.dev')
   })
 
-  it.each(['me', 'me@', 'me@dsqr', 'a b@dsqr.dev', `${'a'.repeat(250)}@x.io`])('rejects %s with a readable message', (email) => {
-    const result = decode({ email })
-    assert.isTrue(Result.isFailure(result))
-    if (Result.isFailure(result)) assert.isString(firstIssueMessage(result.failure))
-  })
+  it.each(['me', 'me@', 'me@dsqr', 'a b@dsqr.dev', `${'a'.repeat(250)}@x.io`])(
+    'rejects %s with a readable message',
+    (email) => {
+      const result = decode({ email })
+      assert.isTrue(Result.isFailure(result))
+      if (Result.isFailure(result)) assert.isString(firstIssueMessage(result.failure))
+    },
+  )
 })

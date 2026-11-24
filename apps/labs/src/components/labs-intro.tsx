@@ -15,9 +15,8 @@ export function LabsIntro() {
       </h1>
       <Prose>
         A one-person consulting studio focused on{' '}
-        <Mark>systems, infrastructure, performance, and backend engineering</Mark>. The goal is
-        simple: help people ship software that stays{' '}
-        <Mark>understandable, operable, and boring in the best way</Mark>. Want to work together?{' '}
+        <Mark>systems, infrastructure, performance, and backend engineering</Mark>. The goal is simple: help people ship
+        software that stays <Mark>understandable, operable, and boring in the best way</Mark>. Want to work together?{' '}
         <TextLink href="mailto:me@dsqr.dev">me@dsqr.dev</TextLink>
       </Prose>
     </Stack>

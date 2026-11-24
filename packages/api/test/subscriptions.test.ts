@@ -48,6 +48,8 @@ describe('POST /api/subscriptions', () => {
       const client = yield* makeClient
       const exit = yield* client.subscriptions.subscribe({ payload: { email: 'me@dsqr.dev' } }).pipe(Effect.exit)
       assert.isTrue(exit._tag === 'Failure')
-    }).pipe(Effect.provide(handlers(Layer.succeed(Database, Database.unavailable(new DatabaseError({ cause: 'down' })))))),
+    }).pipe(
+      Effect.provide(handlers(Layer.succeed(Database, Database.unavailable(new DatabaseError({ cause: 'down' }))))),
+    ),
   )
 })

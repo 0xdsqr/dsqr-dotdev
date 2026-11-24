@@ -14,16 +14,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "lib": [
-      "ES2022"
-    ],
-    "types": [
-      "node"
-    ]
+    "lib": ["ES2022"],
+    "types": ["node"]
   },
-  "include": [
-    "src",
-    "migrate",
-    "drizzle.config.ts"
-  ]
+  "include": ["src", "migrate", "drizzle.config.ts"]
 }

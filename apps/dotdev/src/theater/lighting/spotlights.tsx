@@ -26,11 +26,7 @@ function MovingHead({ x, color, speed, phase }: (typeof rigs)[number]) {
 
   useFrame(({ clock }) => {
     const time = clock.elapsedTime * speed
-    aim.set(
-      x * 0.45 + Math.sin(time + phase) * 6.5,
-      0.4,
-      -3.5 + Math.sin(time * 0.71 + phase * 1.3) * 7.5,
-    )
+    aim.set(x * 0.45 + Math.sin(time + phase) * 6.5, 0.4, -3.5 + Math.sin(time * 0.71 + phase * 1.3) * 7.5)
     const spot = light.current
     if (spot) {
       spot.target.position.copy(aim)

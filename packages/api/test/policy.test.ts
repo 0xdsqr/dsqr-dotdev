@@ -25,7 +25,10 @@ describe('clientIp', () => {
 
   it('canonicalizes IPv6 and IPv4-mapped addresses into one bucket', () => {
     assert.deepStrictEqual(clientIp(trusting(1), { 'x-forwarded-for': '2001:DB8:0:0::1' }), Option.some('2001:db8::1'))
-    assert.deepStrictEqual(clientIp(trusting(1), { 'x-forwarded-for': '::ffff:203.0.113.9' }), Option.some('203.0.113.9'))
+    assert.deepStrictEqual(
+      clientIp(trusting(1), { 'x-forwarded-for': '::ffff:203.0.113.9' }),
+      Option.some('203.0.113.9'),
+    )
   })
 
   it.each([undefined, '', 'not-an-ip', 'fe80::1%eth0', '203.0.113.9'])(

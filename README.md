@@ -17,11 +17,11 @@ nix run .#dev
 Open <http://127.0.0.1:3030>. The first run installs npm dependencies, and later runs reinstall
 only when `package-lock.json` changes. Edits to components and styles hot-reload.
 
-| Site    | Command                | Address                 |
-| ------- | ---------------------- | ----------------------- |
+| Site     | Command                | Address                 |
+| -------- | ---------------------- | ----------------------- |
 | dsqr.dev | `nix run .#dev`        | <http://127.0.0.1:3030> |
-| Labs    | `nix run .#dev-labs`   | <http://127.0.0.1:3031> |
-| Studio  | `nix run .#dev-studio` | <http://127.0.0.1:3032> |
+| Labs     | `nix run .#dev-labs`   | <http://127.0.0.1:3031> |
+| Studio   | `nix run .#dev-studio` | <http://127.0.0.1:3032> |
 
 ### Newsletter signup (optional)
 

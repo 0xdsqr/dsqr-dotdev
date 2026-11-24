@@ -28,10 +28,10 @@ export function ScreenFrame({
       </mesh>
       {rigging &&
         [-1, 1].map((side) => (
-        <mesh key={side} position={[side * 1.6, screenSize.height / 2 + 3, -0.08]} material={materials.metal}>
-          <cylinderGeometry args={[0.012, 0.012, 5.7, 6]} />
-        </mesh>
-      ))}
+          <mesh key={side} position={[side * 1.6, screenSize.height / 2 + 3, -0.08]} material={materials.metal}>
+            <cylinderGeometry args={[0.012, 0.012, 5.7, 6]} />
+          </mesh>
+        ))}
       {children}
     </group>
   )

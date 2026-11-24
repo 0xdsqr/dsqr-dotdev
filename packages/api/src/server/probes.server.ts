@@ -14,7 +14,9 @@ export const ProbeRoutes = HttpRouter.use((router) =>
       '/api/healthz',
       healthCheck.pipe(
         Effect.as(plain('ok', 200)),
-        Effect.catch((error) => Effect.logWarning('Health check failed', error).pipe(Effect.as(plain('unavailable', 503)))),
+        Effect.catch((error) =>
+          Effect.logWarning('Health check failed', error).pipe(Effect.as(plain('unavailable', 503))),
+        ),
       ),
     )
   }),

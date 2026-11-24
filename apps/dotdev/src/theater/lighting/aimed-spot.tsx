@@ -12,7 +12,16 @@ export type AimedSpotProps = {
   decay?: number
 }
 
-export function AimedSpot({ position, target, color, intensity, angle, distance, penumbra = 0.8, decay = 1.5 }: AimedSpotProps) {
+export function AimedSpot({
+  position,
+  target,
+  color,
+  intensity,
+  angle,
+  distance,
+  penumbra = 0.8,
+  decay = 1.5,
+}: AimedSpotProps) {
   const aim = useMemo(() => new Object3D(), [])
   return (
     <group>

@@ -17,15 +17,7 @@ const styles = stylex.create({
 
 const tags = { 1: 'h1', 2: 'h2', 3: 'h3' } as const
 
-export function Heading({
-  level = 1,
-  id,
-  children,
-}: {
-  level?: 1 | 2 | 3
-  id?: string
-  children: ReactNode
-}) {
+export function Heading({ level = 1, id, children }: { level?: 1 | 2 | 3; id?: string; children: ReactNode }) {
   const Tag = tags[level]
   return (
     <Tag id={id} {...stylex.props(styles.heading, styles[level])}>

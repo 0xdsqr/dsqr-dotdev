@@ -45,4 +45,3 @@ export function createCrowd(seed: number) {
     return { people, random }
   }
 }
-

@@ -15,8 +15,8 @@
         "flake.lock"
         "packages/database/migrations/**"
         "**/routeTree.gen.ts"
-        # Helm templates are Go templates, not YAML.
-        "helm/dsqr-app/templates/**"
+        # The chart is versioned on every change (and its templates are Go templates, not YAML).
+        "helm/**"
         ".claude/**"
         ".agents/**"
         "skills-lock.json"

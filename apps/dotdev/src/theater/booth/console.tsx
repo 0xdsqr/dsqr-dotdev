@@ -18,7 +18,10 @@ export function Console() {
   const faders = useRef<InstancedMesh>(null)
   const knobs = useRef<InstancedMesh>(null)
   const meters = useRef<InstancedMesh>(null)
-  const knobColors = useMemo(() => [palette.violet, palette.cyan, palette.amber, palette.stick].map((c) => new Color(c)), [])
+  const knobColors = useMemo(
+    () => [palette.violet, palette.cyan, palette.amber, palette.stick].map((c) => new Color(c)),
+    [],
+  )
 
   useLayoutEffect(() => {
     const mesh = knobs.current

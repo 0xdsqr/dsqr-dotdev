@@ -85,7 +85,8 @@ export function Audience() {
       dummy.updateMatrix()
       body.setMatrixAt(index, dummy.matrix)
 
-      const drinking = person.mood === 'drink' ? Math.max(0, Math.sin(((time + person.phase) / person.drinkEvery) * Math.PI * 2)) : 0
+      const drinking =
+        person.mood === 'drink' ? Math.max(0, Math.sin(((time + person.phase) / person.drinkEvery) * Math.PI * 2)) : 0
       const sip = Math.pow(drinking, 3)
       offset.set(-Math.sin(lean) * 0.62 * person.scale, 0, sip * 0.05).applyAxisAngle(up, person.yaw)
       dummy.position.set(person.x + offset.x, baseY + 1.24 * person.scale, person.z + offset.z)
@@ -100,9 +101,7 @@ export function Audience() {
           shoulder.set(side * 0.22 * person.scale, 0.98 * person.scale, 0).applyEuler(dummy.rotation)
           dummy.position.set(person.x + shoulder.x, baseY + shoulder.y, person.z + shoulder.z)
           const raise =
-            person.mood === 'hands'
-              ? -0.3 + sway(time * 1.5, person.phase + side) * 0.25
-              : -2.6 + sip * 2.05
+            person.mood === 'hands' ? -0.3 + sway(time * 1.5, person.phase + side) * 0.25 : -2.6 + sip * 2.05
           dummy.rotation.set(raise, person.yaw, side * (person.mood === 'hands' ? -0.25 : 0.15), 'YXZ')
           dummy.scale.setScalar(person.scale)
           dummy.updateMatrix()

@@ -36,7 +36,11 @@ function subscribe(onChange: () => void) {
 }
 
 function useReducedMotion() {
-  return useSyncExternalStore(subscribe, () => window.matchMedia(reducedMotionQuery).matches, () => false)
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(reducedMotionQuery).matches,
+    () => false,
+  )
 }
 
 /** `pending` until mounted, then whether this browser can create a WebGL context at all. */
@@ -237,13 +241,7 @@ export function Theater({ intro, onNavigate }: { intro: ReactNode; onNavigate: (
             <kbd {...stylex.props(pill.key)}>Esc</kbd>
           </button>
         ) : (
-          <button
-            ref={controlRoom}
-            type="button"
-            aria-keyshortcuts="C"
-            onClick={enter}
-            {...stylex.props(pill.base)}
-          >
+          <button ref={controlRoom} type="button" aria-keyshortcuts="C" onClick={enter} {...stylex.props(pill.base)}>
             <Equalizer />
             Control room
             <kbd {...stylex.props(pill.key)}>C</kbd>

@@ -23,8 +23,21 @@ type Joint =
   | 'footR'
 
 const joints: ReadonlyArray<Joint> = [
-  'pelvis', 'neck', 'head', 'shoulderL', 'elbowL', 'handL', 'shoulderR', 'elbowR', 'handR',
-  'hipL', 'kneeL', 'footL', 'hipR', 'kneeR', 'footR',
+  'pelvis',
+  'neck',
+  'head',
+  'shoulderL',
+  'elbowL',
+  'handL',
+  'shoulderR',
+  'elbowR',
+  'handR',
+  'hipL',
+  'kneeL',
+  'footL',
+  'hipR',
+  'kneeR',
+  'footR',
 ]
 
 const limbs: ReadonlyArray<readonly [Joint, Joint]> = [
@@ -62,14 +75,7 @@ function span(mesh: Mesh, from: Vector3, to: Vector3, thickness: number) {
 const axis = new Vector3()
 const lateral = new Vector3()
 
-export function solveElbow(
-  shoulder: Vector3,
-  hand: Vector3,
-  upper: number,
-  fore: number,
-  pole: Vector3,
-  out: Vector3,
-) {
+export function solveElbow(shoulder: Vector3, hand: Vector3, upper: number, fore: number, pole: Vector3, out: Vector3) {
   axis.subVectors(hand, shoulder)
   const distance = Math.min(axis.length(), (upper + fore) * 0.999)
   axis.normalize()

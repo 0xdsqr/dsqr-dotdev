@@ -30,9 +30,9 @@ export class HttpPolicy extends Context.Service<
         ? yield* Config.schema(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 16 })), 'TRUSTED_PROXY_HOPS')
         : 0
       // Helm renders an empty list as TRUSTED_ORIGINS="", which means "none".
-      const trustedOrigins = (yield* Config.Array(OriginOrBlank, 'TRUSTED_ORIGINS').pipe(Config.withDefault([]))).filter(
-        (origin) => origin !== '',
-      )
+      const trustedOrigins = (yield* Config.Array(OriginOrBlank, 'TRUSTED_ORIGINS').pipe(
+        Config.withDefault([]),
+      )).filter((origin) => origin !== '')
       return HttpPolicy.of({ trustProxy, trustedProxyHops, trustedOrigins })
     }),
   ).pipe(Layer.orDie)
@@ -43,7 +43,8 @@ export const clientIp = (policy: HttpPolicy['Service'], headers: Readonly<Record
   const chain = headers['x-forwarded-for']?.split(',').map((hop) => hop.trim()) ?? []
   const trusted = chain.slice(-policy.trustedProxyHops)
   // Missing/malformed trusted hops share a bounded bucket, never bypass the limiter.
-  if (trusted.length !== policy.trustedProxyHops || !trusted.every(Schema.is(IpAddress))) return Option.some('unresolved')
+  if (trusted.length !== policy.trustedProxyHops || !trusted.every(Schema.is(IpAddress)))
+    return Option.some('unresolved')
   const address = trusted[0]!
   if (isIP(address) === 4) return Option.some(address)
   // Normalize equivalent IPv6 spellings so they cannot obtain separate buckets.

@@ -20,7 +20,10 @@ export class Subscriptions extends Context.Service<
       const database = yield* Database
       const limiter = yield* RateLimiter
 
-      const subscribe = Effect.fn('Subscriptions.subscribe')(function* (email: string, clientIp: Option.Option<string>) {
+      const subscribe = Effect.fn('Subscriptions.subscribe')(function* (
+        email: string,
+        clientIp: Option.Option<string>,
+      ) {
         const allowed =
           (yield* limiter.allow(overall, 'all')) &&
           (Option.isNone(clientIp) || (yield* limiter.allow(perClient, clientIp.value))) &&

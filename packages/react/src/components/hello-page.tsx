@@ -8,7 +8,9 @@ export function HelloPage({ site, title, message }: { site: string; title: strin
     <Page site={site}>
       <Section>
         <Heading>{title}</Heading>
-        <Text role="status" tone="muted">{message}</Text>
+        <Text role="status" tone="muted">
+          {message}
+        </Text>
       </Section>
     </Page>
   )

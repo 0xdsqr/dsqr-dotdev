@@ -30,7 +30,12 @@ export const materials = {
     sheenRoughness: 0.4,
     sheenColor: palette.orchid,
   }),
-  stick: new MeshStandardMaterial({ color: palette.stick, emissive: palette.violet, emissiveIntensity: 0.18, roughness: 0.6 }),
+  stick: new MeshStandardMaterial({
+    color: palette.stick,
+    emissive: palette.violet,
+    emissiveIntensity: 0.18,
+    roughness: 0.6,
+  }),
   violet: neon(palette.violet),
   lilac: neon(palette.lilac),
   orchid: neon(palette.orchid),
