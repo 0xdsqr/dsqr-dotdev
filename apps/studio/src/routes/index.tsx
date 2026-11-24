@@ -2,7 +2,7 @@ import { AppClient } from '@dsqr-dotdev/api/client'
 import { HelloPage } from '@dsqr-dotdev/react/components/hello-page'
 import { useAtomValue } from '@effect/atom-react'
 import { createFileRoute } from '@tanstack/react-router'
-import * as AsyncResult from 'effect/unstable/reactivity/AsyncResult'
+import * as AsyncResult from 'effect/reactivity/AsyncResult'
 import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/')({ component: Home })

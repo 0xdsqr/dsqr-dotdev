@@ -2,7 +2,7 @@
   dockerTools,
   app,
   appName,
-  nodejs-slim_24,
+  nodejs-slim_26,
   cacert,
 }:
 dockerTools.buildLayeredImage {
@@ -13,7 +13,7 @@ dockerTools.buildLayeredImage {
     User = "10001:10001";
     WorkingDir = "${app}/share/${appName}";
     Entrypoint = [
-      "${nodejs-slim_24}/bin/node"
+      "${nodejs-slim_26}/bin/node"
       "${app}/share/${appName}/server/index.mjs"
     ];
     Env = [

@@ -5,23 +5,31 @@
   "type": "module",
   "exports": {
     "./components/*": "./src/components/*.tsx",
+    "./head": "./src/head.ts",
     "./theme.stylex": "./src/styles/theme.stylex.ts",
     "./visually-hidden": "./src/styles/visually-hidden.ts",
     "./globals.css": "./src/styles/globals.css",
-    "./mark.svg": "./src/assets/mark.svg"
+    "./mark.svg": "./src/assets/mark.svg",
+    "./nonce": "./src/nonce.ts",
+    "./security": "./src/security.ts",
+    "./server-entry": "./src/server-entry.ts"
   },
   "dependencies": {
+    "@effect/atom-react": "4.1.5",
     "@fontsource-variable/geist": "5.3.0",
     "@fontsource-variable/geist-mono": "5.3.0",
-    "@stylexjs/stylex": "0.19.1"
+    "@stylexjs/stylex": "0.19.2",
+    "@tanstack/react-router": "1.170.46",
+    "@tanstack/react-start": "1.169.7"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/react": "19.3.0"
+    "@types/react": "19.3.0",
+    "vite": "8.3.8"
   },
   "peerDependencies": {
-    "react": "^19.3.0"
+    "react": "^19.3.1"
   }
 }

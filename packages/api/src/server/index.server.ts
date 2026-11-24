@@ -1,1 +1,1 @@
-export { appHandler, AppApp, dotdevHandler, DotdevApp } from './app.server'
+export { appHandler, AppApp, disposeHandlers, dotdevHandler, DotdevApp } from './app.server'

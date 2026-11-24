@@ -1,4 +1,4 @@
-import { HttpApi } from 'effect/unstable/httpapi'
+import { HttpApi } from 'effect/http-api'
 import { HealthApi } from './health'
 import { SubscriptionsApi } from './subscriptions'
 

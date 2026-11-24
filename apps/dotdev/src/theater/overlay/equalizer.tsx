@@ -1,5 +1,6 @@
+import { breakpoints } from '@dsqr-dotdev/react/theme.stylex'
 import * as stylex from '@stylexjs/stylex'
-import { chrome } from './chrome.stylex'
+import { chrome } from '../chrome.stylex'
 
 const bounce = stylex.keyframes({
   '0%': { transform: 'scaleY(0.35)' },
@@ -19,9 +20,9 @@ const styles = stylex.create({
     height: '100%',
     borderRadius: '1px',
     backgroundColor: chrome.violet,
-    boxShadow: '0 0 8px rgba(139, 92, 246, 0.8)',
+    boxShadow: chrome.barGlow,
     transformOrigin: 'bottom',
-    animationName: { default: bounce, '@media (prefers-reduced-motion: reduce)': 'none' },
+    animationName: { default: bounce, [breakpoints.reducedMotion]: 'none' },
     animationDuration: '0.625s',
     animationIterationCount: 'infinite',
     animationTimingFunction: 'ease-in-out',

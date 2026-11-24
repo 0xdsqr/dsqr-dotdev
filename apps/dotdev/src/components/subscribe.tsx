@@ -8,7 +8,7 @@ import { visuallyHidden } from '@dsqr-dotdev/react/visually-hidden'
 import { useAtom } from '@effect/atom-react'
 import * as stylex from '@stylexjs/stylex'
 import { Option, Result, Schema } from 'effect'
-import * as AsyncResult from 'effect/unstable/reactivity/AsyncResult'
+import * as AsyncResult from 'effect/reactivity/AsyncResult'
 import { type FormEvent, useEffect, useState } from 'react'
 
 const subscribeAtom = DotdevClient.mutation('subscriptions', 'subscribe')

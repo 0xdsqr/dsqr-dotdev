@@ -1,0 +1,38 @@
+{
+  "plugins": ["typescript", "react", "jsx-a11y", "import", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/no-array-index-key": "off",
+    "react/immutability": "off",
+    "react/purity": "off",
+    "react/use-memo": "off",
+    "react/set-state-in-effect": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "import/no-cycle": "error",
+    "import/no-named-as-default-member": "off",
+    "typescript/no-explicit-any": "error",
+    "no-shadow": "off",
+    "no-await-in-loop": "off",
+    "no-underscore-dangle": ["error", { "allow": ["_tag"] }],
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/api/**", "packages/database/**"],
+      "rules": { "react/rules-of-hooks": "off", "react-hooks/rules-of-hooks": "off" }
+    },
+    {
+      "files": ["nix/checks/**"],
+      "rules": { "no-console": "off" }
+    }
+  ],
+  "ignorePatterns": ["**/routeTree.gen.ts", "**/.output/**", "**/dist/**", "packages/database/migrations/**"]
+}

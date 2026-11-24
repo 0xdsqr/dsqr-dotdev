@@ -1,47 +1,17 @@
-import { RegistryProvider } from '@effect/atom-react'
-import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
-import { useEffect, type ReactNode } from 'react'
-import appCss from '@dsqr-dotdev/react/globals.css?url'
-import markUrl from '@dsqr-dotdev/react/mark.svg?url'
-import { Document } from '@dsqr-dotdev/react/components/document'
+import { AppShell } from '@dsqr-dotdev/react/components/app-shell'
+import { ErrorPage, NotFoundPage } from '@dsqr-dotdev/react/components/status-page'
+import { siteHead } from '@dsqr-dotdev/react/head'
+import { createRootRoute } from '@tanstack/react-router'
+
+const site = 'DSQR Labs LLC'
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'DSQR Labs LLC' },
-      {
-        name: 'description',
-        content: 'A one-person consulting studio for systems, infrastructure, performance, and backend engineering.',
-      },
-    ],
-    links: [
-      { rel: 'stylesheet', href: appCss },
-      { rel: 'icon', type: 'image/svg+xml', href: markUrl },
-    ],
-  }),
-  shellComponent: RootDocument,
+  head: () =>
+    siteHead({
+      title: site,
+      description: 'A one-person consulting studio for systems, infrastructure, performance, and backend engineering.',
+    }),
+  shellComponent: AppShell,
+  notFoundComponent: () => <NotFoundPage site={site} />,
+  errorComponent: () => <ErrorPage site={site} />,
 })
-
-function RootDocument({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      void import('virtual:stylex:runtime')
-    }
-  }, [])
-
-  return (
-    <Document
-      head={
-        <>
-          <HeadContent />
-          {import.meta.env.DEV && <link rel="stylesheet" href="/virtual:stylex.css" />}
-        </>
-      }
-    >
-      <RegistryProvider>{children}</RegistryProvider>
-      <Scripts />
-    </Document>
-  )
-}

@@ -1,13 +1,13 @@
 {
   lib,
   buildNpmPackage,
-  nodejs_24,
+  nodejs_26,
   postgresql_18,
   npmDeps,
   dbStart,
   dbStop,
 }:
-(buildNpmPackage.override { nodejs = nodejs_24; }) {
+(buildNpmPackage.override { nodejs = nodejs_26; }) {
   pname = "database-check";
   version = "0.0.0";
   src = lib.fileset.toSource {

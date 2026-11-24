@@ -39,8 +39,22 @@ jobs:
         with:
           send-statistics: false
 
-      - name: Run flake checks (apps, database, Helm, workflows)
+      - name: Run flake checks (apps, tests, lint, formatting, database, Helm, workflows)
         run: nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false --print-build-logs --keep-going
+
+      - name: Resolve Trivy database cache key
+        id: trivy
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Trivy database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ steps.trivy.outputs.day }}
+          restore-keys: trivy-db-
+
+      - name: Scan npm dependencies (including dev) for fixable vulnerabilities
+        run: nix run .#ci-deps-scan
 
   codeql:
     name: CodeQL (${{ matrix.language }})

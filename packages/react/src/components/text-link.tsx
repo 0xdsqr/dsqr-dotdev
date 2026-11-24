@@ -22,6 +22,10 @@ const styles = stylex.create({
   },
 })
 
-export function TextLink(props: Omit<ComponentProps<'a'>, 'className' | 'style'>) {
-  return <a {...props} {...stylex.props(styles.link)} />
+export function TextLink({ children, ...props }: Omit<ComponentProps<'a'>, 'className' | 'style'>) {
+  return (
+    <a {...props} {...stylex.props(styles.link)}>
+      {children}
+    </a>
+  )
 }

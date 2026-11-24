@@ -1,5 +1,5 @@
 import { Effect, Layer } from 'effect'
-import { HttpApiBuilder } from 'effect/unstable/httpapi'
+import { HttpApiBuilder } from 'effect/http-api'
 import { DotdevApi } from '../../api/api'
 import { clientIp, HttpPolicy } from '../policy.server'
 import { Subscriptions } from '../subscriptions.server'
@@ -7,13 +7,13 @@ import { Subscriptions } from '../subscriptions.server'
 export const SubscriptionsHandlers = HttpApiBuilder.group(
   DotdevApi,
   'subscriptions',
-  Effect.fn(function* (handlers) {
+  Effect.fn('SubscriptionsHandlers')(function* (handlers) {
     const subscriptions = yield* Subscriptions
     const policy = yield* HttpPolicy
 
     return handlers.handle(
       'subscribe',
-      Effect.fn(function* ({ payload, request }) {
+      Effect.fn('SubscriptionsHandlers.subscribe')(function* ({ payload, request }) {
         yield* subscriptions
           .subscribe(payload.email, clientIp(policy, request.headers))
           .pipe(Effect.catchTag('DatabaseError', Effect.die))

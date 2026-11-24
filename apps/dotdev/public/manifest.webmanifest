@@ -1,0 +1,11 @@
+{
+  "name": "dsqr.dev",
+  "short_name": "dsqr",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#07050d",
+  "theme_color": "#07050d",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

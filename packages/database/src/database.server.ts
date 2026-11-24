@@ -25,8 +25,9 @@ const poolDefaults: PoolConfig = {
   idle_in_transaction_session_timeout: 10_000,
 }
 
+const decoded = (value: string) => (value ? decodeURIComponent(value) : undefined)
+
 const connectionFields = (url: URL, ca: string): PoolConfig => {
-  const decoded = (value: string) => (value ? decodeURIComponent(value) : undefined)
   return {
     host: url.hostname.replace(/^\[(.*)\]$/, '$1'),
     port: url.port ? Number(url.port) : 5432,
@@ -41,20 +42,23 @@ const connectionFields = (url: URL, ca: string): PoolConfig => {
 const configError = (message: string) => new DatabaseError({ cause: new Error(message) })
 
 export const DatabaseConfig = Effect.gen(function* () {
-  const production = (yield* Config.string('NODE_ENV').pipe(Config.withDefault('development'))) === 'production'
-  const selected = yield* Config.literals(['local', 'remote'], 'DSQR_DATABASE').pipe(Config.withDefault('local'))
+  const env = yield* Config.Literals(['development', 'production', 'test'], 'NODE_ENV').pipe(
+    Config.withDefault('development'),
+  )
+  const production = env === 'production'
+  const selected = yield* Config.Literals(['local', 'remote'], 'DSQR_DATABASE').pipe(Config.withDefault('local'))
 
   if (!production && selected === 'local') {
-    const host = yield* Config.string('LOCAL_DATABASE_SOCKET').pipe(Config.withDefault(localSocket))
+    const host = yield* Config.String('LOCAL_DATABASE_SOCKET').pipe(Config.withDefault(localSocket))
     return { target: 'local' as Target, pool: { host, port: 55432, user: 'dsqr_dev', database: 'dsqr_dotdev_dev' } }
   }
 
-  const url = yield* Config.redacted('DATABASE_URL')
+  const url = yield* Config.Redacted('DATABASE_URL')
   const parsed = yield* Effect.try({
     try: () => new URL(Redacted.value(url)),
     catch: () => configError('DATABASE_URL is not a valid URL'),
   })
-  const caPath = yield* Config.option(Config.string('PGSSLROOTCERT'))
+  const caPath = yield* Config.option(Config.String('PGSSLROOTCERT'))
 
   if (Option.isSome(caPath)) {
     const ca = yield* Effect.try({

@@ -1,7 +1,8 @@
+import { typography } from '@dsqr-dotdev/react/theme.stylex'
 import * as stylex from '@stylexjs/stylex'
 import { Link } from '@tanstack/react-router'
 import { destinations } from '../../content/destinations'
-import { chrome } from './chrome.stylex'
+import { chrome } from '../chrome.stylex'
 
 const styles = stylex.create({
   nav: {
@@ -22,7 +23,7 @@ const styles = stylex.create({
     paddingInline: '0.6rem',
     borderRadius: '0.5rem',
     color: chrome.ink,
-    fontFamily: chrome.mono,
+    fontFamily: typography.mono,
     fontSize: '0.8rem',
     textDecoration: 'none',
     outline: { ':focus-visible': `2px solid ${chrome.edgeHot}` },

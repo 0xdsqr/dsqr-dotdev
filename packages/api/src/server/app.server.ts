@@ -1,7 +1,7 @@
 import { Database } from '@dsqr-dotdev/database/server'
 import { Effect, Layer } from 'effect'
-import { HttpRouter, HttpServer } from 'effect/unstable/http'
-import { HttpApiBuilder } from 'effect/unstable/httpapi'
+import { HttpRouter, HttpServer } from 'effect/http'
+import { HttpApiBuilder } from 'effect/http-api'
 import { AppApi, DotdevApi } from '../api/api'
 import { BodyTooLargeError, readBody } from './body.server'
 import { AppHealthHandlers, DotdevHealthHandlers } from './http/health.server'
@@ -49,13 +49,28 @@ interface WebHandler {
   readonly dispose: () => Promise<void>
 }
 
+// Shared through the global symbol registry: Nitro's plugin bundle and Start's SSR bundle
+// can each hold their own copy of this module, but must dispose the same runtimes.
+const registry = Symbol.for('@dsqr-dotdev/api/web-handlers')
+const built: Set<WebHandler> = ((globalThis as { [registry]?: Set<WebHandler> })[registry] ??= new Set())
+
 const lazyWebHandler = (app: Layer.Layer<never, never, HttpRouter.HttpRouter>) => {
   let web: WebHandler | undefined
   return withBodyCap((request) => {
-    web ??= HttpRouter.toWebHandler(app)
+    if (!web) {
+      web = HttpRouter.toWebHandler(app)
+      built.add(web)
+    }
     return web.handler(request)
   })
 }
 
 export const dotdevHandler = lazyWebHandler(DotdevApp)
 export const appHandler = lazyWebHandler(AppApp)
+
+/** Closes every built runtime (database pool included); called from Nitro's `close` hook. */
+export const disposeHandlers = async () => {
+  const handlers = [...built]
+  built.clear()
+  await Promise.allSettled(handlers.map((web) => web.dispose()))
+}

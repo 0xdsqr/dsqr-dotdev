@@ -1,7 +1,19 @@
+import { Page } from '@dsqr-dotdev/react/components/page'
+import { pageHead } from '@dsqr-dotdev/react/head'
 import { createFileRoute } from '@tanstack/react-router'
-import { ComingSoon } from '../components/coming-soon'
+import { Intro } from '../components/intro'
+import { Subscribe } from '../components/subscribe'
+import { site } from '../site'
 
 export const Route = createFileRoute('/about')({
-  head: () => ({ meta: [{ title: 'About | dsqr.dev' }] }),
-  component: () => <ComingSoon title="About" blurb="The long version is still being written. For now, the stage says most of it." />,
+  head: () => pageHead({ title: `About | ${site.name}`, path: '/about', origin: site.origin }),
+  component: About,
 })
+
+function About() {
+  return (
+    <Page site={site.name} centered footerAction={<Subscribe />}>
+      <Intro />
+    </Page>
+  )
+}

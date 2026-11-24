@@ -26,22 +26,36 @@ dsqr-dotdev: the dsqr.dev site, Labs, and Studio, developed directly on `master`
   pins intentionally. Pinning enables repeatability, not automatic security fixes.
 - Flake inputs come from FlakeHub (`nixpkgs` 0.1 is the rolling unstable channel)
   for semver-resolved, fast tarball fetches. A weekly workflow opens a
-  `flake.lock` update PR; review it like any dependency bump.
+  `flake.lock` update PR and dispatches CI on its branch (PRs opened with
+  `GITHUB_TOKEN` never trigger `pull_request` runs); review it like any dependency bump.
 - CI tooling lives in `nix/ci.nix` as `writeShellApplication` apps
   (`ci-image-scan`, `ci-image-push`, `ci-image-index`): shellchecked, pinned by
   `flake.lock`, and runnable locally. Workflows stay thin and call them.
 - Compose with flake-parts. Keep inputs, supported systems, and module imports in
   `flake.nix`; system outputs belong in each module's `perSystem`.
-- Keep tools/formatter in `nix/devshell.nix`, checks in `nix/checks.nix`, package
+- Keep tools in `nix/devshell.nix`, formatting in `nix/treefmt.nix`, checks in `nix/checks.nix`, package
   registration in `nix/packages/default.nix`, and ordinary callPackage derivations
   in `nix/packages/app.nix` and `nix/packages/image.nix`, parameterized by app name.
   All three apps share these builders. Avoid per-app copies or speculative helpers.
 - Keep dependency fetching separate from application builds internally. Define
   the manifest-only npm cache inside `app.nix`; it does not need its own file
   or public package output. Component edits must not invalidate its derivation.
-- Pin direct npm dependencies exactly and commit `package-lock.json`. Update the
-  dependency hash in `nix/packages/app.nix` when the cache changes.
-  Nix and npm lockfiles are complementary, not replacements for one another.
+- Pin direct npm dependencies exactly and commit `package-lock.json` (`.npmrc` sets
+  `save-exact` and `engine-strict`; `devEngines` pins Node 26 and npm 11.20+). After any
+  lockfile change run `nix run .#update-npm-hash`, which rewrites the hash in
+  `nix/packages/app.nix`. Nix and npm lockfiles are complementary, not replacements.
+- Keep `fetchNpmDeps` over `importNpmLock`: the latter copies workspace packages into
+  the store instead of linking them, so shared `packages/*` source would not resolve.
+- Resolve vulnerable transitive dependencies with exact `overrides` in the root
+  `package.json` (currently esbuild under drizzle-kit's `@esbuild-kit`), never `--force`.
+  `npm audit` must report zero; CI scans dev dependencies too (`ci-deps-scan`).
+- `nix fmt` runs treefmt: nixfmt, deadnix, statix, and oxfmt (TypeScript, CSS, JSON,
+  Markdown, YAML; style in `.oxfmtrc.json`). `checks.treefmt` fails on drift. oxlint
+  (`.oxlintrc.json`, with react, jsx-a11y, import and TypeScript rules) runs as
+  `checks.lint`. React Compiler rules are off: the project does not use the compiler,
+  and R3F mutates three.js objects in `useFrame` by design.
+- `nix run .#dev*` installs npm dependencies whenever `package-lock.json` changed, so a
+  fresh clone needs no other setup. Node is 26 (Active LTS) everywhere.
 - Install from the fixed-output npm cache offline during builds. Dependency
   lifecycle scripts are disabled; review any dependency requiring them explicitly.
 - Select source inputs in `nix/packages/app.nix`. Exclude secrets, node_modules,
@@ -108,9 +122,9 @@ helm/
 - Development PostgreSQL listens only on a private Unix socket, with trust auth
   gated by owner-only directory permissions. No TCP listener or production secrets.
 - The pool sets a 10 s statement and idle-in-transaction timeout and recycles
-  connections after 30 min; `ping(db)` backs health checks. Nitro's graceful
-  shutdown force-exits, so no signal handlers; `closeDatabase()` exists for a
-  Nitro `close` hook if forced exit is ever disabled. Imports are extensionless.
+  connections after 30 min; `ping(db)` backs health checks. On SIGTERM/SIGINT Nitro
+  runs its `close` hooks; `@dsqr-dotdev/api/nitro-plugin` disposes every Effect
+  runtime there, which closes the pool. No custom signal handlers. Imports are extensionless.
 - `packages/database` owns schema and the server-only connection factory. It has
   its own TypeScript config; no emitted library build or eager connection on import.
   API code owns subscription behavior and email delivery; React never imports DB code.
@@ -158,7 +172,8 @@ helm/
 - `checks.database` type-checks the package, applies committed migrations in a
   disposable PostgreSQL instance, repeats migrate/push, checks schema drift, and
   checks that a sentinel `public`
-  table survives. There are no unit tests for now; they return later. Use the shared fixed-output npm cache offline; no
+  table survives. API unit and in-memory HttpApi tests (`packages/api/test`,
+  `@effect/vitest`) run as `checks.api-tests`. Use the shared fixed-output npm cache offline; no
   live database or email service in builds. It never touches developer data.
 - The same disposable database exercises the production migration core: check-only,
   owner-scoped execution, concurrent-run rejection, repeat application, history
@@ -272,7 +287,15 @@ helm/
 ## React and styling standards
 
 - React + TanStack Start/Router, TypeScript, Vite, and StyleX in each app.
-  Nitro produces standalone Node servers. Keep one page per app for now.
+  Nitro produces standalone Node servers. Each app's root route is a few lines: the
+  shared `AppShell` (document, head tags, atom registry, scripts), `siteHead()` /
+  `pageHead()` from `@dsqr-dotdev/react/head` (title, description, Open Graph, icons,
+  canonical), and the shared `NotFoundPage` / `ErrorPage`.
+- Each app's `src/server.ts` re-exports `@dsqr-dotdev/react/server-entry`: it mints a CSP
+  nonce per request, passes it to the router (`ssr: { nonce: requestNonce() }`), and sends
+  `content-security-policy` with the static security headers (also applied to assets via
+  Nitro route rules). Inline scripts must carry that nonce; never add `'unsafe-inline'`
+  to `script-src`. Development skips the CSP because Vite injects inline scripts.
 - Use the stable Go-native TypeScript compiler (currently pinned to `7.0.2`).
   TypeScript 7 runs through `tsc`; a separate native-preview package is unnecessary.
   Update stable versions deliberately with the lockfile and Nix dependency hash.
@@ -294,8 +317,16 @@ helm/
 - Every app renders the shared `Document` (tokens on `<html>`/`<body>`) in its root
   route and wraps each page in the shared `Page`: `main` stacking `Section`s and
   the footer at the bottom. `centered` places a single focal block (the Dotdev
-  intro) in the middle of the viewport. There is no header or nav yet; add one
-  only with real destinations, and never link to routes that do not exist.
+  intro) in the middle of the viewport. There is no header; Dotdev navigates through
+  the theater's control room. Never link to routes that do not exist. The `<footer>`
+  is always a sibling of `<main>`, never inside it (the smoke check enforces this).
+- The theater must degrade, never strand: without WebGL, or if the scene throws, it
+  renders the playbill (the intro plus plain links) instead. Single-letter shortcuts
+  (R, C) only act while the theater has focus (WCAG 2.1.4); Escape may stay global.
+  Entering the booth focuses its first channel; leaving returns focus to the
+  Control room button. Channels are real links. Theater DOM colors and glows live in
+  `theater/chrome.stylex.ts`; 3D material colors in `theater/lib/palette.ts`.
+- `/about` shows the intro; the home page keeps it visually hidden behind the show.
   Every shared region aligns to `column.base` in
   `packages/react/src/styles/column.ts`; never re-derive width/gutters locally.
 - Home-page voice, shared by Dotdev and Labs: `Stack` (centered or start column
@@ -316,7 +347,8 @@ helm/
   with the shoulder fades baked into its alpha and fully transparent edges.
   Replace it the same way.
 - Import images from `src/assets` so Vite fingerprints their URLs (no stale
-  caches, immutable caching); `public/` is only for files that need fixed URLs.
+  caches, immutable caching); `public/` is only for files that need fixed URLs
+  (`robots.txt`, `sitemap.xml`, `manifest.webmanifest` and its icon).
 - Screen-reader-only text uses the shared `visuallyHidden` style. Separate
   items in a row with the shared `Separator` (a quiet grey dot), not glyphs.
 - `globals.css` is a token-free reset inside `@layer reset`, with the layer order
@@ -395,13 +427,25 @@ are made; tokens in `packages/react/src/styles/theme.stylex.ts` are the source o
 
 ## Effect standards
 
-Effect (v4, pinned exactly to `4.0.0-beta.107`) is the primary way this project
-models logic, errors, dependencies, validation, and HTTP. References: the Effect
-guide shipped in `node_modules/effect/AGENTS.md` and `ai-docs/` (prefer these and
-the installed source over outside docs), OpenCode, and Executor.
+Effect (v4 stable, pinned exactly to `4.1.5`) is the primary way this project
+models logic, errors, dependencies, validation, and HTTP. References: OpenCode and
+Executor, and above all the guide shipped with the installed version.
 
-- Write Effect code with `Effect.gen` and `Effect.fn("Service.method")`; attach
-  behaviour with combinators. Never build functions that return `Effect.gen`.
+Before writing any Effect code, first read `node_modules/effect/AGENTS.md`
+**completely**, and follow the links in the file when required. If you need to learn
+more about particular Effect APIs and concepts that the guide doesn't cover, search
+through the source code in `node_modules/effect/src`. The official agent skill is
+installed locally with `npx skills add Effect-TS/skills`.
+
+- Stable module paths: `effect/http`, `effect/http-api`, `effect/reactivity/*`,
+  `effect/testing`. Config constructors are PascalCase (`Config.String`,
+  `Config.Boolean`, `Config.Literals`, `Config.Redacted`, `Config.Array`).
+
+- Write Effect code with `Effect.gen` and `Effect.fn("Service.method")`; always name
+  `Effect.fn`. Attach behaviour with combinators. Never build functions that return
+  `Effect.gen`. CLIs run through `NodeRuntime.runMain` so signals release scopes.
+- Test with `@effect/vitest` (`it.effect`, `TestClock`, `HttpApiTest` with in-memory
+  service layers); tests never need a database or network.
 - Model every dependency as a service: `class X extends Context.Service<X, Shape>()("@dsqr-dotdev/<package>/X")`
   with `static readonly layer`. Compose with `Layer.provide`/`provideMerge`;
   resources use `Effect.acquireRelease` inside the layer so they close with it.
@@ -429,8 +473,7 @@ the installed source over outside docs), OpenCode, and Executor.
   in development. Never log secrets or subscriber emails. `HttpPolicy` holds request policy
   (TRUST_PROXY, TRUSTED_ORIGINS).
 - Upgrade Effect deliberately: bump every `effect`/`@effect/*` package to the
-  same exact version, update the lockfile and Nix hash, and re-run all apps.
-  `effect/unstable/*` modules may change between betas.
+  same exact version, update the lockfile and Nix hash, and re-run all apps and tests.
 
 ## API standards
 
@@ -456,7 +499,7 @@ the installed source over outside docs), OpenCode, and Executor.
   `@effect/atom-react` hooks; each app root renders a `RegistryProvider`. Keep
   presentational components plain React; Effect belongs in data and logic.
   Queries that need the browser's origin render after mount; add SSR hydration
-  (`effect/unstable/reactivity/Hydration`) with the first server-fetched data.
+  (`effect/reactivity/Hydration`) with the first server-fetched data.
 - `packages/database` exposes the `Database` service: Drizzle over a `pg` pool
   acquired in the layer's scope (closed when the runtime disposes). It reads
   config with `Config`; if that fails, the layer still builds as an unavailable
@@ -485,8 +528,7 @@ the installed source over outside docs), OpenCode, and Executor.
 ## Working commands
 
 ```sh
-nix develop --command npm ci
-nix run .#dev                            # Dotdev: http://127.0.0.1:3030
+nix run .#dev                            # Dotdev: http://127.0.0.1:3030 (installs deps)
 nix run .#dev-labs                       # Labs: http://127.0.0.1:3031
 nix run .#dev-studio                     # Studio: http://127.0.0.1:3032
 nix build .#dotdev .#labs .#studio        # Production apps
@@ -497,7 +539,10 @@ nix build .#checks.aarch64-darwin.helm       # offline Helm/schema/security chec
 nix run .#db-migrate-production -- --check # inspect Knox migration history; no DDL
 nix run .#db-migrate-production -- --apply # explicit confirmation; applies on Knox
 nix run .#ci-image-scan -- result image.cdx.json # scan an image archive
-nix fmt flake.nix nix/*.nix nix/checks/*.nix nix/packages/*.nix
+nix run .#ci-deps-scan                   # scan package-lock.json, dev deps included
+nix run .#update-npm-hash                # after any package-lock.json change
+nix fmt                                  # treefmt: nixfmt, deadnix, statix, oxfmt
+nix build .#checks.aarch64-darwin.lint .#checks.aarch64-darwin.api-tests
 nix flake check --no-update-lock-file --option sandbox true --option sandbox-fallback false
 nix flake check --all-systems --no-build --no-update-lock-file
 # After building/priming inputs, force an offline repeat and compare:
@@ -507,7 +552,9 @@ nix build .#dotdev .#labs .#studio --rebuild --offline --option substitute false
 Stage new files explicitly before Git-backed flake commands; avoid `git add .`.
 The `smoke` check verifies toolchain execution. Each app check builds/type-checks
 that app and both shared packages, then checks HTML, the public API, origin guard,
-assets, shared styles/fonts, and unknown routes/procedures. Each app build includes
+assets, shared styles/fonts, unknown routes/procedures (and the designed 404 page),
+the nonce CSP on every script, security headers, landmark order, fixed-URL files, and
+a clean SIGTERM shutdown. Each app build includes
 only its own source plus shared source and all workspace manifests. Root
 `npm run build` builds all apps; `npm run typecheck` checks every workspace.
 

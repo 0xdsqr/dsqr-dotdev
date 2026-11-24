@@ -1,5 +1,17 @@
 import { isIP } from 'node:net'
-import { Config, Context, Effect, Layer, Option, Schema } from 'effect'
+import { Config, Context, Effect, Layer, Option, Schema, SchemaTransformation } from 'effect'
+
+// An exact `scheme://host[:port]` origin, as browsers send it in the Origin header.
+const Origin = Schema.String.pipe(
+  Schema.decode(SchemaTransformation.trim()),
+  Schema.check(
+    Schema.makeFilter((value: string) => URL.canParse(value) && new URL(value).origin === value, {
+      message: 'Expected an origin such as https://dsqr.dev',
+    }),
+  ),
+)
+
+const OriginOrBlank = Schema.Union([Schema.Literal(''), Origin])
 
 export class HttpPolicy extends Context.Service<
   HttpPolicy,
@@ -12,15 +24,15 @@ export class HttpPolicy extends Context.Service<
   static readonly layer = Layer.effect(
     HttpPolicy,
     Effect.gen(function* () {
-      const trustProxy = yield* Config.boolean('TRUST_PROXY').pipe(Config.withDefault(false))
+      const trustProxy = yield* Config.Boolean('TRUST_PROXY').pipe(Config.withDefault(false))
       // Enabling trust requires an explicit, bounded count; never guess the chain.
       const trustedProxyHops = trustProxy
         ? yield* Config.schema(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 16 })), 'TRUSTED_PROXY_HOPS')
         : 0
-      const trustedOrigins = (yield* Config.string('TRUSTED_ORIGINS').pipe(Config.withDefault('')))
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter(Boolean)
+      // Helm renders an empty list as TRUSTED_ORIGINS="", which means "none".
+      const trustedOrigins = (yield* Config.Array(OriginOrBlank, 'TRUSTED_ORIGINS').pipe(Config.withDefault([]))).filter(
+        (origin) => origin !== '',
+      )
       return HttpPolicy.of({ trustProxy, trustedProxyHops, trustedOrigins })
     }),
   ).pipe(Layer.orDie)

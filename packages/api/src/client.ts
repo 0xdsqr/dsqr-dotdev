@@ -1,5 +1,5 @@
-import { FetchHttpClient } from 'effect/unstable/http'
-import * as AtomHttpApi from 'effect/unstable/reactivity/AtomHttpApi'
+import { FetchHttpClient } from 'effect/http'
+import * as AtomHttpApi from 'effect/reactivity/AtomHttpApi'
 import { AppApi, DotdevApi } from './api/api'
 
 const baseUrl = (globalThis as { location?: { origin: string } }).location?.origin

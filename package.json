@@ -3,11 +3,16 @@
   "private": true,
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
-  "engines": { "node": ">=24 <25" },
+  "engines": { "node": ">=26 <27" },
+  "devEngines": {
+    "runtime": { "name": "node", "version": ">=26 <27", "onFail": "error" },
+    "packageManager": { "name": "npm", "version": ">=11.20.0 <12", "onFail": "error" }
+  },
   "scripts": {
     "dev": "npm run dev --workspace dotdev",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
     "db:push": "npm run push --workspace @dsqr-dotdev/database --",
     "db:studio": "npm run studio --workspace @dsqr-dotdev/database --",
     "db:generate": "npm run generate --workspace @dsqr-dotdev/database --",
@@ -15,6 +20,11 @@
   },
   "devDependencies": {
     "typescript": "7.0.2"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.28.2"
+    }
   },
   "browserslist": ["chrome >= 123", "edge >= 123", "firefox >= 120", "safari >= 17.5", "ios_saf >= 17.5"]
 }

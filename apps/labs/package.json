@@ -11,20 +11,18 @@
   "dependencies": {
     "@dsqr-dotdev/api": "0.0.0",
     "@dsqr-dotdev/react": "0.0.0",
-    "@effect/atom-react": "4.0.0-beta.107",
-    "@tanstack/react-router": "1.170.41",
-    "@tanstack/react-start": "1.168.60",
-    "effect": "4.0.0-beta.107",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "@tanstack/react-router": "1.170.46",
+    "@tanstack/react-start": "1.169.7",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@stylexjs/unplugin": "0.19.1",
-    "@types/node": "24.19.0",
+    "@stylexjs/unplugin": "0.19.2",
+    "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "6.1.1",
-    "nitro": "3.0.260903-beta",
-    "vite": "8.3.3"
+    "@vitejs/plugin-react": "6.3.0",
+    "nitro": "3.0.261103-rc",
+    "vite": "8.3.8"
   }
 }

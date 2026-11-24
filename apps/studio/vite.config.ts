@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url'
+import { staticSecurityHeaders } from '@dsqr-dotdev/react/security'
 import stylex from '@stylexjs/unplugin'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import react from '@vitejs/plugin-react'
@@ -9,6 +11,10 @@ export default defineConfig({
     tanstackStart(),
     stylex.vite({ useCSSLayers: true }),
     react(),
-    nitro({ preset: 'node-server' }),
+    nitro({
+      preset: 'node-server',
+      plugins: [fileURLToPath(import.meta.resolve('@dsqr-dotdev/api/nitro-plugin'))],
+      routeRules: { '/**': { headers: staticSecurityHeaders } },
+    }),
   ],
 })

@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: write
       id-token: write
       pull-requests: write
@@ -30,8 +31,20 @@ jobs:
         uses: DeterminateSystems/determinate-nix-action@96c5ee93a9dddf2830d31e1da6ec719077336c28 # v3.23.3
 
       - name: Open flake.lock update pull request
+        id: update
         uses: DeterminateSystems/update-flake-lock@da03c0f078bc4b2c37ee4f7e072d34bf8f188bb3 # v29
         with:
+          branch: update_flake_lock_action
           pr-title: "chore(nix): update flake.lock"
           commit-msg: "chore(nix): update flake.lock"
           pr-labels: dependencies
+
+      # Pull requests opened with GITHUB_TOKEN never trigger `pull_request` workflows, so
+      # the update would sit without checks. A workflow_dispatch run on the PR branch
+      # reports its checks on the PR's head commit, satisfying the required status.
+      - name: Run CI on the update branch
+        if: steps.update.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: update_flake_lock_action
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"

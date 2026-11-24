@@ -1,26 +1,37 @@
+import { breakpoints, controls, motion, typography } from '@dsqr-dotdev/react/theme.stylex'
 import * as stylex from '@stylexjs/stylex'
-import { chrome } from './chrome.stylex'
+import { chrome } from '../chrome.stylex'
 
 export const pill = stylex.create({
   base: {
     display: 'inline-flex',
     alignItems: 'center',
     columnGap: '0.6rem',
-    height: '2.25rem',
+    minHeight: { default: '2.25rem', [breakpoints.coarse]: controls.targetTouch },
     paddingInline: '0.5rem',
     borderWidth: 0,
     borderRadius: '0.5rem',
     backgroundColor: 'transparent',
-    color: { default: chrome.ink, ':hover': '#ffffff' },
-    textShadow: { default: '0 0 14px rgba(139, 92, 246, 0.55)', ':hover': '0 0 18px rgba(196, 181, 253, 0.9)' },
-    fontFamily: chrome.mono,
+    color: {
+      default: chrome.ink,
+      ':hover': { default: null, [breakpoints.hover]: chrome.inkHot },
+      ':focus-visible': chrome.inkHot,
+    },
+    textShadow: {
+      default: chrome.textGlow,
+      ':hover': { default: null, [breakpoints.hover]: chrome.textGlowHot },
+      ':focus-visible': chrome.textGlowHot,
+    },
+    fontFamily: typography.mono,
     fontSize: '0.8rem',
     letterSpacing: '0.02em',
     cursor: 'pointer',
     transitionProperty: 'color, text-shadow',
-    transitionDuration: '160ms',
-    outline: { ':focus-visible': `2px solid ${chrome.edgeHot}` },
+    transitionDuration: motion.fast,
+    transitionTimingFunction: motion.easeColor,
+    outline: { default: null, ':focus-visible': `2px solid ${chrome.edgeHot}` },
     outlineOffset: '2px',
+    WebkitTapHighlightColor: 'transparent',
   },
   key: {
     paddingInline: '0.35rem',
@@ -28,7 +39,7 @@ export const pill = stylex.create({
     backgroundColor: chrome.tint,
     color: chrome.muted,
     textShadow: 'none',
-    fontFamily: chrome.mono,
-    fontSize: '0.68rem',
+    fontFamily: typography.mono,
+    fontSize: '0.75rem',
   },
 })

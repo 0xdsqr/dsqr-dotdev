@@ -25,6 +25,30 @@
 
           helm = pkgs.callPackage ./checks/helm.nix { };
 
+          api-tests = pkgs.callPackage ./checks/api-tests.nix {
+            inherit (config.packages.dotdev) npmDeps;
+          };
+
+          lint =
+            pkgs.runCommand "dsqr-dotdev-lint"
+              {
+                nativeBuildInputs = [ pkgs.oxlint ];
+                src = lib.fileset.toSource {
+                  root = ../.;
+                  fileset = lib.fileset.unions [
+                    ../.oxlintrc.json
+                    ../apps
+                    ../packages
+                    ./checks
+                  ];
+                };
+              }
+              ''
+                cd "$src"
+                oxlint --deny-warnings apps packages nix/checks
+                touch "$out"
+              '';
+
           workflows =
             pkgs.runCommand "dsqr-dotdev-workflows"
               {
@@ -52,7 +76,7 @@
               }
               ''
                 export HOME="$TMPDIR"
-                node --eval 'require("node:assert/strict").equal(process.versions.node.split(".")[0], "24")'
+                node --eval 'require("node:assert/strict").equal(process.versions.node.split(".")[0], "26")'
                 node --version
                 npm --version
                 git --version

@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { HttpApiBuilder } from 'effect/unstable/httpapi'
+import { HttpApiBuilder } from 'effect/http-api'
 import { AppApi, DotdevApi } from '../../api/api'
 
 const health = () => Effect.succeed({ message: 'API connected.' })

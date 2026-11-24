@@ -24,6 +24,15 @@
               trivy image --input "$archive" --format cyclonedx --output "$sbom" --quiet
             '';
 
+        ci-deps-scan =
+          script "ci-deps-scan"
+            "Scan package-lock.json (dev dependencies included) for fixable vulnerabilities"
+            [ pkgs.trivy ]
+            ''
+              trivy fs --scanners vuln --include-dev-deps --severity MEDIUM,HIGH,CRITICAL \
+                --ignore-unfixed --exit-code 1 --no-progress package-lock.json
+            '';
+
         ci-image-push =
           script "ci-image-push" "Push an image archive to a registry and print its digest" [ pkgs.skopeo ]
             ''

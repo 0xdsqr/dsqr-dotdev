@@ -1,6 +1,8 @@
 {
   runCommand,
-  nodejs_24,
+  coreutils,
+  gnugrep,
+  nodejs_26,
   app,
   appName,
   port,
@@ -9,8 +11,10 @@
 runCommand "${appName}-http-smoke"
   {
     nativeBuildInputs = [
-      nodejs_24
+      nodejs_26
       app
+      coreutils
+      gnugrep
     ];
     __darwinAllowLocalNetworking = true;
   }
@@ -85,9 +89,50 @@ runCommand "${appName}-http-smoke"
     for (const path of new Set(fonts)) {
       assert.equal((await fetch(new URL(path, origin))).status, 200, path);
     }
-    assert.equal((await fetch(origin + '/missing', { signal: AbortSignal.timeout(1000) })).status, 404);
-    console.log('SSR, public API, origin guard, probes, client assets, shared styles/fonts, and 404 responses passed');
+    const missing = await fetch(origin + '/missing', { signal: AbortSignal.timeout(1000) });
+    assert.equal(missing.status, 404);
+    assert.match(await missing.text(), /Page not found/, 'Unknown pages render the designed 404 page');
+
+    // Security headers: a per-request nonce CSP on pages, and the static set everywhere.
+    const csp = response.headers.get('content-security-policy') ?? "";
+    const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
+    assert.ok(nonce, 'Pages must send a nonce-based CSP');
+    assert.match(csp, /object-src 'none'/);
+    assert.match(csp, /frame-ancestors 'none'/);
+    const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map(match => match[0]);
+    assert.ok(scripts.length > 0);
+    for (const tag of scripts) assert.ok(tag.includes(`nonce="''${nonce}"`), `Script lacks the CSP nonce: ''${tag}`);
+    for (const headers of [response.headers, (await fetch(new URL(assets[0], origin))).headers]) {
+      assert.equal(headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      assert.equal(headers.get('x-frame-options'), 'DENY');
+    }
+
+    // Landmarks: the footer is a sibling of main, never inside it.
+    assert.ok(html.indexOf('</main>') !== -1 && html.indexOf('</main>') < html.lastIndexOf('<footer'), 'Footer must follow main');
+
+    assert.equal((await fetch(origin + '/robots.txt')).status, 200);
+    ${
+      if appName == "dotdev" then
+        ''
+          for (const path of ['/sitemap.xml', '/manifest.webmanifest', '/about', '/blog', '/misc']) {
+            assert.equal((await fetch(origin + path)).status, 200, path);
+          }
+          assert.match(html, /<link rel="canonical" href="https:\/\/dsqr\.dev\/"/);
+          assert.match(html, /<meta property="og:image" content="https:\/\/dsqr\.dev\/assets\/og-[^"]+\.png"/);
+          assert.match(await (await fetch(origin + '/about')).text(), /infrastructure/, 'About shows the intro');
+        ''
+      else
+        ""
+    }
+    console.log('SSR, API, origin guard, probes, assets, styles/fonts, CSP, headers, landmarks, and 404 page passed');
     JS
+
+    # Graceful shutdown runs Nitro's close hook (disposing Effect runtimes) and exits.
+    kill -TERM "$server_pid"
+    for _ in $(seq 50); do kill -0 "$server_pid" 2>/dev/null || break; sleep 0.1; done
+    if kill -0 "$server_pid" 2>/dev/null; then cat server.log; echo "Server did not stop on SIGTERM" >&2; exit 1; fi
+    if grep -q 'Error while calling `close` hooks' server.log; then cat server.log; exit 1; fi
 
     touch "$out"
   ''

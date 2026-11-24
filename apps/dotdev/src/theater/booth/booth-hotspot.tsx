@@ -1,8 +1,9 @@
 import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
+import { typography } from '@dsqr-dotdev/react/theme.stylex'
 import * as stylex from '@stylexjs/stylex'
 import { type ReactNode, useEffect, useState } from 'react'
-import { chrome } from '../overlay/chrome.stylex'
+import { chrome } from '../chrome.stylex'
 import { boothCenterZ, boothFloorY } from './geometry'
 
 const styles = stylex.create({
@@ -16,7 +17,7 @@ const styles = stylex.create({
     borderColor: chrome.edgeHot,
     boxShadow: chrome.glow,
     color: chrome.ink,
-    fontFamily: chrome.mono,
+    fontFamily: typography.mono,
     fontSize: '0.75rem',
     whiteSpace: 'nowrap',
     pointerEvents: 'none',

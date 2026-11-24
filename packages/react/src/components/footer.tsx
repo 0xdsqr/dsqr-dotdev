@@ -17,7 +17,6 @@ const links: ReadonlyArray<{ label: string; href: string; icon: IconName; profil
   { label: 'X', href: 'https://x.com/0xdsqr', icon: 'x', profile: true },
   { label: 'LinkedIn', href: 'https://linkedin.com/in/davedennis93', icon: 'linkedin', profile: true },
   { label: 'Email', href: 'mailto:me@dsqr.dev', icon: 'mail' },
-  { label: 'RSS feed', href: 'https://dsqr.dev/rss.xml', icon: 'rss' },
 ]
 
 const styles = stylex.create({

@@ -1,7 +1,7 @@
 import * as stylex from '@stylexjs/stylex'
 import type { ReactNode } from 'react'
 import { colors, typography } from '../styles/theme.stylex'
-import { themeScript } from '../theme'
+import { THEME_COLOR_ID, themeScript } from '../theme'
 
 const styles = stylex.create({
   html: {
@@ -20,13 +20,14 @@ const styles = stylex.create({
   },
 })
 
-export function Document({ head, children }: { head: ReactNode; children: ReactNode }) {
+export function Document({ head, nonce, children }: { head: ReactNode; nonce?: string; children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning {...stylex.props(stylex.defaultMarker(), styles.html)}>
       <head>
-        <meta name="theme-color" content="#fdfdfd" />
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {head}
+        {/* After `head`: a page's own fixed theme-color comes first, and browsers use the first. */}
+        <meta id={THEME_COLOR_ID} name="theme-color" content="#fdfdfd" />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body {...stylex.props(styles.body)}>{children}</body>
     </html>

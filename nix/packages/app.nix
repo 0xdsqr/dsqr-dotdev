@@ -1,8 +1,8 @@
 {
   lib,
   buildNpmPackage,
-  nodejs_24,
-  nodejs-slim_24,
+  nodejs_26,
+  nodejs-slim_26,
   makeWrapper,
   fetchNpmDeps,
   appName,
@@ -29,9 +29,10 @@ let
       "avif"
       "webp"
       "svg"
+      "png"
     ];
 in
-(buildNpmPackage.override { nodejs = nodejs_24; }) {
+(buildNpmPackage.override { nodejs = nodejs_26; }) {
   pname = appName;
   npmBuildFlags = [ "--workspace=${appName}" ];
   version = "0.0.0";
@@ -47,6 +48,8 @@ in
       ../../packages/database/tsconfig.json
       ../../packages/database/drizzle.config.ts
       (lib.fileset.fileFilter sourceFiles (appRoot + "/src"))
+      # Fixed-URL files (robots.txt, sitemap, manifest); optional per app.
+      (lib.fileset.maybeMissing (appRoot + "/public"))
       (lib.fileset.fileFilter sourceFiles ../../packages/api/src)
       (lib.fileset.fileFilter sourceFiles ../../packages/react/src)
       (lib.fileset.fileFilter sourceFiles ../../packages/database/src)
@@ -58,7 +61,7 @@ in
       inherit root;
       fileset = manifests;
     };
-    hash = "sha256-lTH8XDI3JBNccmDffmi8Tq+ekPx6h3IFWNKFJjlRBRo=";
+    hash = "sha256-nsq86gr9Ky+eIo5Fq2/+2/rJBmgfPRprH/ixBgb1tC0=";
   };
   npmRebuildFlags = [ "--ignore-scripts" ];
   env = {
@@ -76,8 +79,9 @@ in
         'mtime: new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toJSON(),' \
       --replace-fail 'JSON.stringify(assets, null, 2)' \
         'JSON.stringify(Object.fromEntries(Object.keys(assets).sort().map(key => [key, assets[key]])), null, 2)'
-    substituteInPlace node_modules/nitro/dist/_chunks/nitro3.mjs \
-      --replace-fail 'hash(h.handler)' 'hash(h.handler.replace(process.env.NIX_BUILD_TOP, "."))'
+    # Route handler ids hash absolute paths; hash them relative to the build directory.
+    substituteInPlace node_modules/nitro/dist/_chunks/nitro.mjs \
+      --replace-fail 'hash(handler)' 'hash(handler.replace(process.env.NIX_BUILD_TOP, "."))'
   '';
 
   postBuild = ''
@@ -89,7 +93,7 @@ in
     runHook preInstall
     mkdir -p "$out/share/${appName}"
     cp -r apps/${appName}/.output/server apps/${appName}/.output/public "$out/share/${appName}/"
-    makeWrapper ${nodejs-slim_24}/bin/node "$out/bin/${appName}" \
+    makeWrapper ${nodejs-slim_26}/bin/node "$out/bin/${appName}" \
       --add-flags "$out/share/${appName}/server/index.mjs" \
       --set NODE_ENV production
     runHook postInstall

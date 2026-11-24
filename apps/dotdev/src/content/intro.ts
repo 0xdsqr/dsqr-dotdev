@@ -1,6 +1,6 @@
-export type IntroTone = 'accent' | 'teal' | 'orange' | 'emerald' | 'indigo' | 'quiet'
+import type { MarkTone } from '@dsqr-dotdev/react/components/mark'
 
-export type IntroSegment = { readonly text: string; readonly tone?: IntroTone }
+export type IntroSegment = { readonly text: string; readonly tone?: MarkTone }
 
 export const handle = '0xdsqr'
 
@@ -19,5 +19,3 @@ export const intro: ReadonlyArray<IntroSegment> = [
   { text: 'Stablecore', tone: 'quiet' },
   { text: '. I also enjoy hardware, Nix, and collecting things that are nice to look at.' },
 ]
-
-export const introText = intro.map((segment) => segment.text).join('')

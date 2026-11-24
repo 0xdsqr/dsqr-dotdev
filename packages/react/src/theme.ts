@@ -1,6 +1,7 @@
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'dsqr-theme'
+export const THEME_COLOR_ID = 'theme-color'
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 const THEME_COLOR: Record<Theme, string> = { light: '#fdfdfd', dark: '#1a1b1e' }
@@ -8,13 +9,14 @@ const THEME_COLOR: Record<Theme, string> = { light: '#fdfdfd', dark: '#1a1b1e' }
 export const themeScript = `(function () {
   var key = ${JSON.stringify(STORAGE_KEY)};
   var colors = ${JSON.stringify(THEME_COLOR)};
+  var metaId = ${JSON.stringify(THEME_COLOR_ID)};
   var query = matchMedia(${JSON.stringify(DARK_QUERY)});
   function apply() {
     var stored = null;
     try { stored = localStorage.getItem(key); } catch (e) {}
     var theme = stored === 'light' || stored === 'dark' ? stored : query.matches ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
-    var meta = document.querySelector('meta[name="theme-color"]');
+    var meta = document.getElementById(metaId);
     if (meta) meta.setAttribute('content', colors[theme]);
   }
   apply();
@@ -23,7 +25,7 @@ export const themeScript = `(function () {
 
 function setTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[theme])
+  document.getElementById(THEME_COLOR_ID)?.setAttribute('content', THEME_COLOR[theme])
 }
 
 export function toggleTheme() {
