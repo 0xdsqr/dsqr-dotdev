@@ -304,6 +304,8 @@ helm/
 - The color palette is the owner's palette from master and is fixed: near-white
   and black in light, cool grey-black in dark, purple primary as the one accent.
   Map it into tokens exactly; never substitute or "improve" it without asking.
+  Exception (approved November 2026): the light-mode teal, orange and emerald highlight
+  hues are one step darker than master's so they meet AA; dark mode is unchanged.
   Keep Geist typography. Evolve other StyleX tokens as decisions are made.
 - Light/dark: every color token is `light-dark(light, dark)`, resolved by
   `color-scheme` on `<html>`. The inline theme script (`packages/react/src/theme.ts`)

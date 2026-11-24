@@ -9,10 +9,11 @@ export const colors = stylex.defineVars({
   accent: 'light-dark(oklch(0.5393 0.2713 286.7462), oklch(0.6132 0.2294 291.7437))',
 })
 
+// Light values sit one step darker than master's so highlighted words meet WCAG AA (≥5:1 on ground).
 export const hues = stylex.defineVars({
-  teal: 'light-dark(oklch(0.6 0.118 184.704), oklch(0.777 0.152 181.912))',
-  orange: 'light-dark(oklch(0.646 0.222 41.116), oklch(0.837 0.128 66.29))',
-  emerald: 'light-dark(oklch(0.596 0.145 163.225), oklch(0.765 0.177 163.223))',
+  teal: 'light-dark(oklch(0.511 0.096 186.391), oklch(0.777 0.152 181.912))',
+  orange: 'light-dark(oklch(0.553 0.195 38.402), oklch(0.837 0.128 66.29))',
+  emerald: 'light-dark(oklch(0.508 0.118 165.612), oklch(0.765 0.177 163.223))',
   indigo: 'light-dark(oklch(0.511 0.262 276.966), oklch(0.673 0.182 276.935))',
 })
 
